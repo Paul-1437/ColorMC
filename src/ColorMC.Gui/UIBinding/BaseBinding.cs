@@ -89,7 +89,7 @@ public static class BaseBinding
         ColorMCCore.LanguageReload = (type)=> 
         {
             App.LoadLanguage(type);
-            Localizer.Instance.Reload();
+            Localizer.Reload();
 
             App.Reboot();
         };
@@ -111,9 +111,9 @@ public static class BaseBinding
 
         ImageUtils.Init(ColorMCGui.RunDir);
 
-        FontSel.Instance.Load();
+        FontSel.Load();
         ColorSel.Load();
-        StyleSel.Instance.Load();
+        StyleSel.Load();
         LoadStyle();
 
         InputElement.PointerReleasedEvent.AddClassHandler<DataGridCell>((x, e) =>
