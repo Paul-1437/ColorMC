@@ -2,6 +2,8 @@
 
 [简体中文](./README.md)
 
+This fork aims to provide macOS arm build for ColorMC
+
 **The following content is machine translation**  
 **Notie: Translations from other languages are not yet ready. If possible, welcome to do the translation together**  
 https://crowdin.com/project/colormc

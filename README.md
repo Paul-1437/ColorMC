@@ -1,6 +1,6 @@
 # ColorMC 全新的MC启动器
 
-交流QQ群：571239090
+本Fork旨在提供ColorMC macOS arm版本
 
 [English](./README_EN.md)
 
@@ -8,10 +8,6 @@
 
 [用户手册](https://github.com/Coloryr/ColorMC_Pic/blob/master/guide/Main.md)
 
-![](/image/run.png)  
-
-**演示动画**
-![](/image/GIF.gif)  
 
 ## 支持平台
 - Linux
@@ -21,7 +17,7 @@
 注意：ARM64平台不能保证其兼容性  
 Windows ARM64 可以运行，渲染有问题  
 Linux ARM64 在xx派上可以运行，运行缓慢  
-Mac ARM64 不能运行，可以运行x64版本  
+Mac ARM64 可以运行  
 
 Linux由于发行版过于复杂，每个人的电脑兼容性都不一样，如果打不开可以需要自行解决
 

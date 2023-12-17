@@ -1,8 +1,0 @@
-Package: ColorMC       
-Version: %version%                
-Section: free             
-Prioritt: optional        
-Architecture: amd64 
-Maintainer: coloryr    
-Description: ColorMC        
-
