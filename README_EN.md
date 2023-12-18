@@ -20,12 +20,12 @@ Using dotnet8 as the runtime environment, XAML as the front-end language, and C 
 ## Supporting platforms
 - Linux
 - Windows
-- macOs
+- macOS
 
 Note: ARM64 platform cannot guarantee its compatibility  
 Windows ARM64 can run, but there are rendering issues  
 Linux ARM64 can run on xx, but it runs slowly  
-Mac ARM64 cannot run, it can run x64 version  
+Mac ARM64 can run  
 
 Due to the complexity of Linux distributions, everyone's computer compatibility is different. If it cannot be opened, it can be resolved on its own
 

@@ -12,7 +12,7 @@
 ## 支持平台
 - Linux
 - Windows
-- macOs
+- macOS
 
 注意：ARM64平台不能保证其兼容性  
 Windows ARM64 可以运行，渲染有问题  
