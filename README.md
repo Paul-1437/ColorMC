@@ -1,3 +1,4 @@
+This fork aims to provide macOS arm64 build for ColorMC
 # ColorMC 一个全平台Minecraft PC启动器
 
 **ColorMC2 正在制作中，尽情期待**
