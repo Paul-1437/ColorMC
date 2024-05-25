@@ -1,7 +1,6 @@
 using Avalonia.Media.Imaging;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
-using ColorMC.Core.Utils;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UI.Controls.Custom;
 using ColorMC.Gui.UI.Model.Items;
@@ -33,7 +32,10 @@ public partial class CustomControlPanelModel : TopModel
     public CustomControlPanelModel(CustomControl con, BaseModel model, GameSettingObj obj) : base(model)
     {
         _top = con;
-        _game = new(model, con, obj);
+        _game = new(model, con, obj)
+        {
+            OneGame = true
+        };
 
         App.UserEdit += App_UserEdit;
         App.SkinLoad += App_SkinLoad;
@@ -83,7 +85,7 @@ public partial class CustomControlPanelModel : TopModel
         item.IsLaunch = false;
         item.IsLoad = true;
         Model.Notify(App.Lang(string.Format(App.Lang("MainWindow.Info28"), game.Name)));
-        var res = await GameBinding.Launch(Model, game, wait: GuiConfigUtils.Config.CloseBeforeLaunch);
+        var res = await GameBinding.Launch(Model, game, hide: GuiConfigUtils.Config.CloseBeforeLaunch);
         Model.Title1 = null;
         item.IsLoad = false;
         Model.ProgressClose();
@@ -95,10 +97,7 @@ public partial class CustomControlPanelModel : TopModel
         {
             Model.Notify(App.Lang("MainWindow.Info2"));
 
-            if (SystemInfo.Os != OsType.Android)
-            {
-                item.IsLaunch = true;
-            }
+            item.IsLaunch = true;
 
             Model.Progress(App.Lang("MainWindow.Info26"));
         }

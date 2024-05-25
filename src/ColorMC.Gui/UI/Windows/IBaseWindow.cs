@@ -11,7 +11,6 @@ public interface IBaseWindow
     public IUserControl ICon { get; }
     public void SetTitle(string data);
     public void SetIcon(Bitmap icon);
-
     public void Close()
     {
         if (ConfigBinding.WindowMode())
@@ -36,7 +35,7 @@ public interface IBaseWindow
         }
     }
 
-    virtual public void Activate()
+    virtual public void TopActivate()
     {
         if (ConfigBinding.WindowMode())
         {
@@ -64,4 +63,6 @@ public interface IBaseWindow
             window.Hide();
         }
     }
+
+    void SetSize(int width, int height);
 }

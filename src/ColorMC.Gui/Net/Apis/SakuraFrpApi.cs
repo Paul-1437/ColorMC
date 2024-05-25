@@ -1,14 +1,14 @@
-﻿using ColorMC.Core.LaunchPath;
+﻿using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Net;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.Objs.Frp;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.Net.Apis;
 
@@ -57,7 +57,7 @@ public static class SakuraFrpApi
 
             var data = await BaseClient.LoginClient.PostAsync($"{Url}tunnel/config?token={key}", content);
             var str = await data.Content.ReadAsStringAsync();
-            if (str.StartsWith("{"))
+            if (str.StartsWith('{'))
             {
                 return null;
             }

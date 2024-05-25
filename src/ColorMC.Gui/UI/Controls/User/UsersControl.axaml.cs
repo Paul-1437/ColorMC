@@ -2,12 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using ColorMC.Core;
 using ColorMC.Gui.UI.Flyouts;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.User;
 using ColorMC.Gui.UI.Windows;
-using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UI.Controls.User;
 
@@ -36,14 +34,10 @@ public partial class UsersControl : UserControl, IUserControl
     public void Opened()
     {
         Window.SetTitle(Title);
-
-        DataGrid_User.SetFontColor();
     }
 
     public void Closed()
     {
-        ColorMCCore.LoginOAuthCode = null;
-
         App.UserWindow = null;
     }
 
@@ -122,7 +116,7 @@ public partial class UsersControl : UserControl, IUserControl
         DataContext = amodel;
     }
 
-    private void TextBox_KeyDown(object? sender, Avalonia.Input.KeyEventArgs e)
+    private void TextBox_KeyDown(object? sender, KeyEventArgs e)
     {
     }
 }

@@ -1,4 +1,8 @@
-﻿using Avalonia.Layout;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading;
+using System.Threading.Tasks;
+using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Helpers;
@@ -11,10 +15,6 @@ using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DialogHostAvalonia;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.Main;
 
@@ -97,6 +97,13 @@ public partial class MainModel : TopModel, IMainTop
     [ObservableProperty]
     private string _sidePath = _side[0];
 
+    [ObservableProperty]
+    private string _gameSearchText;
+    [ObservableProperty]
+    private bool _gameSearch;
+    [ObservableProperty]
+    private bool _lowFps;
+
     private bool _isNewUpdate;
     private string _updateStr;
 
@@ -107,6 +114,24 @@ public partial class MainModel : TopModel, IMainTop
         App.SkinLoad += App_SkinLoad;
 
         App.UserEdit += LoadUser;
+    }
+
+    partial void OnGameSearchTextChanged(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            foreach (var item in GameGroups)
+            {
+                item.DisplayAll();
+            }
+        }
+        else
+        {
+            foreach (var item in GameGroups)
+            {
+                item.Display(value);
+            }
+        }
     }
 
     partial void OnTopSideChanged(bool value)
@@ -148,11 +173,11 @@ public partial class MainModel : TopModel, IMainTop
         var data = await WebBinding.GetNewLog();
         if (data == null)
         {
-            Model.Show(App.Lang("Gui.Error38"));
+            Model.Show(App.Lang("MainWindow.Error1"));
         }
         else
         {
-            Model.ShowText(App.Lang("Gui.Info35"), data);
+            Model.ShowText(App.Lang("MainWindow.Info40"), data);
         }
 
         _isGetNewInfo = false;
@@ -161,7 +186,7 @@ public partial class MainModel : TopModel, IMainTop
     [RelayCommand]
     public async Task Upgrade()
     {
-        var res = await Model.ShowTextWait(App.Lang("Gui.Info5"), _updateStr);
+        var res = await Model.ShowTextWait(App.Lang("Text.Update"), _updateStr);
         if (res)
         {
             if (_isNewUpdate)
@@ -173,12 +198,6 @@ public partial class MainModel : TopModel, IMainTop
                 UpdateChecker.StartUpdate();
             }
         }
-    }
-
-    [RelayCommand]
-    public void AddGame()
-    {
-        App.ShowAddGame(null);
     }
 
     [RelayCommand]
@@ -194,13 +213,13 @@ public partial class MainModel : TopModel, IMainTop
         {
             BaseBinding.MusicPause();
 
-            Model.Title = App.Lang("MainWindow.Title");
+            Model.Title = App.Lang("Name");
         }
         else
         {
             BaseBinding.MusicPlay();
 
-            Model.Title = App.Lang("MainWindow.Title") + " " + App.Lang("MainWindow.Info33");
+            Model.Title = App.Lang("Name") + " " + App.Lang("MainWindow.Info33");
         }
 
         _isplay = !_isplay;
@@ -264,33 +283,10 @@ public partial class MainModel : TopModel, IMainTop
     }
 
     [RelayCommand]
-    public void AddUser()
+    public async Task OpenGuide()
     {
-        App.ShowUser(true);
-    }
-
-    [RelayCommand]
-    public void SetJava()
-    {
-        App.ShowSetting(SettingType.SetJava);
-    }
-
-    [RelayCommand]
-    public void OpenWeb1()
-    {
-        WebBinding.OpenWeb(WebType.Web);
-    }
-
-    [RelayCommand]
-    public void OpenWeb2()
-    {
-        WebBinding.OpenWeb(WebType.Minecraft);
-    }
-
-    [RelayCommand]
-    public void OpenGuide()
-    {
-        WebBinding.OpenWeb(WebType.Guide);
+        var res = await Model.ShowWait(App.Lang("SettingWindow.Tab7.Info3"));
+        WebBinding.OpenWeb(res ? WebType.Guide1 : WebType.Guide);
     }
 
     [RelayCommand]
@@ -311,6 +307,18 @@ public partial class MainModel : TopModel, IMainTop
         Head = UserBinding.HeadBitmap!;
 
         IsHeadLoad = false;
+    }
+
+    public void Search()
+    {
+        GameSearch = true;
+        GameSearchText = "";
+    }
+
+    public void SearchClose()
+    {
+        GameSearch = false;
+        GameSearchText = "";
     }
 
     public Task<(bool, string?)> Set(GameItemModel obj)
@@ -407,6 +415,10 @@ public partial class MainModel : TopModel, IMainTop
         BaseBinding.LoadMusic();
 
         var config = ConfigBinding.GetAllConfig();
+        if (config.Item2?.Live2D.LowFps == true)
+        {
+            LowFps = true;
+        }
         if (config.Item1?.Http?.CheckUpdate == true)
         {
             var data = await UpdateChecker.Check();
@@ -428,7 +440,7 @@ public partial class MainModel : TopModel, IMainTop
 
         if (config.Item2.ServerCustom?.PlayMusic == true)
         {
-            Model.Title = App.Lang("MainWindow.Title") + " " + App.Lang("MainWindow.Info33");
+            Model.Title = App.Lang("Name") + " " + App.Lang("MainWindow.Info33");
             MusicDisplay = true;
         }
         else
@@ -450,7 +462,10 @@ public partial class MainModel : TopModel, IMainTop
             else
             {
                 IsGameError = false;
-                OneGame = new(Model, this, game);
+                OneGame = new(Model, this, game)
+                {
+                    OneGame = true
+                };
                 IsOneGame = true;
             }
         }
@@ -558,7 +573,7 @@ public partial class MainModel : TopModel, IMainTop
         item.IsLaunch = false;
         item.IsLoad = true;
         Model.Notify(App.Lang(string.Format(App.Lang("MainWindow.Info28"), game.Name)));
-        var res = await GameBinding.Launch(Model, game, wait: GuiConfigUtils.Config.CloseBeforeLaunch);
+        var res = await GameBinding.Launch(Model, game, hide: GuiConfigUtils.Config.CloseBeforeLaunch);
         Model.Title1 = null;
         item.IsLoad = false;
         if (GuiConfigUtils.Config.CloseBeforeLaunch)
@@ -572,11 +587,9 @@ public partial class MainModel : TopModel, IMainTop
         else
         {
             Model.Notify(App.Lang("MainWindow.Info2"));
-            if (SystemInfo.Os != OsType.Android)
-            {
-                item.IsLaunch = true;
-                Launchs.Add(game.UUID, item);
-            }
+
+            item.IsLaunch = true;
+            Launchs.Add(game.UUID, item);
 
             if (GuiConfigUtils.Config.CloseBeforeLaunch)
             {

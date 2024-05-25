@@ -1,4 +1,8 @@
-﻿using Avalonia;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.OpenGL;
@@ -12,10 +16,6 @@ using ColorMC.Gui.UI.Model.Main;
 using ColorMC.Gui.Utils;
 using Live2DCSharpSDK.App;
 using Live2DCSharpSDK.Framework.Motion;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 
 namespace ColorMC.Gui.UI.Controls.Main;
 
@@ -136,17 +136,13 @@ public class Live2dRender : OpenGlControlBase, ICustomHitTest
     {
         _lapp.Live2dManager.ReleaseAllModel();
         var model = GuiConfigUtils.Config.Live2D.Model;
-        if (string.IsNullOrWhiteSpace(model))
+        if (!GuiConfigUtils.Config.Live2D.Enable || string.IsNullOrWhiteSpace(model))
         {
             return;
         }
         if (!File.Exists(model))
         {
-            (DataContext as MainModel)!.Model.Show(App.Lang("MainWindow.Live2d.Error1"));
-            return;
-        }
-        if (!GuiConfigUtils.Config.Live2D.Enable)
-        {
+            (DataContext as MainModel)!.Model.Show(App.Lang("MainWindow.Live2D.Error1"));
             return;
         }
         var info = new FileInfo(model);
@@ -156,7 +152,7 @@ public class Live2dRender : OpenGlControlBase, ICustomHitTest
         }
         catch (Exception e)
         {
-            string temp = App.Lang("MainWindow.Live2d.Error2");
+            string temp = App.Lang("MainWindow.Live2D.Error2");
             Logs.Error(temp, e);
             (DataContext as MainModel)!.Model.Show(temp);
         }
@@ -225,7 +221,7 @@ public class Live2dRender : OpenGlControlBase, ICustomHitTest
             _change = false;
             ChangeModel();
             model.ChangeModelDone();
-            model.ShowMessage(App.Lang("Live2D.Text1"));
+            model.ShowMessage(App.Lang("MainWindow.Live2D.Text1"));
         }
         if (_delete)
         {

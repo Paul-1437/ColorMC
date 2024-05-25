@@ -1,7 +1,6 @@
 using ColorMC.Core.Net;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Login;
-using ColorMC.Core.Objs.Minecraft;
 using ColorMC.Core.Objs.OptiFine;
 using ColorMC.Core.Objs.ServerPack;
 using ColorMC.Core.Utils;
@@ -14,7 +13,6 @@ namespace ColorMC.Core.Helpers;
 public static class UrlHelper
 {
     public const string BMCLAPI = "https://bmclapi2.bangbang93.com/";
-    public const string MCBBS = "https://download.mcbbs.net/";
 
     public const string Authlib = "https://authlib-injector.yushi.moe/";
 
@@ -42,11 +40,13 @@ public static class UrlHelper
     public const string Minecraft = "https://www.minecraft.net/";
     public const string MinecraftLib = "https://libraries.minecraft.net/";
     public const string MinecraftResources = "https://resources.download.minecraft.net/";
+
     public static readonly string[] Mojang =
     [
         "https://launchermeta.mojang.com/",
         "https://launcher.mojang.com/",
-        "https://piston-data.mojang.com/"
+        "https://piston-data.mojang.com/",
+        "https://piston-meta.mojang.com/"
     ];
 
     public static readonly string[] MavenUrl =
@@ -98,7 +98,6 @@ public static class UrlHelper
         return local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}mc/game/version_manifest_v2.json",
-            SourceLocal.MCBBS => $"{MCBBS}mc/game/version_manifest_v2.json",
             _ => $"{Mojang[0]}mc/game/version_manifest_v2.json"
         };
     }
@@ -111,7 +110,6 @@ public static class UrlHelper
         string? to = local switch
         {
             SourceLocal.BMCLAPI => BMCLAPI,
-            SourceLocal.MCBBS => MCBBS,
             _ => null
         };
         if (to == null)
@@ -135,7 +133,7 @@ public static class UrlHelper
     /// <returns></returns>
     public static string DownloadGame(string mc, SourceLocal? local)
     {
-        return $"{(local == SourceLocal.BMCLAPI ? BMCLAPI : MCBBS)}version/{mc}/client";
+        return $"{BMCLAPI}version/{mc}/client";
     }
 
     /// <summary>
@@ -146,7 +144,6 @@ public static class UrlHelper
         string? to = local switch
         {
             SourceLocal.BMCLAPI => BMCLAPI + "maven/",
-            SourceLocal.MCBBS => MCBBS + "maven/",
             _ => null
         };
         if (to == null)
@@ -167,7 +164,6 @@ public static class UrlHelper
         string? url = local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}assets/{uuid[..2]}/{uuid}",
-            SourceLocal.MCBBS => $"{MCBBS}assets/{uuid[..2]}/{uuid}",
             _ => $"{MinecraftResources}{uuid[..2]}/{uuid}"
         };
 
@@ -182,7 +178,6 @@ public static class UrlHelper
         string? url = local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}maven/net/minecraftforge/forge/{mc}-{version}/",
-            SourceLocal.MCBBS => $"{MCBBS}maven/net/minecraftforge/forge/{mc}-{version}/",
             _ => $"{Forge}net/minecraftforge/forge/{mc}-{version}/"
         };
 
@@ -201,7 +196,6 @@ public static class UrlHelper
         string? url = local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}maven/net/neoforged/{baseurl}",
-            SourceLocal.MCBBS => $"{MCBBS}maven/net/neoforged/{baseurl}",
             _ => $"{NeoForge}releases/net/neoforged/{baseurl}"
         };
 
@@ -216,7 +210,6 @@ public static class UrlHelper
         string? to = local switch
         {
             SourceLocal.BMCLAPI => BMCLAPI + "maven/",
-            SourceLocal.MCBBS => MCBBS + "maven/",
             _ => null
         };
         if (to == null)
@@ -234,8 +227,7 @@ public static class UrlHelper
     {
         string? to = local switch
         {
-            //SourceLocal.BMCLAPI => BMCLAPI + "maven/",
-            //SourceLocal.MCBBS => MCBBS + "maven/",
+            SourceLocal.BMCLAPI => BMCLAPI + "maven/",
             _ => null
         };
         if (to == null)
@@ -255,8 +247,7 @@ public static class UrlHelper
     {
         string? url = local switch
         {
-            //SourceLocal.BMCLAPI => $"{BMCLAPI}fabric-meta/v2/versions",
-            //SourceLocal.MCBBS => $"{MCBBS}fabric-meta/v2/versions",
+            SourceLocal.BMCLAPI => $"{BMCLAPI}fabric-meta/v2/versions",
             _ => $"{FabricMeta}v2/versions"
         };
 
@@ -271,7 +262,6 @@ public static class UrlHelper
         string? url = local switch
         {
             //SourceLocal.BMCLAPI => $"{BMCLAPI}quilt-meta/v3/versions",
-            //SourceLocal.MCBBS => $"{MCBBS}quilt-meta/v3/versions",
             _ => $"{QuiltMeta}v3/versions"
         };
 
@@ -286,7 +276,6 @@ public static class UrlHelper
         string? replace = local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}maven/",
-            SourceLocal.MCBBS => $"{MCBBS}maven/",
             _ => null
         };
 
@@ -304,7 +293,6 @@ public static class UrlHelper
         string? replace = local switch
         {
             //SourceLocal.BMCLAPI => BMCLAPI + "maven/",
-            //SourceLocal.MCBBS => MCBBS + "maven/",
             _ => null
         };
 
@@ -322,7 +310,6 @@ public static class UrlHelper
         return local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}mirrors/authlib-injector/artifacts.json",
-            SourceLocal.MCBBS => $"{MCBBS}mirrors/authlib-injector/artifacts.json",
             _ => $"{Authlib}artifacts.json"
         };
     }
@@ -335,7 +322,6 @@ public static class UrlHelper
         return local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}mirrors/authlib-injector/artifact/{obj.build_number}.json",
-            SourceLocal.MCBBS => $"{MCBBS}mirrors/authlib-injector/artifact/{obj.build_number}.json",
             _ => $"{Authlib}artifact/{obj.build_number}.json"
         };
     }
@@ -348,7 +334,6 @@ public static class UrlHelper
         return local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}mirrors/authlib-injector/artifact/{obj.build_number}/authlib-injector-{obj.version}.jar",
-            SourceLocal.MCBBS => $"{MCBBS}mirrors/authlib-injector/artifact/{obj.build_number}/authlib-injector-{obj.version}.jar",
             _ => $"{Authlib}artifact/{obj.build_number}/authlib-injector-{obj.version}.jar"
         };
     }
@@ -361,7 +346,6 @@ public static class UrlHelper
         return local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}forge/minecraft",
-            SourceLocal.MCBBS => $"{MCBBS}forge/minecraft",
             _ => $"{Forge}net/minecraftforge/forge/maven-metadata.xml"
         };
     }
@@ -374,7 +358,6 @@ public static class UrlHelper
         return local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}forge/minecraft/{version}",
-            SourceLocal.MCBBS => $"{MCBBS}forge/minecraft/{version}",
             _ => $"{Forge}net/minecraftforge/forge/maven-metadata.xml"
         };
     }
@@ -382,26 +365,12 @@ public static class UrlHelper
     /// <summary>
     /// NeoForge版本地址
     /// </summary>
-    public static string NeoForgeVersion(SourceLocal? local)
+    public static string NeoForgeVersion(SourceLocal? local, string version)
     {
         return local switch
         {
-            //SourceLocal.BMCLAPI => $"{BMCLAPI}forge/minecraft/{version}",
-            //SourceLocal.MCBBS => $"{MCBBS}forge/minecraft/{version}",
+            SourceLocal.BMCLAPI => $"{BMCLAPI}neoforge/list/{version}",
             _ => $"{NeoForge}releases/net/neoforged/forge/maven-metadata.xml"
-        };
-    }
-
-    /// <summary>
-    /// NeoForge版本地址
-    /// </summary>
-    public static string NeoForgeNewVersion(SourceLocal? local)
-    {
-        return local switch
-        {
-            //SourceLocal.BMCLAPI => $"{BMCLAPI}forge/minecraft/{version}",
-            //SourceLocal.MCBBS => $"{MCBBS}forge/minecraft/{version}",
-            _ => $"{NeoForge}releases/net/neoforged/neoforge/maven-metadata.xml"
         };
     }
 
@@ -409,14 +378,24 @@ public static class UrlHelper
     /// NeoForge版本地址
     /// </summary>
     /// <param name="mc">游戏版本</param>
-    public static string NeoForgeVersions(string mc, SourceLocal? local)
+    public static string NeoForgeVersions(string mc, SourceLocal? local, bool v222)
     {
-        return local switch
+        if (v222)
         {
-            SourceLocal.BMCLAPI => $"{BMCLAPI}neoforge/list/{mc}",
-            SourceLocal.MCBBS => $"{MCBBS}neoforge/list/{mc}",
-            _ => $"{NeoForge}releases/net/neoforged/forge/maven-metadata.xml"
-        };
+            return local switch
+            {
+                SourceLocal.BMCLAPI => $"{BMCLAPI}neoforge/list/{mc}",
+                _ => $"{NeoForge}releases/net/neoforged/neoforge/maven-metadata.xml"
+            };
+        }
+        else
+        {
+            return local switch
+            {
+                SourceLocal.BMCLAPI => $"{BMCLAPI}neoforge/list/{mc}",
+                _ => $"{NeoForge}releases/net/neoforged/forge/maven-metadata.xml"
+            };
+        }
     }
 
     /// <summary>
@@ -426,23 +405,20 @@ public static class UrlHelper
     /// <returns></returns>
     public static (bool, string?) UrlChange(string old)
     {
-        var random = new Random();
+        //var random = new Random();
         if (BaseClient.Source == SourceLocal.Offical)
         {
             if (old.StartsWith(Forge))
             {
-                return (true, old.Replace(Forge,
-                    random.Next() % 2 == 0 ? $"{BMCLAPI}maven" : $"{MCBBS}maven"));
+                return (true, old.Replace(Forge, $"{BMCLAPI}maven"));
             }
             else if (old.StartsWith(MinecraftLib))
             {
-                return (true, old.Replace(MinecraftLib,
-                   random.Next() % 2 == 0 ? $"{BMCLAPI}maven" : $"{MCBBS}maven"));
+                return (true, old.Replace(MinecraftLib, $"{BMCLAPI}maven"));
             }
             else if (old.StartsWith(Fabric))
             {
-                return (true, old.Replace(Fabric,
-                   random.Next() % 2 == 0 ? $"{BMCLAPI}maven" : $"{MCBBS}maven"));
+                return (true, old.Replace(Fabric, $"{BMCLAPI}maven"));
             }
         }
 
@@ -457,7 +433,6 @@ public static class UrlHelper
         return local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}optifine/versionList",
-            SourceLocal.MCBBS => $"{MCBBS}optifine/versionList",
             _ => $"{OptiFine}downloads"
         };
     }
@@ -469,7 +444,6 @@ public static class UrlHelper
     {
         return local switch
         {
-            SourceLocal.MCBBS => $"{MCBBS}optifine/{obj.mcversion}/{obj.type}/{obj.patch}",
             _ => $"{BMCLAPI}optifine/{obj.mcversion}/{obj.type}/{obj.patch}"
         };
     }
@@ -527,21 +501,5 @@ public static class UrlHelper
             return MakeDownloadUrl(SourceType.CurseForge, item.Projcet,
                 item.FileId, item.File);
         }
-    }
-
-    /// <summary>
-    /// 游戏版本数据
-    /// </summary>
-    /// <param name="local">下载源</param>
-    /// <param name="obj">版本</param>
-    /// <returns></returns>
-    public static string DownloadIndex(SourceLocal? local, VersionObj.Versions obj)
-    {
-        return local switch
-        {
-            SourceLocal.BMCLAPI => $"{BMCLAPI}version/{obj.id}/json",
-            SourceLocal.MCBBS => $"{MCBBS}version/{obj.id}/json",
-            _ => obj.url
-        };
     }
 }

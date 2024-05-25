@@ -8,9 +8,9 @@
 		<PlatformTarget>AnyCPU</PlatformTarget>
 		<Platforms>AnyCPU</Platforms>
 		<ApplicationIcon>icon.ico</ApplicationIcon>
-		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+		<IncludeNativeLibrariesForSelfExtract>false</IncludeNativeLibrariesForSelfExtract>
 	</PropertyGroup>
-
+	
 	<PropertyGroup>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 	</PropertyGroup>
@@ -29,4 +29,5 @@
 		<ProjectReference Include="..\ColorMC.Gui\ColorMC.Gui.csproj" />
 		<ProjectReference Include="..\ColorMC.Core\ColorMC.Core.csproj" />
 	</ItemGroup>
+
 </Project>

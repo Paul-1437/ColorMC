@@ -1,3 +1,4 @@
+using System.Text;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Nbt;
@@ -7,7 +8,6 @@ using ColorMC.Core.Utils;
 using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Text;
 
 namespace ColorMC.Core.Game;
 
@@ -24,7 +24,7 @@ public static class Worlds
     /// </summary>
     /// <param name="game">游戏实例</param>
     /// <returns>世界列表</returns>
-    public static async Task<List<WorldObj>> GetWorlds(this GameSettingObj game)
+    public static async Task<List<WorldObj>> GetWorldsAsync(this GameSettingObj game)
     {
         var list = new List<WorldObj>();
         var dir = game.GetSavesPath();
@@ -56,12 +56,12 @@ public static class Worlds
                     };
 
                     //读数据
-                    var tag1 = (tag["Data"] as NbtCompound)!;
-                    obj.LastPlayed = (tag1["LastPlayed"] as NbtLong)!.Value;
-                    obj.GameType = (tag1["GameType"] as NbtInt)!.Value;
-                    obj.Hardcore = (tag1["hardcore"] as NbtByte)!.Value;
-                    obj.Difficulty = (tag1["Difficulty"] as NbtByte)!.Value;
-                    obj.LevelName = (tag1["LevelName"] as NbtString)!.Value;
+                    var tag1 = tag.TryGet<NbtCompound>("Data")!;
+                    obj.LastPlayed = tag1.TryGet<NbtLong>("LastPlayed")!.Value;
+                    obj.GameType = tag1.TryGet<NbtInt>("GameType")!.Value;
+                    obj.Hardcore = tag1.TryGet<NbtByte>("hardcore")!.Value;
+                    obj.Difficulty = tag1.TryGet<NbtByte>("Difficulty")!.Value;
+                    obj.LevelName = tag1.TryGet<NbtString>("LevelName")!.Value;
 
                     obj.Local = Path.GetFullPath(item.FullName);
                     obj.Game = game;
@@ -112,7 +112,7 @@ public static class Worlds
     /// <param name="obj">游戏实例</param>
     /// <param name="file">文件位置</param>
     /// <returns>结果</returns>
-    public static async Task<bool> AddWorldZip(this GameSettingObj obj, string file)
+    public static async Task<bool> AddWorldZipAsync(this GameSettingObj obj, string file)
     {
         var dir = obj.GetSavesPath();
         var info = new FileInfo(file);
@@ -170,7 +170,7 @@ public static class Worlds
     /// <param name="file">输出文件位置</param>
     public static Task ExportWorldZip(this WorldObj world, string file)
     {
-        return new ZipUtils().ZipFile(world.Local, file);
+        return new ZipUtils().ZipFileAsync(world.Local, file);
     }
 
     /// <summary>
@@ -184,33 +184,10 @@ public static class Worlds
     }
 
     /// <summary>
-    /// 文件流处理
-    /// </summary>
-    private class ZipFileStream : IStaticDataSource, IDisposable
-    {
-        private readonly MemoryStream Memory;
-        public ZipFileStream(byte[] data)
-        {
-            Memory = new(data);
-            Memory.Seek(0, SeekOrigin.Begin);
-        }
-
-        public void Dispose()
-        {
-            Memory.Dispose();
-        }
-
-        public Stream GetSource()
-        {
-            return Memory;
-        }
-    }
-
-    /// <summary>
     /// 备份世界
     /// </summary>
     /// <param name="world">世界储存</param>
-    public static async Task Backup(this WorldObj world)
+    public static async Task BackupAsync(this WorldObj world)
     {
         var game = world.Game;
 
@@ -220,7 +197,7 @@ public static class Worlds
         var file = Path.GetFullPath(path + "/" + world.LevelName + "_" + DateTime.Now
             .ToString("yyyy_MM_dd_HH_mm_ss") + ".zip");
 
-        await new ZipUtils().ZipFile(world.Local, file);
+        await new ZipUtils().ZipFileAsync(world.Local, file);
         using var s = new ZipFile(PathHelper.OpenRead(file));
         var info = new { name = world.LevelName };
         var data = JsonConvert.SerializeObject(info);
@@ -237,7 +214,8 @@ public static class Worlds
     /// <param name="obj">游戏实例</param>
     /// <param name="item1">文件</param>
     /// <returns>还原结果</returns>
-    public static async Task<bool> UnzipBackupWorld(this GameSettingObj obj, FileInfo item1)
+    public static async Task<bool> UnzipBackupWorldAsync(this GameSettingObj obj, FileInfo item1,
+        ColorMCCore.Request request)
     {
         var local = "";
 
@@ -269,13 +247,13 @@ public static class Worlds
                 return false;
             }
 
-            var list1 = await obj.GetWorlds();
+            var list1 = await obj.GetWorldsAsync();
             var item = list1.FirstOrDefault(a => a.LevelName == name);
 
             if (item != null)
             {
                 local = item.Local;
-                await PathHelper.DeleteFiles(item.Local);
+                await PathHelper.DeleteFilesAsync(item.Local, request);
             }
             else
             {
@@ -285,15 +263,13 @@ public static class Worlds
 
         try
         {
-            await new ZipUtils().Unzip(local, item1.FullName,
+            await new ZipUtils().UnzipAsync(local, item1.FullName,
                 PathHelper.OpenRead(item1.FullName)!);
             return true;
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Game.Error11");
-            Logs.Error(text, e);
-            ColorMCCore.OnError?.Invoke(text, e, false);
+            ColorMCCore.OnError(LanguageHelper.Get("Core.Game.Error11"), e, false);
             return false;
         }
     }

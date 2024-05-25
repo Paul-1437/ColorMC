@@ -1,11 +1,11 @@
+using System;
+using System.IO;
 using ColorMC.Core.Config;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.Utils.LaunchSetting;
 using Newtonsoft.Json;
-using System;
-using System.IO;
 
 namespace ColorMC.Gui.Utils;
 
@@ -100,6 +100,11 @@ public static class GuiConfigUtils
                 Config.Style = MakeStyleSettingConfig();
                 save = true;
             }
+            if (Config.Input == null)
+            {
+                Config.Input = new();
+            }
+
             if (save)
             {
                 Logs.Info(LanguageHelper.Get("Core.Config.Info2"));
@@ -187,10 +192,11 @@ public static class GuiConfigUtils
             Render = MakeRenderConfig(),
             BackLimitValue = 50,
             EnableBG = false,
-            BackImage = "https://api.cyrilstudio.top/bing/image.php",
+            BackImage = "",
             Live2D = MakeLive2DConfig(),
             Gui = MakeGuiSettingConfig(),
-            Style = MakeStyleSettingConfig()
+            Style = MakeStyleSettingConfig(),
+            Input = new()
         };
     }
 

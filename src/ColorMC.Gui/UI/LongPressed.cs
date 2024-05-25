@@ -1,7 +1,8 @@
-using ColorMC.Core.Objs;
-using ColorMC.Core.Utils;
 using System;
 using System.Timers;
+using Avalonia.Threading;
+using ColorMC.Core.Objs;
+using ColorMC.Core.Utils;
 
 namespace ColorMC.Gui.UI;
 
@@ -49,7 +50,10 @@ public static class LongPressed
         s_count++;
         if (s_count >= 4 && SystemInfo.Os != OsType.Android)
         {
-            s_action?.Invoke();
+            Dispatcher.UIThread.Post(() =>
+            {
+                s_action?.Invoke();
+            });
         }
     }
 

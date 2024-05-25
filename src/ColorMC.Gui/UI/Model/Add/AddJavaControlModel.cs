@@ -1,13 +1,15 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using Avalonia.Threading;
 using AvaloniaEdit.Utils;
-using ColorMC.Core;
+using ColorMC.Core.Objs;
+using ColorMC.Core.Utils;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UI.Model.Setting;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace ColorMC.Gui.UI.Model.Add;
 
@@ -25,7 +27,7 @@ public partial class AddJavaControlModel : TopModel
     public ObservableCollection<string> SystemList { get; init; } = [];
     public ObservableCollection<string> VersionList { get; init; } = [];
     public ObservableCollection<string> ArchList { get; init; } = [];
-    public List<string> JavaTypeList { get; init; } = JavaBinding.GetJavaType();
+    public List<string> JavaTypeList { get; init; } = WebBinding.GetJavaType();
 
     [ObservableProperty]
     private string _javaType;
@@ -46,12 +48,12 @@ public partial class AddJavaControlModel : TopModel
 
     private readonly string _useName;
 
-    public AddJavaControlModel(BaseModel model) : base(model)
+    private int _needJava;
+
+    public AddJavaControlModel(BaseModel model, int version) : base(model)
     {
-        ColorMCCore.JavaUnzip = JavaUnzip;
-
         _useName = ToString() ?? "AddJavaControlModel";
-
+        _needJava = version;
         Model.SetChoiseContent(_useName, App.Lang("Button.Refash"));
         Model.SetChoiseCall(_useName, Load);
     }
@@ -110,25 +112,106 @@ public partial class AddJavaControlModel : TopModel
         _list1.Clear();
         JavaList.Clear();
 
-        var res = await JavaBinding.GetJavaList(TypeIndex, SystemList.IndexOf(System), VersionList.IndexOf(Version));
+        var res = await WebBinding.GetJavaList(TypeIndex, SystemList.IndexOf(System), VersionList.IndexOf(Version));
 
         if (res.Item1)
         {
             if (res.Os != null && SystemList.Count == 0)
             {
                 SystemList.AddRange(res.Os);
+                if (SystemInfo.Os == OsType.Windows)
+                {
+                    var item = res.Os.FirstOrDefault(item => item.Equals("windows", StringComparison.CurrentCultureIgnoreCase));
+                    if (item != null)
+                    {
+                        System = item;
+                    }
+                }
+                else if (SystemInfo.Os == OsType.Linux)
+                {
+                    var item = res.Os.FirstOrDefault(item => item.Equals("linux", StringComparison.CurrentCultureIgnoreCase));
+                    if (item != null)
+                    {
+                        System = item;
+                    }
+                }
+                else if (SystemInfo.Os == OsType.MacOS)
+                {
+                    var item = res.Os.FirstOrDefault(item => item.Equals("macos", StringComparison.CurrentCultureIgnoreCase));
+                    if (item != null)
+                    {
+                        System = item;
+                    }
+                }
             }
             if (res.MainVersion != null && VersionList.Count == 0)
             {
                 VersionList.AddRange(res.MainVersion);
-                Version = res.MainVersion[0];
+
+                if (_needJava != 0
+                    && res.MainVersion.Contains(_needJava.ToString()))
+                {
+                    Version = _needJava.ToString();
+                }
+                else if (res.MainVersion.Count > 0)
+                {
+                    Version = res.MainVersion[0];
+                }
             }
             if (res.Arch != null && ArchList.Count == 0)
             {
                 ArchList.AddRange(res.Arch);
+                if (SystemInfo.IsArm)
+                {
+                    if (SystemInfo.Is64Bit)
+                    {
+                        var item = res.Arch.FirstOrDefault(item => item.Equals("aarch64", StringComparison.CurrentCultureIgnoreCase)
+                        || item.Equals("arm_64", StringComparison.CurrentCultureIgnoreCase));
+                        if (item != null)
+                        {
+                            Arch = item;
+                        }
+                    }
+                    else
+                    {
+                        var item = res.Arch.FirstOrDefault(item => item.Equals("arm", StringComparison.CurrentCultureIgnoreCase)
+                        || item.Equals("arm_32", StringComparison.CurrentCultureIgnoreCase));
+                        if (item != null)
+                        {
+                            Arch = item;
+                        }
+                    }
+                }
+                else
+                {
+                    if (SystemInfo.Is64Bit)
+                    {
+                        var item = res.Arch.FirstOrDefault(item => item.Equals("x64", StringComparison.CurrentCultureIgnoreCase)
+                        || item.Equals("x86_64", StringComparison.CurrentCultureIgnoreCase));
+                        if (item != null)
+                        {
+                            Arch = item;
+                        }
+                    }
+                    else
+                    {
+                        var item = res.Arch.FirstOrDefault(item => item.Equals("x32", StringComparison.CurrentCultureIgnoreCase)
+                        || item.Equals("x86_32", StringComparison.CurrentCultureIgnoreCase));
+                        if (item != null)
+                        {
+                            Arch = item;
+                        }
+                    }
+                }
             }
 
-            _list1.AddRange(res.Item5!);
+            if (Arch != null || Version != null || System != null)
+            {
+                res = await WebBinding.GetJavaList(TypeIndex, SystemList.IndexOf(System), 
+                    VersionList.IndexOf(Version!));
+            }
+
+            _list1.AddRange(res.Download!);
 
             Select();
 
@@ -156,7 +239,17 @@ public partial class AddJavaControlModel : TopModel
         {
             Model.Progress(App.Lang("AddJavaWindow.Info2"));
         }
-        var res1 = await JavaBinding.DownloadJava(obj);
+        string temp = App.Lang("Gui.Info27");
+        var res1 = await JavaBinding.DownloadJava(obj, (a, b, c) =>
+        {
+            Dispatcher.UIThread.Post(() => Model.ProgressUpdate($"{temp} {a} {b}/{c}"));
+        }, () =>
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                Model.ProgressUpdate(App.Lang("AddJavaWindow.Info5"));
+            });
+        });
         Model.ProgressClose();
         if (!res1.Item1)
         {
@@ -201,14 +294,6 @@ public partial class AddJavaControlModel : TopModel
             Display = false;
             JavaList.AddRange(list1);
         }
-    }
-
-    private void JavaUnzip()
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            Model.ProgressUpdate(App.Lang("AddJavaWindow.Info5"));
-        });
     }
 
     protected override void Close()

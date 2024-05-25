@@ -87,13 +87,9 @@ public record LaunchDataObj
 }
 
 public record CustomLoader
-{ 
+{
     /// <summary>
-    /// 加载器位置
-    /// </summary>
-    public string? Local { get; set; }
-    /// <summary>
-    /// 不使用原版运行库
+    /// 后加载原版运行库
     /// </summary>
     public bool OffLib { get; set; }
 }
@@ -131,7 +127,7 @@ public partial record GameSettingObj
     /// <summary>
     /// Jvm参数
     /// </summary>
-    public JvmArgObj? JvmArg { get; set; }
+    public RunArgObj? JvmArg { get; set; }
     /// <summary>
     /// Jvm名字
     /// </summary>

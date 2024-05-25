@@ -1,10 +1,9 @@
+using System.Net.Http.Headers;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Login;
-using ColorMC.Core.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Net.Http.Headers;
 
 namespace ColorMC.Core.Net.Login;
 
@@ -51,7 +50,7 @@ public static class OAuthAPI
     /// <param name="url">网址</param>
     /// <param name="arg">参数</param>
     /// <returns>数据</returns>
-    private static async Task<string> PostString(string url, Dictionary<string, string> arg)
+    private static async Task<string> PostStringAsync(string url, Dictionary<string, string> arg)
     {
         FormUrlEncodedContent content = new(arg);
         using var message = await BaseClient.LoginClient.PostAsync(url, content);
@@ -64,7 +63,7 @@ public static class OAuthAPI
     /// <param name="url">网址</param>
     /// <param name="arg">参数</param>
     /// <returns>数据</returns>
-    private static async Task<JObject?> PostObj(string url, object arg)
+    private static async Task<JObject?> PostObjAsync(string url, object arg)
     {
         var data1 = JsonConvert.SerializeObject(arg);
         StringContent content = new(data1, MediaTypeHeaderValue.Parse("application/json"));
@@ -89,12 +88,11 @@ public static class OAuthAPI
     /// <summary>
     /// 获取登录码
     /// </summary>
-    public static async Task<(LoginState Done, string? Code, string? Url)> GetCode()
+    public static async Task<(LoginState Done, string? Code, string? Url)> GetCodeAsync()
     {
-        var data = await PostString(OAuthCode, Arg1);
+        var data = await PostStringAsync(OAuthCode, Arg1);
         if (data.Contains("error"))
         {
-            Logs.Error(data);
             return (LoginState.Error,
                 LanguageHelper.Get("Core.Login.Error21"), null);
         }
@@ -115,7 +113,7 @@ public static class OAuthAPI
     /// <summary>
     /// 获取token
     /// </summary>
-    public static async Task<(LoginState Done, OAuth1Obj? Obj)> RunGetCode()
+    public static async Task<(LoginState Done, OAuth1Obj? Obj)> RunGetCodeAsync()
     {
         Arg2["code"] = s_deviceCode;
         long startTime = DateTime.Now.Ticks;
@@ -134,7 +132,7 @@ public static class OAuthAPI
             {
                 return (LoginState.TimeOut, null);
             }
-            var data = await PostString(OAuthToken, Arg2);
+            var data = await PostStringAsync(OAuthToken, Arg2);
             var obj3 = JObject.Parse(data);
             if (obj3 == null)
             {
@@ -197,7 +195,7 @@ public static class OAuthAPI
     /// <returns></returns>
     public static async Task<(LoginState Done, string? XNLToken, string? XBLUhs)> GetXBLAsync(string token)
     {
-        var json = await PostObj(XboxLive, new
+        var json = await PostObjAsync(XboxLive, new
         {
             Properties = new
             {
@@ -228,7 +226,7 @@ public static class OAuthAPI
     /// <exception cref="FailedAuthenticationException"></exception>
     public static async Task<(LoginState Done, string? XSTSToken, string? XSTSUhs)> GetXSTSAsync(string token)
     {
-        var json = await PostObj(XSTS, new
+        var json = await PostObjAsync(XSTS, new
         {
             Properties = new
             {
@@ -256,7 +254,7 @@ public static class OAuthAPI
     /// </summary>
     public static async Task<(LoginState Done, string? AccessToken)> GetMinecraftAsync(string token, string token1)
     {
-        var json = await PostObj(XBoxProfile, new
+        var json = await PostObjAsync(XBoxProfile, new
         {
             identityToken = $"XBL3.0 x={token};{token1}"
         });

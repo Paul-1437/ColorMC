@@ -1,9 +1,10 @@
-﻿using ColorMC.Core.Objs;
+﻿using System;
+using System.Threading.Tasks;
+using ColorMC.Core.Helpers;
+using ColorMC.Core.Objs;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.Setting;
 
@@ -18,14 +19,51 @@ public partial class SettingModel
     [ObservableProperty]
     private string? _local4;
 
+    public string RunDir => ColorMCGui.RunDir;
+
+    [RelayCommand]
+    public async Task ChangeBackRunDir()
+    {
+        var res = await Model.ShowWait(App.Lang("SettingWindow.Tab1.Info16"));
+        if (!res)
+        {
+            return;
+        }
+
+        var path1 = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}/ColorMC/run";
+        PathHelper.Delete(path1);
+
+        App.Reboot();
+    }
+
+    [RelayCommand]
+    public async Task ChangeRunDir()
+    {
+        var res = await Model.ShowWait(App.Lang("SettingWindow.Tab1.Info13"));
+        if (!res)
+        {
+            return;
+        }
+
+        var path = await PathBinding.SelectPath(PathType.RunDir);
+        if (path == null)
+        {
+            return;
+        }
+
+        var path1 = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}/ColorMC/run";
+        PathHelper.WriteText(path1, path);
+
+        App.Reboot();
+    }
+
     [RelayCommand]
     public async Task Open1()
     {
         var file = await PathBinding.SelectFile(FileType.Config);
-
-        if (file != null)
+        if (file.Item1 != null)
         {
-            Local1 = file;
+            Local1 = file.Item1;
         }
     }
 
@@ -33,10 +71,9 @@ public partial class SettingModel
     public async Task Open2()
     {
         var file = await PathBinding.SelectFile(FileType.AuthConfig);
-
-        if (file != null)
+        if (file.Item1 != null)
         {
-            Local2 = file;
+            Local2 = file.Item1;
         }
     }
 
@@ -44,10 +81,9 @@ public partial class SettingModel
     public async Task Open3()
     {
         var file = await PathBinding.SelectFile(FileType.Config);
-
-        if (file != null)
+        if (file.Item1 != null)
         {
-            Local3 = file;
+            Local3 = file.Item1;
         }
     }
 
@@ -55,10 +91,9 @@ public partial class SettingModel
     public async Task Open4()
     {
         var file = await PathBinding.SelectFile(FileType.Config);
-
-        if (file != null)
+        if (file.Item1 != null)
         {
-            Local4 = file;
+            Local4 = file.Item1;
         }
     }
 

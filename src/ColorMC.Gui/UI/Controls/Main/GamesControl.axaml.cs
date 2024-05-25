@@ -1,8 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using ColorMC.Gui.UI.Model.Main;
-using ColorMC.Gui.Utils;
-using System;
 
 namespace ColorMC.Gui.UI.Controls.Main;
 
@@ -12,7 +10,6 @@ public partial class GamesControl : UserControl
     {
         InitializeComponent();
 
-        LayoutUpdated += GamesControl_LayoutUpdated;
         Expander_Head.ContentTransition = App.CrossFade300;
 
         AddHandler(DragDrop.DragEnterEvent, DragEnter);
@@ -40,10 +37,5 @@ public partial class GamesControl : UserControl
         {
             model.Drop(e.Data);
         }
-    }
-
-    private void GamesControl_LayoutUpdated(object? sender, EventArgs e)
-    {
-        Expander_Head.MakeTran();
     }
 }

@@ -1,16 +1,15 @@
-﻿using Avalonia.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.NetFrp;
 
@@ -36,6 +35,18 @@ public partial class NetFrpModel
 
     private NetFrpLocalModel _now;
 
+    partial void OnIsOkChanged(bool value)
+    {
+        RemoveClick();
+        SetTab3Click();
+    }
+
+    partial void OnIsRuningChanged(bool value)
+    {
+        RemoveClick();
+        SetTab3Click();
+    }
+
     private void SetProcess(Process process, NetFrpLocalModel model, string ip)
     {
         _now = model;
@@ -44,7 +55,6 @@ public partial class NetFrpModel
             Stop();
         }
 
-        App.FrpProcess = process;
         _process = process;
         _remoteIP = ip;
         _localIP = model.Port;
@@ -82,9 +92,10 @@ public partial class NetFrpModel
     private void Process_OutputDataReceived(object sender, DataReceivedEventArgs e)
     {
         Log(e.Data);
-        if (e.Data?.Contains("TCP 类型隧道启动成功") == true
+        if (e.Data?.Contains("TCP 隧道启动成功") == true
             || e.Data?.Contains("Your TCP proxy is available now") == true
-            || e.Data?.Contains("来连接服务, 或使用IP地址(不推荐)") == true)
+            || e.Data?.Contains("来连接服务, 或使用IP地址(不推荐)") == true
+            || e.Data?.Contains("或使用 IP 地址连接") == true)
         {
             _isOut.Add(_localIP);
             Dispatcher.UIThread.Post(() =>
@@ -95,8 +106,7 @@ public partial class NetFrpModel
         }
     }
 
-    [RelayCommand]
-    public async Task Share()
+    public async void Share()
     {
         var res = await Model.ShowWait(App.Lang("NetFrpWindow.Tab3.Info3"));
         if (!res)
@@ -122,7 +132,6 @@ public partial class NetFrpModel
         }
     }
 
-    [RelayCommand]
     public void Stop()
     {
         IsOk = false;
@@ -136,7 +145,6 @@ public partial class NetFrpModel
         _process.Kill(true);
         _process.Close();
         _process.Dispose();
-        App.FrpProcess = null;
         _process = null;
     }
 
@@ -157,7 +165,7 @@ public partial class NetFrpModel
     {
         if (_process != null)
         {
-            var res = await Model.ShowWait(App.Lang(App.Lang("NetFrpWindow.Tab3.Info2")));
+            var res = await Model.ShowWait(App.Lang("NetFrpWindow.Tab3.Info2"));
             if (res)
             {
                 Stop();
@@ -168,5 +176,24 @@ public partial class NetFrpModel
         }
 
         return false;
+    }
+
+    public void SetTab3Click()
+    {
+        if (IsOk && IsRuning)
+        {
+            Model.SetChoiseCall(_name, Share, Stop);
+            Model.SetChoiseContent(_name, App.Lang("NetFrpWindow.Tab3.Text3"), App.Lang("NetFrpWindow.Tab3.Text2"));
+        }
+        else if (IsOk)
+        {
+            Model.SetChoiseCall(_name, Share);
+            Model.SetChoiseContent(_name, App.Lang("NetFrpWindow.Tab3.Text3"));
+        }
+        else if (IsRuning)
+        {
+            Model.SetChoiseCall(_name, Stop);
+            Model.SetChoiseContent(_name, App.Lang("NetFrpWindow.Tab3.Text2"));
+        }
     }
 }

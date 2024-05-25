@@ -1,23 +1,34 @@
-﻿using ColorMC.Core.LaunchPath;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
-using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ColorMC.Gui.UI.Model.NetFrp;
 
 public partial class NetFrpModel
 {
-    public ObservableCollection<CloudServerModel> CloudServers { get; init; } = [];
+    public ObservableCollection<NetFrpCloudServerModel> CloudServers { get; init; } = [];
 
-    [RelayCommand]
+    [ObservableProperty]
+    private bool _isCloudEmpty = true;
+
+    [ObservableProperty]
+    private (string?, ushort) _iPPort;
+
     public void GetCloud()
     {
+        IsCloudEmpty = true;
+
+        Model.HeadChoiseDisplay = false;
+
         LoadCloud();
+
+        Model.HeadChoiseDisplay = true;
     }
 
     public async void LoadCloud()
@@ -36,9 +47,16 @@ public partial class NetFrpModel
             item.Top = this;
             CloudServers.Add(item);
         }
+
+        IsCloudEmpty = CloudServers.Count == 0;
     }
 
-    public async void Join(CloudServerModel model)
+    public void Test(NetFrpCloudServerModel model)
+    {
+        IPPort = (model.IP, 0);
+    }
+
+    public async void Join(NetFrpCloudServerModel model)
     {
         var list = GameBinding.GetGames();
         var list1 = new List<string>();
@@ -77,5 +95,11 @@ public partial class NetFrpModel
             Logs.Error(temp1, e);
             Model.Show(temp1);
         }
+    }
+
+    public void SetTab4Click()
+    {
+        Model.SetChoiseCall(_name, GetCloud);
+        Model.SetChoiseContent(_name, App.Lang("NetFrpWindow.Tab4.Text2"));
     }
 }

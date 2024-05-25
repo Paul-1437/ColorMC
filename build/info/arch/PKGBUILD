@@ -1,18 +1,19 @@
 pkgname="colormc"
-pkgver="a%version%"
-pkgrel="%version%"
+pkgver="%version%"
+pkgrel="1"
 pkgdesc="A Minecraft Launcher"
 url="https://www.github.com/Coloryr/ColorMC"
 packager="colormc"
-arch=("x86_64")
+arch=("%arch%")
 license=("Apache 2.0")
-install=".INSTALL"
-sha512sums=("SKIP" "SKIP" "SKIP" "SKIP" "SKIP" "SKIP" "SKIP" "SKIP")
-options=("!strip" "!libtool" "!staticlibs")
-
+sha512sums=("SKIP" "SKIP" "SKIP" "SKIP" "SKIP" "SKIP" 
+            "SKIP" "SKIP" "SKIP" "SKIP" "SKIP" "SKIP")
+OPTIONS=(!strip)
 source=("ColorMC.Gui.pdb" "ColorMC.Core.pdb" "Live2DCSharpSDK.App.pdb"
-    "Live2DCSharpSDK.Framework.pdb" "ColorMC.Launcher.pdb" "ColorMC.Launcher"
-    "ColorMC.desktop" "colormc.png")
+        "Live2DCSharpSDK.Framework.pdb" "ColorMC.Launcher.pdb" "X11.pdb"
+        "libHarfBuzzSharp.so" "libSDL2-2.0.so" "libSkiaSharp.so" "ColorMC.Launcher"
+        "ColorMC.desktop" "colormc.png")
+install=colormc.install
 
 package() {
     mkdir -p ${pkgdir}/usr/share/ColorMC
@@ -22,7 +23,8 @@ package() {
     dir="${pkgdir}/usr/share/ColorMC"
 
     pdbs=("ColorMC.Gui.pdb" "ColorMC.Core.pdb" "Live2DCSharpSDK.App.pdb"
-    "Live2DCSharpSDK.Framework.pdb" "ColorMC.Launcher.pdb" "ColorMC.Launcher")
+          "Live2DCSharpSDK.Framework.pdb" "ColorMC.Launcher.pdb" "X11.pdb"
+          "libHarfBuzzSharp.so" "libSDL2-2.0.so" "libSkiaSharp.so" "ColorMC.Launcher")
 
     for line in ${pdbs[@]}
     do

@@ -1,9 +1,9 @@
+using System.ComponentModel;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
 using ColorMC.Core.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.ComponentModel;
 
 namespace ColorMC.Gui.UI.Model.Items;
 
@@ -19,10 +19,13 @@ public partial class ModExportModel : ObservableObject
     [ObservableProperty]
     private string? _fID;
 
-    public ModExportModel(string? pid, string? fid)
+    private BaseModel _model;
+
+    public ModExportModel(BaseModel model, string? pid, string? fid)
     {
         _pID = pid;
         _fID = fid;
+        _model = model;
 
         Reload();
     }
@@ -51,6 +54,18 @@ public partial class ModExportModel : ObservableObject
     {
         OnPropertyChanged(new PropertyChangedEventArgs(nameof(Source)));
         Reload();
+    }
+
+    partial void OnExportChanged(bool value)
+    {
+        if (value)
+        {
+            if (Obj1 == null)
+            {
+                _model.Show(App.Lang("Gui.Error52"));
+                Export = false;
+            }
+        }
     }
 
     public void Reload()

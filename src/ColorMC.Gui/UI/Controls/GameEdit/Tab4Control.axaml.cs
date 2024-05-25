@@ -4,7 +4,6 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using ColorMC.Gui.UI.Flyouts;
 using ColorMC.Gui.UI.Model.GameEdit;
-using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UI.Controls.GameEdit;
 
@@ -29,11 +28,6 @@ public partial class Tab4Control : UserControl
         {
             model.WhellChange(e.Delta.Y);
         }
-    }
-
-    public void Opened()
-    {
-        DataGrid1.SetFontColor();
     }
 
     private void DragEnter(object? sender, DragEventArgs e)

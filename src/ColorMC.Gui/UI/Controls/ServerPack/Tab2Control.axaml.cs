@@ -2,7 +2,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using ColorMC.Gui.UI.Model.ServerPack;
 using ColorMC.Gui.UI.Model.Setting;
-using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UI.Controls.ServerPack;
 
@@ -14,11 +13,6 @@ public partial class Tab2Control : UserControl
 
         DataGrid1.CellEditEnded += DataGrid1_CellEditEnded;
         ScrollViewer1.PointerWheelChanged += ScrollViewer1_PointerWheelChanged;
-    }
-
-    public void Opened()
-    {
-        DataGrid1.SetFontColor();
     }
 
     private void DataGrid1_CellEditEnded(object? sender, DataGridCellEditEndedEventArgs e)

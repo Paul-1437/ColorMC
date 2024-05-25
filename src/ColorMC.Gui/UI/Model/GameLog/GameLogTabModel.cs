@@ -1,4 +1,10 @@
-﻿using Avalonia.Threading;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
@@ -6,11 +12,6 @@ using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.GameLog;
 
@@ -135,7 +136,7 @@ public partial class GameLogModel : GameModel
 
         IsGameRun = true;
 
-        var res = await GameBinding.Launch(Model, Obj, wait: GuiConfigUtils.Config.CloseBeforeLaunch);
+        var res = await GameBinding.Launch(Model, Obj, hide: GuiConfigUtils.Config.CloseBeforeLaunch);
         if (!res.Item1)
         {
             Model.Show(res.Item2!);
@@ -165,6 +166,8 @@ public partial class GameLogModel : GameModel
         {
             Model.Title1 = "";
         }
+
+        LoadLast();
     }
 
     public void SetNotAuto()
@@ -190,17 +193,17 @@ public partial class GameLogModel : GameModel
 
     private void Run()
     {
-        string? temp = null;
+        var temp = new StringBuilder();
         while (!_queue.IsEmpty)
         {
             if (_queue.TryDequeue(out var temp1) && !string.IsNullOrWhiteSpace(temp1))
             {
-                temp += temp1;
+                temp.Append(temp1);
             }
         }
         if (temp != null)
         {
-            Temp = temp;
+            Temp = temp.ToString();
             Dispatcher.UIThread.Invoke(() =>
             {
                 OnPropertyChanged("Insert");
@@ -222,6 +225,9 @@ public partial class GameLogModel : GameModel
 
     public void LoadLast()
     {
-        Text = new(BaseBinding.GameLogs[Obj.UUID].ToString());
+        if (BaseBinding.GameLogs.TryGetValue(Obj.UUID, out var temp))
+        {
+            Text = new(temp.ToString());
+        }
     }
 }

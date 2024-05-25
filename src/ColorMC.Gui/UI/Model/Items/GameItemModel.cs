@@ -1,4 +1,7 @@
-﻿using Avalonia.Controls;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -9,10 +12,10 @@ using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.UI.Flyouts;
 using ColorMC.Gui.UIBinding;
+using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.Generic;
-using System.IO;
+using DialogHostAvalonia;
 
 namespace ColorMC.Gui.UI.Model.Items;
 
@@ -34,6 +37,12 @@ public partial class GameItemModel : GameModel
     private bool _isNew;
 
     [ObservableProperty]
+    private bool _buttonShow;
+
+    [ObservableProperty]
+    private bool _isDisplay = true;
+
+    [ObservableProperty]
     private string _tips;
 
     [ObservableProperty]
@@ -44,6 +53,9 @@ public partial class GameItemModel : GameModel
     private readonly IMainTop _top;
 
     public string Name => Obj.Name;
+
+    [ObservableProperty]
+    private bool _oneGame;
 
     [ObservableProperty]
     private Bitmap _pic;
@@ -60,6 +72,14 @@ public partial class GameItemModel : GameModel
     {
         _top = top;
         LoadIcon();
+    }
+
+    partial void OnOneGameChanged(bool value)
+    {
+        if (value)
+        {
+            IsSelect = true;
+        }
     }
 
     partial void OnIsLaunchChanged(bool value)
@@ -92,8 +112,17 @@ public partial class GameItemModel : GameModel
         }
     }
 
+    partial void OnIsOverChanged(bool value)
+    {
+        ButtonShow = value || IsSelect;
+    }
+
     partial void OnIsSelectChanged(bool value)
     {
+        if (value == false && OneGame)
+        {
+            return;
+        }
         Wrap = value ? TextWrapping.Wrap : TextWrapping.NoWrap;
         Trim = value ? TextTrimming.None : TextTrimming.CharacterEllipsis;
         IsDrop = false;
@@ -101,6 +130,8 @@ public partial class GameItemModel : GameModel
         {
             IsOver = value;
         }
+
+        ButtonShow = value || IsOver;
     }
 
     [RelayCommand]
@@ -221,6 +252,22 @@ public partial class GameItemModel : GameModel
         GameBinding.SetGameName(Obj, Text1);
     }
 
+    public void SetJoystick()
+    {
+        if (GameJoystick.NowGameJoystick.TryGetValue(Obj.UUID, out var value))
+        {
+            var model = value.MakeConfig();
+            model.TopCancel = () => { DialogHost.Close("MainCon"); };
+            model.TopConfirm = () =>
+            {
+                DialogHost.Close("MainCon");
+                value.ChangeConfig(model);
+                Model.Notify(App.Lang("MainWindow.Info39"));
+            };
+            DialogHost.Show(model, "MainCon");
+        }
+    }
+
     public async void Copy()
     {
         var (Cancel, Text1) = await Model.ShowEdit(App.Lang("MainWindow.Info23"),
@@ -235,7 +282,7 @@ public partial class GameItemModel : GameModel
             return;
         }
 
-        var res = await GameBinding.CopyGame(Obj, Text1);
+        var res = await GameBinding.CopyGame(Obj, Text1, Model.ShowWait, GameOverwirte);
         if (!res)
         {
             Model.Show(App.Lang("MainWindow.Error5"));
@@ -255,8 +302,8 @@ public partial class GameItemModel : GameModel
             return;
         }
 
-        Model.Progress(App.Lang("Gui.Info34"));
-        res = await GameBinding.DeleteGame(Model, Obj);
+        Model.Progress(App.Lang("GameEditWindow.Tab1.Info11"));
+        res = await GameBinding.DeleteGame(Obj, Model.ShowWait);
         Model.ProgressClose();
         Model.InputClose();
         if (!res)
@@ -268,6 +315,17 @@ public partial class GameItemModel : GameModel
     public void EditGroup()
     {
         _top.EditGroup(this);
+    }
+
+    /// <summary>
+    /// 请求
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    private async Task<bool> GameOverwirte(GameSettingObj obj)
+    {
+        return await Model.ShowWait(
+            string.Format(App.Lang("AddGameWindow.Info2"), obj.Name));
     }
 
     protected override void Close()

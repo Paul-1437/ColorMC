@@ -1,16 +1,14 @@
-﻿using ColorMC.Core.Objs;
+﻿using System.Collections.Generic;
+using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.ServerPack;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UIBinding;
-using CommunityToolkit.Mvvm.Input;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.ServerPack;
 
-public partial class ServerPackModel(BaseModel model, ServerPackObj obj) : MenuModel(model)
+public partial class ServerPackModel : MenuModel
 {
-    public ServerPackObj Obj { get; } = obj;
+    public ServerPackObj Obj { get; }
 
     public override List<MenuObj> TabItems { get; init; } =
     [
@@ -24,19 +22,25 @@ public partial class ServerPackModel(BaseModel model, ServerPackObj obj) : MenuM
             Text = App.Lang("ServerPackWindow.Tabs.Text4") },
     ];
 
-    [RelayCommand]
-    public async Task Gen()
+    private readonly string _name;
+
+    public ServerPackModel(BaseModel model, ServerPackObj obj) : base(model)
     {
-        var local = await PathBinding.SelectPath(FileType.ServerPack);
+        _name = ToString() ?? "ServerPackModel";
+
+        Obj = obj;
+    }
+
+    public async void Gen()
+    {
+        var local = await PathBinding.SelectPath(PathType.ServerPackPath);
         if (local == null)
             return;
-
-        InfoBinding.Window = Model;
 
         Obj.Text = Text;
 
         Model.Progress(App.Lang("ServerPackWindow.Tab1.Info1"));
-        var res = await GameBinding.GenServerPack(Obj, local);
+        var res = await GameBinding.GenServerPack(Obj, local, Model.ShowWait);
         Model.ProgressClose();
         if (res)
         {
@@ -46,6 +50,11 @@ public partial class ServerPackModel(BaseModel model, ServerPackObj obj) : MenuM
         {
             Model.Show(App.Lang("ServerPackWindow.Tab1.Error3"));
         }
+    }
+
+    public void RemoveChoise()
+    {
+        Model.RemoveChoiseData(_name);
     }
 
     protected override void Close()

@@ -1,34 +1,29 @@
+using System;
+using System.Threading;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Media;
 using Avalonia.Styling;
-using System;
-using System.Threading;
 
 namespace ColorMC.Gui.UI.Animations;
 
 /// <summary>
 /// Transitions between two pages by sliding them horizontally or vertically.
 /// </summary>
-public class SelfPageSlideSide
+/// <remarks>
+/// Initializes a new instance of the <see cref="SelfPageSlide"/> class.
+/// </remarks>
+/// <param name="duration">The duration of the animation.</param>
+/// <param name="orientation">The axis on which the animation should occur</param>
+public class SelfPageSlideSide(TimeSpan duration)
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SelfPageSlide"/> class.
-    /// </summary>
-    /// <param name="duration">The duration of the animation.</param>
-    /// <param name="orientation">The axis on which the animation should occur</param>
-    public SelfPageSlideSide(TimeSpan duration)
-    {
-        Duration = duration;
-    }
-
     public bool Mirror { get; set; }
 
     /// <summary>
     /// Gets the duration of the animation.
     /// </summary>
-    public TimeSpan Duration { get; set; }
+    public TimeSpan Duration { get; set; } = duration;
 
     /// <summary>
     /// Gets or sets element entrance easing.
@@ -75,6 +70,18 @@ public class SelfPageSlideSide
                             }
                         },
                         Cue = new Cue(1d)
+                    },
+                    new KeyFrame
+                    {
+                        Setters =
+                        {
+                            new Setter
+                            {
+                                Property = Visual.IsVisibleProperty,
+                                Value = false
+                            }
+                        },
+                        Cue = new Cue(1d)
                     }
                 },
                 Duration = Duration
@@ -85,6 +92,7 @@ public class SelfPageSlideSide
         if (to != null)
         {
             double end = to.Bounds.Width;
+            to.IsVisible = true;
             var animation = new Animation
             {
                 FillMode = FillMode.Forward,

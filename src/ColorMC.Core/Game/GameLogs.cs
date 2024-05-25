@@ -1,9 +1,9 @@
+using System.IO.Compression;
+using System.Text;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
-using System.IO.Compression;
-using System.Text;
 
 namespace ColorMC.Core.Game;
 
@@ -20,7 +20,7 @@ public static class GameLogs
     public static List<string> GetLogFiles(this GameSettingObj obj)
     {
         var list = new List<string>();
-        var path = Path.GetFullPath(obj.GetLogPath()) + "/";
+        var path = Path.GetFullPath(obj.GetLogPath() + "/");
         if (Directory.Exists(path))
         {
             var list1 = Directory.GetFiles(path);

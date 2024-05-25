@@ -1,10 +1,10 @@
-﻿using ColorMC.Core.Objs;
+﻿using System.Numerics;
+using System.Threading.Tasks;
+using ColorMC.Core.Objs;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Numerics;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.Skin;
 
@@ -35,6 +35,8 @@ public partial class SkinModel(BaseModel model) : TopModel(model)
     private bool _enableTop = true;
     [ObservableProperty]
     private bool _enableZ;
+    [ObservableProperty]
+    private bool _enableMSAA = true;
 
     [ObservableProperty]
     private SkinType _steveModelType;
@@ -284,7 +286,7 @@ public partial class SkinModel(BaseModel model) : TopModel(model)
         var res = await PathBinding.SaveFile(FileType.Skin, null);
         if (res == true)
         {
-            Model.Notify(App.Lang("Gui.Info10"));
+            Model.Notify(App.Lang("Text.Saved"));
         }
     }
 

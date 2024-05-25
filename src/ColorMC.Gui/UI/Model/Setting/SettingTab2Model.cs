@@ -1,4 +1,7 @@
-﻿using Avalonia.Media;
+﻿using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using Avalonia.Media;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.Objs;
@@ -7,9 +10,6 @@ using ColorMC.Gui.Utils.LaunchSetting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Live2DCSharpSDK.Framework.Core;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.Setting;
 
@@ -76,6 +76,8 @@ public partial class SettingModel
     private bool _enablePicRadius;
     [ObservableProperty]
     private bool _enableBorderRadius;
+    [ObservableProperty]
+    private bool _lowFps;
 
     [ObservableProperty]
     private LanguageType _language;
@@ -111,6 +113,15 @@ public partial class SettingModel
     private string _live2DCoreState;
 
     private bool _load = true;
+
+
+    partial void OnLowFpsChanged(bool value)
+    {
+        if (_load)
+            return;
+
+        ConfigBinding.SetLive2DMode(value);
+    }
 
     partial void OnL2dPosChanged(int value)
     {
@@ -157,7 +168,7 @@ public partial class SettingModel
         if (_load)
             return;
 
-        ConfigBinding.SetStyle1(AmTime, AmFade);
+        ConfigBinding.SetStyle(AmTime, AmFade);
     }
 
     partial void OnAmTimeChanged(int value)
@@ -165,7 +176,7 @@ public partial class SettingModel
         if (_load)
             return;
 
-        ConfigBinding.SetStyle1(AmTime, AmFade);
+        ConfigBinding.SetStyle(AmTime, AmFade);
     }
 
     partial void OnButtonCornerRadiusChanged(int value)
@@ -366,11 +377,10 @@ public partial class SettingModel
     public async Task InstallCore()
     {
         var file = await PathBinding.SelectFile(FileType.Live2DCore);
-
-        if (file != null)
+        if (file.Item1 != null)
         {
             Model.Progress(App.Lang("SettingWindow.Tab2.Info11"));
-            var res = await BaseBinding.SetLive2DCore(file);
+            var res = await BaseBinding.SetLive2DCore(file.Item1);
             Model.ProgressClose();
             if (!res)
             {
@@ -392,7 +402,7 @@ public partial class SettingModel
     [RelayCommand]
     public void DownloadCore()
     {
-        BaseBinding.OpenLive2DCore();
+        WebBinding.OpenWeb(WebType.Live2DCore);
     }
 
     [RelayCommand]
@@ -420,14 +430,14 @@ public partial class SettingModel
         await ConfigBinding.SetBackLimit(EnablePicResize, PicResize);
         Model.ProgressClose();
 
-        Model.Notify(App.Lang("Gui.Info3"));
+        Model.Notify(App.Lang("SettingWindow.Tab2.Info12"));
     }
 
     [RelayCommand]
     public void SetPicTran()
     {
         ConfigBinding.SetBackTran(PicTran);
-        Model.Notify(App.Lang("Gui.Info3"));
+        Model.Notify(App.Lang("SettingWindow.Tab2.Info12"));
     }
 
     [RelayCommand]
@@ -442,10 +452,9 @@ public partial class SettingModel
     public async Task OpenPic()
     {
         var file = await PathBinding.SelectFile(FileType.Pic);
-
-        if (file != null)
+        if (file.Item1 != null)
         {
-            Pic = file;
+            Pic = file.Item1;
 
             if (_load)
                 return;
@@ -468,7 +477,7 @@ public partial class SettingModel
         await ConfigBinding.SetBackPic(EnableBG, Pic, PicEffect);
         Model.ProgressClose();
 
-        Model.Notify(App.Lang("Gui.Info3"));
+        Model.Notify(App.Lang("SettingWindow.Tab2.Info12"));
     }
 
     [RelayCommand]
@@ -483,10 +492,9 @@ public partial class SettingModel
     public async Task OpenLive2D()
     {
         var file = await PathBinding.SelectFile(FileType.Live2D);
-
-        if (file != null)
+        if (file.Item1 != null)
         {
-            Live2DModel = file;
+            Live2DModel = file.Item1;
 
             if (_load)
                 return;
@@ -510,7 +518,7 @@ public partial class SettingModel
         ConfigBinding.SetLive2D(Live2DModel);
         Model.ProgressClose();
 
-        Model.Notify(App.Lang("Gui.Info3"));
+        Model.Notify(App.Lang("SettingWindow.Tab2.Info12"));
     }
 
     public void LoadUISetting()
@@ -578,6 +586,7 @@ public partial class SettingModel
             L2dWidth = con.Live2D.Width;
             EnableLive2D = con.Live2D.Enable;
             L2dPos = con.Live2D.Pos;
+            LowFps = con.Live2D.LowFps;
         }
         if (config.Item1 is { } con1)
         {

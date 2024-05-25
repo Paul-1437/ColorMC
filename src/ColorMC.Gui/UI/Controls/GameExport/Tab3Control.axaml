@@ -14,11 +14,8 @@
     mc:Ignorable="d">
     <Border
         Name="ScrollViewer1"
-        Margin="5"
-        Background="{setting:Colors GroupBack}"
-        BorderBrush="{setting:Colors GroupColor}"
-        BorderThickness="2"
-        CornerRadius="{setting:Style ButtonCornerRadius}">
+        Margin="5,0,5,5"
+        Classes="t1">
         <TreeDataGrid Source="{Binding Source}" />
     </Border>
 </UserControl>

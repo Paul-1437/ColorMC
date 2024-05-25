@@ -1,3 +1,4 @@
+using System.Text;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
@@ -5,7 +6,6 @@ using ColorMC.Core.Objs.Login;
 using ColorMC.Core.Objs.MinecraftAPI;
 using ColorMC.Core.Utils;
 using Newtonsoft.Json;
-using System.Text;
 
 namespace ColorMC.Core.Net.Apis;
 
@@ -43,7 +43,7 @@ public static class PlayerSkinAPI
                 var file = Path.GetFullPath(obj.GetSkinFile());
                 FileInfo info = new(file);
                 info.Directory?.Create();
-                var data2 = await BaseClient.GetBytes(url.textures.SKIN.url);
+                var data2 = await BaseClient.GetBytesAsync(url.textures.SKIN.url);
                 if (data2.Item1)
                 {
                     PathHelper.WriteBytes(file, data2.Item2!);
@@ -63,7 +63,7 @@ public static class PlayerSkinAPI
                 var file = Path.GetFullPath(obj.GetCapeFile());
                 FileInfo info = new(file);
                 info.Directory?.Create();
-                var data2 = await BaseClient.GetBytes(url.textures.CAPE.url);
+                var data2 = await BaseClient.GetBytesAsync(url.textures.CAPE.url);
                 if (data2.Item1)
                 {
                     PathHelper.WriteBytes(file, data2.Item2!);

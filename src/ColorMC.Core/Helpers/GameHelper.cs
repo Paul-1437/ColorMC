@@ -1,3 +1,4 @@
+using System.Text;
 using ColorMC.Core.Game;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Net;
@@ -6,7 +7,6 @@ using ColorMC.Core.Objs.Loader;
 using ColorMC.Core.Objs.Minecraft;
 using ColorMC.Core.Objs.OtherLaunch;
 using ICSharpCode.SharpZipLib.Zip;
-using System.Text;
 
 namespace ColorMC.Core.Helpers;
 
@@ -24,6 +24,11 @@ public static class GameHelper
     /// OptifineWrapper位置
     /// </summary>
     public static string OptifineWrapper { get; private set; }
+
+    /// <summary>
+    /// ColorMCASM位置
+    /// </summary>
+    public static string ColorMCASM { get; private set; }
 
     /// <summary>
     /// Forge运行库修改映射
@@ -220,7 +225,7 @@ public static class GameHelper
     public static void ReadyForgeWrapper()
     {
         ForgeWrapper = Path.GetFullPath(LibrariesPath.BaseDir +
-            "/io/github/zekerzhayard/ForgeWrapper/colormc-1.5.7/ForgeWrapper-colormc-1.5.7.jar");
+            "/io/github/zekerzhayard/ForgeWrapper/colormc-1.6.0/ForgeWrapper-colormc-1.6.0.jar");
         var file = new FileInfo(ForgeWrapper);
         if (!file.Exists)
         {
@@ -228,7 +233,7 @@ public static class GameHelper
             {
                 Directory.CreateDirectory(file.DirectoryName!);
             }
-            PathHelper.WriteBytes(file.FullName, Resource1.ForgeWrapper_colormc_1_5_7);
+            PathHelper.WriteBytes(file.FullName, Resource1.ForgeWrapper_colormc_1_6_0);
         }
     }
 
@@ -238,7 +243,7 @@ public static class GameHelper
     public static void ReadyOptifineWrapper()
     {
         OptifineWrapper = Path.GetFullPath(LibrariesPath.BaseDir +
-            "/coloryr/OptifineWrapper/1.0/OptifineWrapper-1.0.jar");
+            "/com/coloryr/OptifineWrapper/1.0/OptifineWrapper-1.0.jar");
         var file = new FileInfo(OptifineWrapper);
         if (!file.Exists)
         {
@@ -246,7 +251,25 @@ public static class GameHelper
             {
                 Directory.CreateDirectory(file.DirectoryName!);
             }
-            PathHelper.WriteBytes(file.FullName, Resource1.OptifineWrapper_1_0);
+            PathHelper.WriteBytes(file.FullName, Resource1.OptifineWrapper_1_1);
+        }
+    }
+
+    /// <summary>
+    /// Optifine加载器
+    /// </summary>
+    public static void ReadyColorMCASM()
+    {
+        ColorMCASM = Path.GetFullPath(LibrariesPath.BaseDir +
+            "/com/coloryr/colormc/ColorMCASM/1.0/ColorMCASM-1.0-all.jar");
+        var file = new FileInfo(ColorMCASM);
+        if (!file.Exists)
+        {
+            if (!Directory.Exists(file.DirectoryName))
+            {
+                Directory.CreateDirectory(file.DirectoryName!);
+            }
+            PathHelper.WriteBytes(file.FullName, Resource1.ColorMCASM_1_0_all);
         }
     }
 

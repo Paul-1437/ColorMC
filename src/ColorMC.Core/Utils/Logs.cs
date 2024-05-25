@@ -1,5 +1,5 @@
-using ColorMC.Core.Helpers;
 using System.Collections.Concurrent;
+using ColorMC.Core.Helpers;
 
 namespace ColorMC.Core.Utils;
 
@@ -8,7 +8,7 @@ namespace ColorMC.Core.Utils;
 /// </summary>
 public static class Logs
 {
-    private static readonly ConcurrentBag<string> s_bags = new();
+    private static readonly ConcurrentBag<string> s_bags = [];
 
     private static string s_local;
     private static StreamWriter s_writer;
@@ -34,9 +34,9 @@ public static class Logs
             s_run = true;
             t_log.Start();
         }
-        catch (Exception e)
+        catch
         {
-            ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Log.Error1"), e, true);
+
         }
     }
 
@@ -135,10 +135,14 @@ public static class Logs
     /// <param name="data">消息</param>
     /// <param name="e">错误内容</param>
     /// <returns></returns>
-    public static string SaveCrash(string data, Exception e)
+    public static string Crash(string data, Exception e)
     {
         var date = DateTime.Now;
-        string text = $"[{date}][Error]{data}{Environment.NewLine}{e}";
+        string text = $"Version:{ColorMCCore.Version}{Environment.NewLine}" +
+            $"System:{SystemInfo.System}{Environment.NewLine}" +
+            $"SystemName:{SystemInfo.SystemName}" +
+            $"{data}" +
+            $"{Environment.NewLine}{e}";
 
         var file = $"{s_local}{date.Year}_{date.Month}_{date.Day}_" +
             $"{date.Hour}_{date.Minute}_{date.Second}_crash.log";

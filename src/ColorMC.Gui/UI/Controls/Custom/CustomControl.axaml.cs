@@ -1,9 +1,9 @@
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Threading;
-using ColorMC.Core;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Gui.UI.Model;
@@ -11,7 +11,6 @@ using ColorMC.Gui.UI.Model.Custom;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UI.Windows;
 using ColorMC.Gui.UIBinding;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Controls.Custom;
 
@@ -36,9 +35,6 @@ public partial class CustomControl : UserControl, IUserControl, IMainTop
 
     public void Closed()
     {
-        ColorMCCore.GameLaunch = null;
-        ColorMCCore.GameRequest = null;
-
         App.CustomWindow = null;
 
         if (App.MainWindow == null)
@@ -65,9 +61,9 @@ public partial class CustomControl : UserControl, IUserControl, IMainTop
         _obj = GameBinding.GetGame(config.Item2.ServerCustom?.GameName);
         if (_obj == null)
         {
-            Grid1.Children.Add(new Label()
+            Grid1.Children.Add(new TextBlock()
             {
-                Content = App.Lang("MainWindow.Info18"),
+                Text = App.Lang("MainWindow.Info18"),
                 Foreground = Brushes.Black,
                 Background = Brush.Parse("#EEEEEE"),
                 VerticalAlignment = VerticalAlignment.Center,

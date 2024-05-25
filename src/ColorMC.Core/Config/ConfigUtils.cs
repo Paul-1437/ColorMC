@@ -43,13 +43,11 @@ public static class ConfigUtils
         {
             try
             {
-                obj = JsonConvert.DeserializeObject<ConfigObj>(data)!;
+                obj = JsonConvert.DeserializeObject<ConfigObj>(data);
             }
             catch (Exception e)
             {
-                string text = LanguageHelper.Get("Core.Config.Error1");
-                ColorMCCore.OnError?.Invoke(text, e, true);
-                Logs.Error(text, e);
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Config.Error1"), e, true);
             }
         }
         else if (!quit)
@@ -109,12 +107,12 @@ public static class ConfigUtils
         });
     }
 
-    private static ConfigObj MakeDefaultConfig()
+    public static ConfigObj MakeDefaultConfig()
     {
         return new()
         {
             Version = ColorMCCore.Version,
-            JavaList = new(),
+            JavaList = [],
             Http = MakeHttpConfig(),
             DefaultJvmArg = MakeJvmArgConfig(),
             Window = MakeWindowSettingConfig(),
@@ -122,7 +120,7 @@ public static class ConfigUtils
         };
     }
 
-    private static HttpObj MakeHttpConfig()
+    public static HttpObj MakeHttpConfig()
     {
         return new()
         {
@@ -136,7 +134,7 @@ public static class ConfigUtils
         };
     }
 
-    private static JvmArgObj MakeJvmArgConfig()
+    public static RunArgObj MakeJvmArgConfig()
     {
         return new()
         {
@@ -146,7 +144,7 @@ public static class ConfigUtils
         };
     }
 
-    private static WindowSettingObj MakeWindowSettingConfig()
+    public static WindowSettingObj MakeWindowSettingConfig()
     {
         return new()
         {
@@ -155,7 +153,7 @@ public static class ConfigUtils
         };
     }
 
-    private static GameCheckObj MakeGameCheckConfig()
+    public static GameCheckObj MakeGameCheckConfig()
     {
         return new()
         {

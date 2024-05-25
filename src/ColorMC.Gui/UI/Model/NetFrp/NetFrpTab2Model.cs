@@ -1,17 +1,21 @@
-﻿using Avalonia.Threading;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Avalonia.Threading;
 using ColorMC.Core.Game;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace ColorMC.Gui.UI.Model.NetFrp;
 
 public partial class NetFrpModel
 {
-    private readonly LanClient _client = new();
+    private LanClient _client;
     private readonly List<string> _have = [];
+
+    [ObservableProperty]
+    private bool _isLocalEmpty = true;
 
     public ObservableCollection<NetFrpLocalModel> Locals { get; set; } = [];
 
@@ -20,6 +24,8 @@ public partial class NetFrpModel
     {
         Locals.Clear();
         _have.Clear();
+
+        IsLocalEmpty = true;
     }
 
     public async void StartThisLan(NetFrpLocalModel local)
@@ -67,7 +73,10 @@ public partial class NetFrpModel
 
     public void LoadLocal()
     {
-        _client.FindLan = Find;
+        _client ??= new()
+        {
+            FindLan = Find
+        };
     }
 
     private void Find(string motd, string ip, string port)
@@ -81,6 +90,7 @@ public partial class NetFrpModel
 
         Dispatcher.UIThread.Post(() =>
         {
+            IsLocalEmpty = false;
             var item = new NetFrpLocalModel(this, motd, port);
             if (_isOut.Contains(port))
             {
@@ -88,5 +98,11 @@ public partial class NetFrpModel
             }
             Locals.Add(item);
         });
+    }
+
+    public void SetTab2Click()
+    {
+        Model.SetChoiseCall(_name, CleanLocal);
+        Model.SetChoiseContent(_name, App.Lang("NetFrpWindow.Tab2.Text2"));
     }
 }

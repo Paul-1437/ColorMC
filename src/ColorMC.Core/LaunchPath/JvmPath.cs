@@ -11,7 +11,6 @@ namespace ColorMC.Core.LaunchPath;
 /// </summary>
 public static class JvmPath
 {
-    public const string Unknow = "unknow";
     public const string Name1 = "java";
     public static Dictionary<string, JavaInfo> Jvms { get; } = [];
 
@@ -25,14 +24,14 @@ public static class JvmPath
     {
         if (SystemInfo.Os == OsType.Android)
         {
-            BaseDir = ColorMCCore.PhoneGetDataDir?.Invoke()!;
+            BaseDir = ColorMCCore.PhoneGetDataDir();
         }
         else
         {
             BaseDir = dir;
         }
 
-        if (!BaseDir.EndsWith("/") && !BaseDir.EndsWith("\\"))
+        if (!BaseDir.EndsWith('/') && !BaseDir.EndsWith('\\'))
         {
             BaseDir += "/";
         }
@@ -65,18 +64,20 @@ public static class JvmPath
     /// <param name="sha256">验证</param>
     /// <param name="url">地址</param>
     /// <returns>结果</returns>
-    public static async Task<(CoreRunState Res, string? Message)> Install(string file, string name, string sha256, string url)
+    public static async Task<(CoreRunState Res, string? Message)>
+        InstallAsync(string file, string name, string sha256, string url,
+        ColorMCCore.ZipUpdate zip, ColorMCCore.JavaUnzip unzip)
     {
         try
         {
             Remove(name);
-            var res = await Download(file, sha256, url);
+            var res = await DownloadAsync(file, sha256, url);
             if (!res.Res)
             {
                 return (CoreRunState.Error, LanguageHelper.Get("Core.Jvm.Error5"));
             }
-            ColorMCCore.JavaUnzip?.Invoke();
-            res = await UnzipJava(name, res.Local!);
+            unzip();
+            res = await UnzipJavaAsync(name, res.Local!, zip);
             if (!res.Res)
             {
                 return (CoreRunState.Error, res.Local);
@@ -99,7 +100,7 @@ public static class JvmPath
     /// <param name="sha256">校验</param>
     /// <param name="url">网址</param>
     /// <returns>结果</returns>
-    private static async Task<(bool Res, string? Local)> Download(string name, string sha256, string url)
+    private static async Task<(bool Res, string? Local)> DownloadAsync(string name, string sha256, string url)
     {
         var item = new DownloadItemObj()
         {
@@ -109,7 +110,7 @@ public static class JvmPath
             Url = url
         };
 
-        var res = await DownloadManager.Start([item]);
+        var res = await DownloadManager.StartAsync([item]);
 
         if (res == false)
         {
@@ -142,7 +143,8 @@ public static class JvmPath
     /// <param name="name">名字</param>
     /// <param name="file">文件</param>
     /// <returns></returns>
-    public static async Task<(bool, string?)> UnzipJava(string name, string file)
+    public static async Task<(bool, string?)> UnzipJavaAsync(string name, string file,
+        ColorMCCore.ZipUpdate zip)
     {
         string path = BaseDir + Name1 + "/" + name;
         Directory.CreateDirectory(path);
@@ -159,7 +161,7 @@ public static class JvmPath
             {
                 try
                 {
-                    ColorMCCore.PhoneJvmInstall?.Invoke(stream, path);
+                    ColorMCCore.PhoneJvmInstall(stream, path, zip);
                     return (true, null!);
                 }
                 catch (Exception e)
@@ -174,7 +176,7 @@ public static class JvmPath
             {
                 try
                 {
-                    await new ZipUtils().Unzip(path, file, stream);
+                    await new ZipUtils(ZipUpdate: zip).UnzipAsync(path, file, stream);
                     return (true, null!);
                 }
                 catch (Exception e)
@@ -212,7 +214,8 @@ public static class JvmPath
             Logs.Info(string.Format(LanguageHelper.Get("Core.Jvm.Info3"), java));
         }
 
-        if (SystemInfo.Os == OsType.Linux || SystemInfo.Os == OsType.MacOS)
+        if (SystemInfo.Os == OsType.Linux || SystemInfo.Os == OsType.MacOS
+            || SystemInfo.Os == OsType.Android)
         {
             JavaHelper.Per(java);
         }
@@ -313,8 +316,10 @@ public static class JvmPath
                     {
                         Name = a.Name,
                         Path = a.Local,
-                        Type = Unknow,
-                        Version = Unknow
+                        Type = LanguageHelper.Get("Core.Jvm.Info7"),
+                        Version = LanguageHelper.Get("Core.Jvm.Info6"),
+                        MajorVersion = -1,
+                        Arch = ArchEnum.unknow
                     });
                 }
             });

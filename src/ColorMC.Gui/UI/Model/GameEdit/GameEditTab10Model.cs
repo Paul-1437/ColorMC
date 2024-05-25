@@ -1,10 +1,10 @@
-﻿using AvaloniaEdit.Utils;
+﻿using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs.Minecraft;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.GameEdit;
 
@@ -63,15 +63,14 @@ public partial class GameEditModel
         LoadServer();
     }
 
-    public void SetBackHeadTab10()
+    public void SetChoiseTab10()
     {
         Model.SetChoiseContent(_useName, App.Lang("Button.Refash"));
         Model.SetChoiseCall(_useName, choise: LoadServer);
     }
 
-    public void RemoveBackHeadTab10()
+    public void RemoveChoiseTab10()
     {
-        Model.RemoveChoiseContent(_useName);
-        Model.RemoveChoiseCall(_useName);
+        Model.RemoveChoiseData(_useName);
     }
 }

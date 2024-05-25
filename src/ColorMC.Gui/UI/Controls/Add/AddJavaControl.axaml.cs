@@ -4,7 +4,6 @@ using ColorMC.Gui.Objs;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.Add;
 using ColorMC.Gui.UI.Windows;
-using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UI.Controls.Add;
 
@@ -15,6 +14,8 @@ public partial class AddJavaControl : UserControl, IUserControl
     public string Title => App.Lang("AddJavaWindow.Title");
 
     public string UseName { get; }
+
+    public int NeedJava { get; set; }
 
     public AddJavaControl()
     {
@@ -38,8 +39,6 @@ public partial class AddJavaControl : UserControl, IUserControl
         Window.SetTitle(Title);
 
         (DataContext as AddJavaControlModel)!.TypeIndex = 0;
-
-        JavaFiles.SetFontColor();
     }
 
     public void Closed()
@@ -57,6 +56,6 @@ public partial class AddJavaControl : UserControl, IUserControl
 
     public void SetBaseModel(BaseModel model)
     {
-        DataContext = new AddJavaControlModel(model);
+        DataContext = new AddJavaControlModel(model, NeedJava);
     }
 }

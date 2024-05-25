@@ -1,9 +1,9 @@
-﻿using ColorMC.Core.Objs;
+﻿using System.Threading.Tasks;
+using ColorMC.Core.Objs;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.Setting;
 
@@ -105,6 +105,14 @@ public partial class SettingModel
     {
         await GameCloudUtils.StartConnect();
         ServerInfo = GameCloudUtils.Info;
+        if (GameCloudUtils.Connect)
+        {
+            Model.Notify(App.Lang("SettingWindow.Tab3.Info4"));
+        }
+        else
+        {
+            Model.Show(App.Lang("SettingWindow.Tab3.Error1"));
+        }
     }
 
     [RelayCommand]
@@ -133,7 +141,7 @@ public partial class SettingModel
         Model.ProgressClose();
         if (res.Item1 == null)
         {
-            Model.Show(App.Lang("Gui.Error21"));
+            Model.Show(App.Lang("SettingWindow.Tab3.Error2"));
             return;
         }
         else if (res.Item1 == true)
@@ -154,6 +162,16 @@ public partial class SettingModel
     public void SetProxy()
     {
         ConfigBinding.SetDownloadProxy(IP, Port ?? 1080, User, Password);
+    }
+
+    public async void TestGameCloudConnect()
+    {
+        await GameCloudUtils.StartConnect();
+        ServerInfo = GameCloudUtils.Info;
+        if (GameCloudUtils.Connect)
+        {
+            Model.Notify(App.Lang("SettingWindow.Tab3.Info4"));
+        }
     }
 
     public void LoadHttpSetting()

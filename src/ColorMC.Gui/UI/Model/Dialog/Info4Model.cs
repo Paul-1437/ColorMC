@@ -1,7 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DialogHostAvalonia;
-using System;
 
 namespace ColorMC.Gui.UI.Model.Dialog;
 
@@ -15,6 +15,8 @@ public partial class Info4Model(string? name) : ObservableObject
     private bool _enable;
     [ObservableProperty]
     private bool _cancelVisable;
+    [ObservableProperty]
+    private bool _enableVisable = true;
 
     [RelayCommand]
     public void Cancel()

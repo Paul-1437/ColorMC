@@ -1,8 +1,9 @@
+using System.Net;
+using System.Net.Http.Headers;
 using ColorMC.Core.Config;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
-using System.Net;
 
 namespace ColorMC.Core.Net;
 
@@ -14,7 +15,7 @@ public static class BaseClient
     /// <summary>
     /// 下载源
     /// </summary>
-    public static SourceLocal Source { get; private set; }
+    public static SourceLocal Source { get; set; }
 
     public static HttpClient DownloadClient { get; private set; }
     public static HttpClient LoginClient { get; private set; }
@@ -47,13 +48,17 @@ public static class BaseClient
         {
             DownloadClient = new(new HttpClientHandler()
             {
-                Proxy = new WebProxy(ConfigUtils.Config.Http.ProxyIP, ConfigUtils.Config.Http.ProxyPort)
+                Proxy = new WebProxy(ConfigUtils.Config.Http.ProxyIP, ConfigUtils.Config.Http.ProxyPort),
             });
         }
         else
         {
             DownloadClient = new();
         }
+
+        DownloadClient.DefaultRequestHeaders.UserAgent.Clear();
+        DownloadClient.DefaultRequestHeaders.UserAgent
+            .Add(new ProductInfoHeaderValue("ColorMC", ColorMCCore.Version));
 
         if (ConfigUtils.Config.Http.LoginProxy
              && !string.IsNullOrWhiteSpace(ConfigUtils.Config.Http.ProxyIP))
@@ -68,6 +73,10 @@ public static class BaseClient
             LoginClient = new();
         }
 
+        LoginClient.DefaultRequestHeaders.UserAgent.Clear();
+        LoginClient.DefaultRequestHeaders.UserAgent
+            .Add(new ProductInfoHeaderValue("ColorMC", ColorMCCore.Version));
+
         LoginClient.Timeout = TimeSpan.FromSeconds(10);
         DownloadClient.Timeout = TimeSpan.FromSeconds(10);
     }
@@ -77,7 +86,7 @@ public static class BaseClient
     /// </summary>
     /// <param name="url">地址</param>
     /// <returns></returns>
-    public static async Task<(bool, string?)> GetString(string url)
+    public static async Task<(bool, string?)> GetStringAsync(string url)
     {
         var data = await DownloadClient.GetAsync(url);
         if (data.StatusCode != HttpStatusCode.OK)
@@ -94,7 +103,7 @@ public static class BaseClient
     /// </summary>
     /// <param name="url">地址</param>
     /// <returns></returns>
-    public static async Task<(bool, byte[]?)> GetBytes(string url)
+    public static async Task<(bool, byte[]?)> GetBytesAsync(string url)
     {
         var data = await DownloadClient.GetAsync(url);
         if (data.StatusCode != HttpStatusCode.OK)
@@ -111,7 +120,7 @@ public static class BaseClient
     /// </summary>
     /// <param name="url">地址</param>
     /// <returns></returns>
-    public static async Task<(bool, Stream?)> GetStream(string url)
+    public static async Task<(bool, Stream?)> GetStreamAsync(string url)
     {
         var data = await DownloadClient.GetAsync(url);
         if (data.StatusCode != HttpStatusCode.OK)

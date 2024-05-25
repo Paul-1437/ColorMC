@@ -15,35 +15,26 @@
                 HorizontalAlignment="Center"
                 Text="{Binding FindText1}" />
             <DockPanel Margin="5">
-                <TextBlock VerticalAlignment="Center" Text="{Binding FindText2}" />
+                <TextBlock Text="{Binding FindText2}" />
                 <TextBox Classes="input1" Text="{Binding PosName}" />
             </DockPanel>
             <WrapPanel>
                 <StackPanel Margin="0,0,5,0" Orientation="Horizontal">
-                    <TextBlock
-                        Margin="0,0,5,0"
-                        VerticalAlignment="Center"
-                        Text="X" />
+                    <TextBlock Margin="0,0,5,0" Text="X" />
                     <NumericUpDown
                         Width="130"
                         FormatString="N0"
                         Value="{Binding PosX}" />
                 </StackPanel>
                 <StackPanel Margin="0,0,5,0" Orientation="Horizontal">
-                    <TextBlock
-                        Margin="0,0,5,0"
-                        VerticalAlignment="Center"
-                        Text="Y" />
+                    <TextBlock Margin="0,0,5,0" Text="Y" />
                     <NumericUpDown
                         Width="130"
                         FormatString="N0"
                         Value="{Binding PosY}" />
                 </StackPanel>
                 <StackPanel Margin="0,0,5,0" Orientation="Horizontal">
-                    <TextBlock
-                        Margin="0,0,5,0"
-                        VerticalAlignment="Center"
-                        Text="Z" />
+                    <TextBlock Margin="0,0,5,0" Text="Z" />
                     <NumericUpDown
                         Width="130"
                         FormatString="N0"
@@ -55,22 +46,10 @@
                 Margin="0,5,0,0"
                 HorizontalAlignment="Center"
                 Orientation="Horizontal">
-                <TextBlock
-                    Margin="0,0,0,0"
-                    VerticalAlignment="Center"
-                    Text="{setting:Localize ConfigEditWindow.Text8}" />
-                <TextBlock
-                    Margin="0,0,0,0"
-                    VerticalAlignment="Center"
-                    Text="{Binding Chunk}" />
-                <TextBlock
-                    Margin="0,0,0,0"
-                    VerticalAlignment="Center"
-                    Text="{setting:Localize ConfigEditWindow.Text9}" />
-                <TextBlock
-                    Margin="0,0,0,0"
-                    VerticalAlignment="Center"
-                    Text="{Binding ChunkFile}" />
+                <TextBlock Margin="0,0,0,0" Text="{setting:Localize ConfigEditWindow.Text8}" />
+                <TextBlock Margin="0,0,0,0" Text="{Binding Chunk}" />
+                <TextBlock Margin="0,0,0,0" Text="{setting:Localize ConfigEditWindow.Text9}" />
+                <TextBlock Margin="0,0,0,0" Text="{Binding ChunkFile}" />
             </StackPanel>
 
             <StackPanel
@@ -80,13 +59,16 @@
                 Orientation="Horizontal">
                 <Button
                     Width="100"
-                    Height="25"
-                    Margin="0,0,30,0"
+                    Height="30"
+                    Margin="10,0,10,0"
+                    Classes="top"
                     Command="{Binding FindStart}"
                     Content="{setting:Localize ConfigEditWindow.Text10}" />
                 <Button
                     Width="100"
-                    Height="25"
+                    Height="30"
+                    Margin="10,0,10,0"
+                    Classes="top"
                     Command="{Binding FindCancel}"
                     Content="{setting:Localize Button.Cancel}" />
             </StackPanel>

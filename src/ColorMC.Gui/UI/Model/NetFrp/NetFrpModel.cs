@@ -1,11 +1,12 @@
-﻿using ColorMC.Core.Objs;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using ColorMC.Core.Objs;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UIBinding;
-using System.Collections.Generic;
 
 namespace ColorMC.Gui.UI.Model.NetFrp;
 
-public partial class NetFrpModel(BaseModel model) : MenuModel(model)
+public partial class NetFrpModel : MenuModel
 {
     public override List<MenuObj> TabItems { get; init; } =
     [
@@ -21,14 +22,21 @@ public partial class NetFrpModel(BaseModel model) : MenuModel(model)
             Text = App.Lang("NetFrpWindow.Tabs.Text3") }
     ];
 
-    public async void Open()
+    private readonly string _name;
+
+    public NetFrpModel(BaseModel model) : base(model)
+    {
+        _name = ToString() ?? "NetFrpModel";
+    }
+
+    public async Task<bool> Open()
     {
         var user = UserBinding.GetLastUser();
 
         if (user?.AuthType != AuthType.OAuth)
         {
             Model.ShowOk(App.Lang("NetFrpWindow.Tab4.Error1"), WindowClose);
-            return;
+            return false;
         }
         Model.Progress(App.Lang("NetFrpWindow.Tab4.Info2"));
         var res = await UserBinding.TestLogin(user);
@@ -36,15 +44,20 @@ public partial class NetFrpModel(BaseModel model) : MenuModel(model)
         if (!res)
         {
             Model.ShowOk(App.Lang("NetFrpWindow.Tab4.Error2"), WindowClose);
-            return;
+            return false;
         }
-        LoadSakura();
-        LoadCloud();
+
+        return true;
+    }
+
+    public void RemoveClick()
+    {
+        Model.RemoveChoiseData(_name);
     }
 
     protected override void Close()
     {
-        _client.Stop();
+        _client?.Stop();
 
         RemotesOpenFrp.Clear();
         RemotesSakura.Clear();

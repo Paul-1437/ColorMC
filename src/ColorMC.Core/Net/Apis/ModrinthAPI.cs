@@ -1,9 +1,9 @@
+using System.Collections.Concurrent;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Modrinth;
 using ColorMC.Core.Utils;
 using Newtonsoft.Json;
-using System.Collections.Concurrent;
 
 namespace ColorMC.Core.Net.Apis;
 
@@ -99,7 +99,7 @@ public static class ModrinthAPI
         string categoryId = "", Loaders loader = Loaders.Normal)
     {
         return Search(version, filter, sortOrder, page * pagesize,
-            pagesize, categoryId, ClassMod, loader == Loaders.Normal ? "" :
+            pagesize, categoryId, ClassMod, loader is Loaders.Normal or Loaders.Custom ? "" :
             loader.GetName().ToLower());
     }
 
@@ -145,7 +145,7 @@ public static class ModrinthAPI
     {
         try
         {
-            var res = await BaseClient.GetString($"{UrlHelper.Modrinth}project/{id}/version/{version}");
+            var res = await BaseClient.GetStringAsync($"{UrlHelper.Modrinth}project/{id}/version/{version}");
             if (res.Item1 == false)
             {
                 return null;
@@ -168,7 +168,7 @@ public static class ModrinthAPI
     {
         try
         {
-            var res = await BaseClient.GetString($"{UrlHelper.Modrinth}project/{id}");
+            var res = await BaseClient.GetStringAsync($"{UrlHelper.Modrinth}project/{id}");
             if (res.Item1 == false)
             {
                 return null;
@@ -215,8 +215,6 @@ public static class ModrinthAPI
         }
     }
 
-    private static List<string>? ModrinthGameVersions;
-
     /// <summary>
     /// 获取所有游戏版本
     /// </summary>
@@ -250,34 +248,6 @@ public static class ModrinthAPI
             Logs.Error(LanguageHelper.Get("Core.Http.Modrinth.Error5"), e);
             return null;
         }
-    }
-
-    /// <summary>
-    /// 获取所有游戏版本
-    /// </summary>
-    public static async Task<List<string>?> GetGameVersion()
-    {
-        if (ModrinthGameVersions != null)
-        {
-            return ModrinthGameVersions;
-        }
-
-        var list = await GetGameVersions();
-        if (list == null)
-        {
-            return null;
-        }
-
-        var list1 = new List<string>
-        {
-            ""
-        };
-
-        list1.AddRange(from item in list select item.version);
-
-        ModrinthGameVersions = list1;
-
-        return list1;
     }
 
     /// <summary>

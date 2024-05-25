@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using Avalonia.Controls.Primitives;
@@ -11,10 +15,6 @@ using ColorMC.Gui.UI.Controls.Custom;
 using ColorMC.Gui.UI.Controls.Main;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UIBinding;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Windows;
 
@@ -45,12 +45,23 @@ public partial class AllControl : UserControl, IBaseWindow
         }
 
         PointerPressed += AllControl_PointerPressed;
+        PointerReleased += AllControl_PointerReleased;
 
         ResizeButton.AddHandler(PointerPressedEvent, ResizeButton_PointerPressed, RoutingStrategies.Tunnel);
 
         App.PicUpdate += Update;
 
         Update();
+    }
+
+    public Task<bool> IKeyDown(object? sender, KeyEventArgs e)
+    {
+        return ICon.OnKeyDown(sender, e);
+    }
+
+    private void AllControl_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        ICon.IPointerReleased(e);
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
@@ -86,6 +97,8 @@ public partial class AllControl : UserControl, IBaseWindow
         {
             Model.BackClick();
         }
+
+        ICon.IPointerPressed(e);
     }
 
     public void Closed()
@@ -184,7 +197,7 @@ public partial class AllControl : UserControl, IBaseWindow
 
         Model.RemoveBack();
 
-        BaseBinding.Clear();
+        App.Clear();
     }
 
     private void Back()
@@ -239,5 +252,10 @@ public partial class AllControl : UserControl, IBaseWindow
     {
         ICon.WindowStateChange(windowState);
         Head.WindowStateChange(windowState);
+    }
+
+    public void SetSize(int width, int height)
+    {
+
     }
 }

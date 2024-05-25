@@ -1,12 +1,12 @@
+using System.ComponentModel;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Windows;
-using System.ComponentModel;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Controls;
 
@@ -17,7 +17,7 @@ public partial class MenuControl : UserControl, IUserControl
     private CancellationTokenSource _cancel = new();
     private CancellationTokenSource _cancel1 = new();
 
-    private int _now;
+    private int _now = -1;
 
     public IBaseWindow Window => App.FindRoot(VisualRoot);
 
@@ -35,10 +35,12 @@ public partial class MenuControl : UserControl, IUserControl
     virtual protected MenuModel SetModel(BaseModel model) { throw new WarningException(); }
     virtual protected Control ViewChange(bool iswhell, int old, int index) { throw new WarningException(); }
 
-    virtual public void OnKeyDown(object? sender, KeyEventArgs e) { }
+    virtual public Task<bool> OnKeyDown(object? sender, KeyEventArgs e) { return Task.FromResult(false); }
     virtual public Bitmap GetIcon() { return App.GameIcon; }
     virtual public void Opened() { }
     virtual public void Closed() { }
+    virtual public void IPointerPressed(PointerPressedEventArgs e) { }
+    virtual public void IPointerReleased(PointerReleasedEventArgs e) { }
     virtual public Task<bool> Closing() { return Task.FromResult(false); }
 
     private void StackPanel2_PointerPressed(object? sender, PointerPressedEventArgs e)
@@ -59,6 +61,12 @@ public partial class MenuControl : UserControl, IUserControl
         _cancel = new();
 
         var model = (DataContext as MenuModel)!;
+
+        if (_now == -1)
+        {
+            Content1.Child = to;
+            return;
+        }
 
         if (!_switch1)
         {

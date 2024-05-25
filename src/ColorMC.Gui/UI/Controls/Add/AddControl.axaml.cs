@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -6,9 +8,6 @@ using ColorMC.Core.Objs;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.Add;
 using ColorMC.Gui.UI.Windows;
-using ColorMC.Gui.Utils;
-using System.ComponentModel;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Controls.Add;
 
@@ -182,10 +181,6 @@ public partial class AddControl : UserControl, IUserControl
     public void Opened()
     {
         Window.SetTitle(Title);
-
-        VersionFiles.SetFontColor();
-        OptifineFiles.SetFontColor();
-        ModDownloadFiles.SetFontColor();
 
         (DataContext as AddControlModel)!.Display = true;
     }

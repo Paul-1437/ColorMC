@@ -1,15 +1,15 @@
-﻿using Avalonia.Input;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using Avalonia.Input;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.GameEdit;
 
@@ -227,7 +227,7 @@ public partial class GameEditModel
         {
             return;
         }
-        var res = GameBinding.ModEnDi(item.Obj);
+        var res = GameBinding.ModEnableDisable(item.Obj);
         if (!res.Item1)
         {
             Model.Show(res.Item2!);
@@ -243,6 +243,14 @@ public partial class GameEditModel
 
             var list = GameBinding.ModDisable(item, _modItems);
 
+            foreach (var item1 in list.ToArray())
+            {
+                if (item1.Enable == false)
+                {
+                    list.Remove(item1);
+                }
+            }
+
             if (list.Count == 0)
             {
                 return;
@@ -257,7 +265,7 @@ public partial class GameEditModel
                     {
                         continue;
                     }
-                    GameBinding.ModEnDi(item1.Obj);
+                    GameBinding.ModEnableDisable(item1.Obj);
                     item1.LocalChange();
                     item1.Enable = !item1.Obj.Disable;
                 }

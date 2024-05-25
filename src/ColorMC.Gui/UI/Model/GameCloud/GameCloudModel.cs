@@ -1,4 +1,9 @@
-﻿using Avalonia.Controls;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
+using Avalonia.Controls;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
@@ -10,11 +15,6 @@ using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.GameCloud;
 
@@ -150,7 +150,7 @@ public partial class GameCloudModel : MenuModel
         }
         string name = Path.GetFullPath(dir + "/config.zip");
         files.Remove(name);
-        await new ZipUtils().ZipFile(name, files, dir);
+        await new ZipUtils().ZipFileAsync(name, files, dir);
         Model.ProgressUpdate(App.Lang("GameCloudWindow.Info9"));
         var res = await GameCloudUtils.UploadConfig(Obj, name);
         PathHelper.Delete(name);
@@ -223,25 +223,22 @@ public partial class GameCloudModel : MenuModel
         Model.Progress(App.Lang("GameCloudWindow.Info1"));
         var res = await GameCloudUtils.HaveCloud(Obj);
         Model.ProgressClose();
-        if (res.Item1 == 101)
-        {
-            Model.Show(App.Lang("GameCloudWindow.Error2"));
-            return;
-        }
         Enable = res.Item2;
         _configHave = res.Item3 != null;
         ConfigTime = res.Item3 ?? App.Lang("GameCloudWindow.Info2");
     }
 
-    public async Task Init()
+    public async Task<bool> Init()
     {
         if (!GameCloudUtils.Connect)
         {
             Model.ShowOk(App.Lang("GameCloudWindow.Erro1"), WindowClose);
-            return;
+            return false;
         }
         await LoadCloud();
         await LoadConfig();
+
+        return true;
     }
 
     /// <summary>
@@ -260,7 +257,6 @@ public partial class GameCloudModel : MenuModel
             Obj.GetModInfoJsonFile(),
             Obj.GetIconFile(),
             Obj.GetLaunchFile(),
-            Obj.GetModJsonFile(),
             Obj.GetModPackJsonFile()
         };
         _files.SetSelectItems(list);
@@ -342,7 +338,7 @@ public partial class GameCloudModel : MenuModel
         if (!world.HaveCloud)
         {
             Model.Progress(App.Lang("GameCloudWindow.Info8"));
-            await new ZipUtils().ZipFile(dir, local);
+            await new ZipUtils().ZipFileAsync(dir, local);
         }
         else
         {
@@ -394,7 +390,7 @@ public partial class GameCloudModel : MenuModel
                 return;
             }
             Model.ProgressUpdate(App.Lang("GameCloudWindow.Info8"));
-            await new ZipUtils().ZipFile(local, pack, dir);
+            await new ZipUtils().ZipFileAsync(local, pack, dir);
             if (have)
             {
                 PathHelper.Delete(delete);
@@ -474,7 +470,7 @@ public partial class GameCloudModel : MenuModel
             try
             {
                 using var file = PathHelper.OpenRead(local)!;
-                await new ZipUtils().Unzip(dir, local, file);
+                await new ZipUtils().UnzipAsync(dir, local, file);
                 Model.Notify(App.Lang("GameCloudWindow.Info15"));
             }
             catch (Exception e)
@@ -546,7 +542,6 @@ public partial class GameCloudModel : MenuModel
 
     public void RemoveHeadBack()
     {
-        Model.RemoveChoiseCall(_useName);
-        Model.RemoveChoiseContent(_useName);
+        Model.RemoveChoiseData(_useName);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Avalonia.Media.Imaging;
+﻿using System.Threading.Tasks;
+using Avalonia.Media.Imaging;
 using ColorMC.Core;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UIBinding;
@@ -37,9 +38,10 @@ public partial class SettingModel
     }
 
     [RelayCommand]
-    public void OpenUrl5()
+    public async Task OpenUrl5()
     {
-        WebBinding.OpenWeb(WebType.Guide);
+        var res = await Model.ShowWait(App.Lang("SettingWindow.Tab7.Info3"));
+        WebBinding.OpenWeb(res ? WebType.Guide1 : WebType.Guide);
     }
 
     [RelayCommand]
@@ -70,5 +72,11 @@ public partial class SettingModel
     public void OpenUrl10()
     {
         WebBinding.OpenWeb(WebType.BSD);
+    }
+
+    [RelayCommand]
+    public void OpenUrl11()
+    {
+        WebBinding.OpenWeb(WebType.OpenFrpApi);
     }
 }

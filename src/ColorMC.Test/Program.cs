@@ -12,7 +12,7 @@ namespace ColorMC.Test;
 
 internal class Program
 {
-    public static async void Run()
+    public static void Run()
     {
         using HttpClient client = new HttpClient();
         //var data = await client.GetStringAsync("http://www.baidu.com");
@@ -35,18 +35,9 @@ internal class Program
         ColorMCCore.Init(AppContext.BaseDirectory);
         ColorMCCore.Init1();
 
-        ColorMCCore.DownloaderUpdate = Update;
-        ColorMCCore.DownloadItemStateUpdate = Update;
-        ColorMCCore.GameRequest = Download;
-        ColorMCCore.GameOverwirte = Overwirte;
-        ColorMCCore.PackState = Update;
-        ColorMCCore.PackUpdate = PackUpdate;
-        ColorMCCore.ProcessLog = Log;
-        ColorMCCore.LoginOAuthCode = Login;
-        ColorMCCore.AuthStateUpdate = AuthStateUpdate;
-        ColorMCCore.GameLog = Log;
+        ColorMCCore.GameLog += Log;
 
-        //TestItem.Item33();
+        TestItem.Item35();
 
         GetSha1();
 
@@ -55,7 +46,7 @@ internal class Program
 
     public static void GetSha1()
     {
-        var text = File.Exists("tmp/sha1.json") 
+        var text = File.Exists("tmp/sha1.json")
             ? File.ReadAllText("tmp/sha1.json") : "{\"text\":\"\"}";
         var obj = JObject.Parse(text);
         {
@@ -113,12 +104,6 @@ internal class Program
         Console.WriteLine($"登录状态{state}");
     }
 
-    public static void Login(string url, string code)
-    {
-        Console.WriteLine(url);
-        Console.WriteLine(code);
-    }
-
     public static Task<bool> Download(string state)
     {
         return Task.Run(() =>
@@ -138,9 +123,9 @@ internal class Program
         Logs.Info(log);
     }
 
-    public static void Update(int index)
+    public static void Update(DownloadItemObj obj)
     {
-        Console.WriteLine($"下载器{index} 下载项目:{DownloadManager.AllSize}/{DownloadManager.DoneSize}");
+        Console.WriteLine($"下载项目:{DownloadManager.AllSize}/{DownloadManager.DoneSize} {obj.Name} {obj.NowSize}/{obj.AllSize}");
     }
 
     public static void Update(int index, DownloadItemObj item)

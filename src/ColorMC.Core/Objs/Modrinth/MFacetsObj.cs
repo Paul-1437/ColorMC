@@ -1,5 +1,5 @@
-﻿using ColorMC.Core.Helpers;
-using System.Text;
+﻿using System.Text;
+using ColorMC.Core.Helpers;
 
 namespace ColorMC.Core.Objs.Modrinth;
 
@@ -10,7 +10,7 @@ public record MFacetsObj
 
     public string GetName()
     {
-        return LanguageHelper.Get($"MFacets.{Data}");
+        return LanguageHelper.Get($"Type.Modrinth.Facets.{Data}");
     }
 
     public static string Build(List<MFacetsObj> list)

@@ -1,4 +1,8 @@
-﻿using Avalonia.Controls;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
@@ -10,10 +14,6 @@ using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DialogHostAvalonia;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model;
 
@@ -173,19 +173,22 @@ public partial class BaseModel : ObservableObject
         }
     }
 
-    private void Work()
+    public void Work()
     {
-        HeadBackDisplay = false;
+        if (!_listBack.IsEmpty)
+        {
+            HeadBackEnable = false;
+        }
         HeadCloseDisplay = false;
         _isWork = true;
     }
 
-    private void NoWork()
+    public void NoWork()
     {
         _isWork = false;
         if (SystemInfo.Os != OsType.Android && !_listBack.IsEmpty)
         {
-            HeadBackDisplay = true;
+            HeadBackEnable = true;
         }
         HeadCloseDisplay = true;
     }
@@ -212,21 +215,13 @@ public partial class BaseModel : ObservableObject
         }
     }
 
-    public void RemoveChoiseContent(string now)
+    public void RemoveChoiseData(string now)
     {
         if (_nowChoiseUse == now)
         {
             _nowChoiseUse = null;
             HeadChoiseContent = null;
             HeadChoise1Content = null;
-        }
-    }
-
-    public void RemoveChoiseCall(string now)
-    {
-        if (_nowChoiseUse == now)
-        {
-            _nowChoiseUse = null;
 
             HeadChoiseDisplay = false;
             HeadChoise1Display = false;
@@ -252,6 +247,14 @@ public partial class BaseModel : ObservableObject
         {
             HeadBackDisplay = false;
         }
+    }
+
+    /// <summary>
+    /// 关闭弹窗
+    /// </summary>
+    public void ShowClose()
+    {
+        DClose();
     }
 
     /// <summary>
@@ -389,10 +392,10 @@ public partial class BaseModel : ObservableObject
     }
 
     /// <summary>
-    /// 打开一个对话框，显示只读内容
+    /// 打开一个对话框，输入内容
     /// </summary>
     /// <param name="title"></param>
-    /// <param name="lock1">是否不等待用户确认</param>
+    /// <param name="lock1">是否为只读</param>
     /// <returns></returns>
     public async Task<(bool Cancel, string? Text)> ShowInputOne(string title, bool lock1)
     {
@@ -428,6 +431,7 @@ public partial class BaseModel : ObservableObject
 
         DClose();
         Work();
+
         await DialogHost.Show(_info3, Name);
 
         NoWork();
@@ -559,6 +563,7 @@ public partial class BaseModel : ObservableObject
     /// <returns>结果</returns>
     public async Task<bool> ShowWait(string data)
     {
+        _info4.EnableVisable = true;
         bool reut = false;
         _info4.Enable = true;
         _info4.Text = data;
@@ -580,12 +585,30 @@ public partial class BaseModel : ObservableObject
         return reut;
     }
 
+    public void ShowCancel(string data, Action action)
+    {
+        _info4.Enable = true;
+        _info4.Text = data;
+        _info4.CancelVisable = true;
+        _info4.EnableVisable = false;
+
+        _info4.Call = (res) =>
+        {
+            _info4.EnableVisable = true;
+            action.Invoke();
+        };
+
+        DClose();
+        DialogHost.Show(_info4, Name);
+    }
+
     /// <summary>
     /// 打开一个对话框，显示内容
     /// </summary>
     /// <param name="data">内容</param>
     public void Show(string data)
     {
+        _info4.EnableVisable = true;
         _info4.Enable = true;
         _info4.CancelVisable = false;
         _info4.Call = null;
@@ -597,6 +620,7 @@ public partial class BaseModel : ObservableObject
 
     public void ShowOk(string data, Action action)
     {
+        _info4.EnableVisable = true;
         _info4.Enable = true;
         _info4.CancelVisable = false;
         _info4.Text = data;

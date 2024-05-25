@@ -41,6 +41,22 @@ public record WindowSettingObj
     /// 宽
     /// </summary>
     public uint? Width { get; set; }
+    /// <summary>
+    /// 游戏标题
+    /// </summary>
+    public string? GameTitle { get; set; }
+    /// <summary>
+    /// 随机游戏标题
+    /// </summary>
+    public bool RandomTitle { get; set; }
+    /// <summary>
+    /// 循环游戏标题
+    /// </summary>
+    public bool CycTitle { get; set; }
+    /// <summary>
+    /// 循环游戏标题延迟
+    /// </summary>
+    public int TitleDelay { get; set; }
 }
 
 
@@ -75,8 +91,16 @@ public enum GCType
 /// <summary>
 /// 启动参数
 /// </summary>
-public record JvmArgObj
+public record RunArgObj
 {
+    /// <summary>
+    /// 删除原有的Jvm参数
+    /// </summary>
+    public bool? RemoveJvmArg { get; set; }
+    /// <summary>
+    /// 删除原有的游戏参数
+    /// </summary>
+    public bool? RemoveGameArg { get; set; }
     /// <summary>
     /// 自定义Jvm参数
     /// </summary>
@@ -124,7 +148,7 @@ public record ConfigObj
     public List<JvmConfigObj> JavaList { get; set; }
 
     public HttpObj Http { get; set; }
-    public JvmArgObj DefaultJvmArg { get; set; }
+    public RunArgObj DefaultJvmArg { get; set; }
     public WindowSettingObj Window { get; set; }
     public GameCheckObj GameCheck { get; set; }
     public bool SafeLog4j { get; set; }

@@ -45,14 +45,14 @@
                 Command="{ReflectionBinding Skin}"
                 Content="查看皮肤" />
         </StackPanel>
-        <Label
+        <TextBlock
             Margin="10"
             HorizontalAlignment="Left"
             VerticalAlignment="Bottom"
             Background="#FFEEEEEE"
-            Content="xxx服务器专用客户端"
             FontSize="20"
-            Foreground="#FF000000" />
+            Foreground="#FF000000"
+            Text="xxx服务器专用客户端" />
         <views:ServerMotdControl Margin="5" IPPort="{ReflectionBinding Server}" />
         <views1:GameControl
             HorizontalAlignment="Center"
@@ -69,14 +69,14 @@
                 Margin="10,0,10,0"
                 HorizontalAlignment="Center"
                 Source="{ReflectionBinding Head}" />
-            <Label
+            <TextBlock
                 Margin="0,5,0,5"
-                HorizontalContentAlignment="Center"
-                Content="{ReflectionBinding UserName}" />
-            <Label
+                HorizontalAlignment="Center"
+                Text="{ReflectionBinding UserName}" />
+            <TextBlock
                 Margin="0,5,0,5"
-                HorizontalContentAlignment="Center"
-                Content="{ReflectionBinding UserType}" />
+                HorizontalAlignment="Center"
+                Text="{ReflectionBinding UserType}" />
         </StackPanel>
     </Panel>
 </view:CustomPanelControl>

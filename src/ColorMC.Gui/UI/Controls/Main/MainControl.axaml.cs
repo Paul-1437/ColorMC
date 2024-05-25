@@ -1,18 +1,19 @@
+using System;
+using System.ComponentModel;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using ColorMC.Core;
 using ColorMC.Gui.UI.Animations;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.Main;
 using ColorMC.Gui.UI.Windows;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
-using System;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Controls.Main;
 
@@ -20,7 +21,7 @@ public partial class MainControl : UserControl, IUserControl
 {
     public IBaseWindow Window => App.FindRoot(VisualRoot);
 
-    public string Title => App.Lang("MainWindow.Title");
+    public string Title => "ColorMC";
 
     public readonly SelfPageSlideSide SidePageSlide300 = new(TimeSpan.FromMilliseconds(300));
 
@@ -37,6 +38,26 @@ public partial class MainControl : UserControl, IUserControl
         AddHandler(DragDrop.DropEvent, Drop);
 
         SizeChanged += MainControl_SizeChanged;
+    }
+
+    public Task<bool> OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
+        {
+            if (DataContext is MainModel model)
+            {
+                model.Search();
+                if (Content1.Child is MainGamesControl con)
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        con.Search.Focus();
+                    });
+                }
+            }
+        }
+
+        return Task.FromResult(false);
     }
 
     private void MainControl_SizeChanged(object? sender, SizeChangedEventArgs e)
@@ -71,12 +92,27 @@ public partial class MainControl : UserControl, IUserControl
         if (e.Data.Contains(DataFormats.Text))
         {
             Grid2.IsVisible = true;
-            Label1.Text = App.Lang("Gui.Info6");
+            Label1.Text = App.Lang("UserWindow.Text8");
         }
         else if (e.Data.Contains(DataFormats.Files))
         {
-            Grid2.IsVisible = true;
-            Label1.Text = App.Lang("Gui.Info7");
+            var files = e.Data.GetFiles();
+            if (files == null || files.Count() > 1)
+                return;
+
+            var item = files.ToList()[0];
+            if (item == null)
+                return;
+            if (item is IStorageFolder forder && Directory.Exists(forder.GetPath()))
+            {
+                Grid2.IsVisible = true;
+                Label1.Text = App.Lang("AddGameWindow.Text2");
+            }
+            else if (item.Name.EndsWith(".zip") || item.Name.EndsWith(".mrpack"))
+            {
+                Grid2.IsVisible = true;
+                Label1.Text = App.Lang("Text.Import");
+            }
         }
     }
 
@@ -114,12 +150,16 @@ public partial class MainControl : UserControl, IUserControl
             if (files == null || files.Count() > 1)
                 return;
 
-            var item = files.ToList()[0].GetPath();
+            var item = files.ToList()[0];
             if (item == null)
                 return;
-            if (item.EndsWith(".zip") || item.EndsWith(".mrpack"))
+            if (item is IStorageFolder forder && Directory.Exists(forder.GetPath()))
             {
-                App.ShowAddGame(null, item);
+                App.ShowAddGame(null, true, forder.GetPath());
+            }
+            else if (item.Name.EndsWith(".zip") || item.Name.EndsWith(".mrpack"))
+            {
+                App.ShowAddGame(null, false, item.GetPath());
             }
         }
     }
@@ -127,7 +167,7 @@ public partial class MainControl : UserControl, IUserControl
     private void SwitchView()
     {
         var model = (DataContext as MainModel)!;
-        if (model.IsOneGame)
+        if (model.IsOneGame || model.IsGameError)
         {
             if (Content1.Child is not MainOneGameControl)
             {
@@ -138,7 +178,10 @@ public partial class MainControl : UserControl, IUserControl
         {
             if (model.IsNotGame && Content1.Child is not MainEmptyControl)
             {
-                Content1.Child = new MainEmptyControl();
+                Content1.Child = new MainEmptyControl()
+                {
+                    DataContext = new MainEmptyModel(model.Model)
+                };
             }
             else if (Content1.Child is not MainGamesControl)
             {
@@ -154,10 +197,6 @@ public partial class MainControl : UserControl, IUserControl
 
     public void Closed()
     {
-        ColorMCCore.GameLaunch = null;
-        ColorMCCore.GameRequest = null;
-        ColorMCCore.OfflineLaunch = null;
-
         App.MainWindow = null;
 
         App.Close();
@@ -179,7 +218,7 @@ public partial class MainControl : UserControl, IUserControl
         if (ColorMCGui.IsCrash)
         {
             var model = (DataContext as MainModel)!;
-            model.Model.Show(App.Lang("Gui.Error48"));
+            model.Model.Show(App.Lang("MainWindow.Error2"));
         }
     }
 
@@ -191,16 +230,6 @@ public partial class MainControl : UserControl, IUserControl
             var res = await model.Model.ShowWait(App.Lang("MainWindow.Info34"));
             if (res)
             {
-                return false;
-            }
-            return true;
-        }
-        if (App.FrpProcess != null)
-        {
-            var res = await model.Model.ShowWait(App.Lang("NetFrpWindow.Tab3.Info2"));
-            if (res)
-            {
-                App.FrpProcess.Kill(true);
                 return false;
             }
             return true;
@@ -270,6 +299,14 @@ public partial class MainControl : UserControl, IUserControl
         model.Live2dHeight = (int)(Bounds.Height * ((float)config.Height / 100));
         model.L2dPos = (HorizontalAlignment)((config.Pos % 3) + 1);
         model.L2dPos1 = (VerticalAlignment)((config.Pos / 3) + 1);
+    }
+
+    public void ChangeLive2DMode()
+    {
+        var config = GuiConfigUtils.Config.Live2D;
+        var model = (DataContext as MainModel)!;
+
+        model.LowFps = config.LowFps;
     }
 
     public void ShowMessage(string message)

@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
@@ -12,12 +18,6 @@ using ColorMC.Gui.UI.Windows;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.Add;
 
@@ -339,6 +339,7 @@ public partial class AddControlModel : GameModel, IAddWindow
 
         _load = true;
 
+        IsSelect = false;
         _now = (FileType)(Type + 1);
         GameVersionList.Clear();
         SortTypeList.Clear();
@@ -1320,8 +1321,7 @@ public partial class AddControlModel : GameModel, IAddWindow
     {
         _close = true;
         _load = true;
-        Model.RemoveChoiseCall(_useName);
-        Model.RemoveChoiseContent(_useName);
+        Model.RemoveChoiseData(_useName);
         ModList.Clear();
         OptifineList.Clear();
         DownloadOptifineList.Clear();

@@ -1,3 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -38,13 +45,6 @@ using ColorMC.Gui.UI.Windows;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
 using ColorMC.Gui.Utils.LaunchSetting;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui;
 
@@ -79,13 +79,13 @@ public partial class App : Application
 
     public static TopLevel? TopLevel { get; set; }
 
-    public readonly static Dictionary<string, GameEditControl> GameEditWindows = new();
-    public readonly static Dictionary<string, GameConfigEditControl> ConfigEditWindows = new();
-    public readonly static Dictionary<string, AddControl> AddWindows = new();
-    public readonly static Dictionary<string, ServerPackControl> ServerPackWindows = new();
-    public readonly static Dictionary<string, GameLogControl> GameLogWindows = new();
-    public readonly static Dictionary<string, GameExportControl> GameExportWindows = new();
-    public readonly static Dictionary<string, GameCloudControl> GameCloudWindows = new();
+    public readonly static Dictionary<string, GameEditControl> GameEditWindows = [];
+    public readonly static Dictionary<string, GameConfigEditControl> ConfigEditWindows = [];
+    public readonly static Dictionary<string, AddControl> AddWindows = [];
+    public readonly static Dictionary<string, ServerPackControl> ServerPackWindows = [];
+    public readonly static Dictionary<string, GameLogControl> GameLogWindows = [];
+    public readonly static Dictionary<string, GameExportControl> GameExportWindows = [];
+    public readonly static Dictionary<string, GameCloudControl> GameCloudWindows = [];
 
     public static readonly SelfCrossFade CrossFade300 = new(TimeSpan.FromMilliseconds(300));
     public static readonly SelfCrossFade CrossFade200 = new(TimeSpan.FromMilliseconds(200));
@@ -110,8 +110,6 @@ public partial class App : Application
     public static bool IsClose { get; set; }
 
     public static PlatformThemeVariant NowTheme { get; private set; }
-
-    public static Process? FrpProcess;
 
     private static readonly Language s_language = new();
 
@@ -181,7 +179,8 @@ public partial class App : Application
             GameIcon = new Bitmap(asset);
         }
         {
-            using var asset1 = AssetLoader.Open(new Uri("resm:ColorMC.Gui.icon.ico"));
+            using var asset1 = AssetLoader.Open(new Uri(SystemInfo.Os == OsType.MacOS
+                ? "resm:ColorMC.Gui.macicon.ico" : "resm:ColorMC.Gui.icon.ico"));
             Icon = new(asset1!);
         }
         {
@@ -194,7 +193,6 @@ public partial class App : Application
         ColorChange();
 
         BaseBinding.Init();
-        InfoBinding.Init();
 
         if (ConfigBinding.WindowMode())
         {
@@ -216,7 +214,11 @@ public partial class App : Application
         ShowCustom();
         if (ColorMCGui.RunType != RunType.AppBuilder)
         {
-            Task.Run(ColorMCCore.Init1);
+            Task.Run(() =>
+            {
+                ColorMCCore.Init1();
+                BaseBinding.LoadDone();
+            });
         }
         Dispatcher.UIThread.Post(() => _ = LoadImage());
         if (ConfigBinding.WindowMode())
@@ -226,6 +228,26 @@ public partial class App : Application
                 TopLevel ??= TopLevel.GetTopLevel(AllWindow);
             });
         }
+    }
+
+    /// <summary>
+    /// 加载样式
+    /// </summary>
+    public static void LoadPageSlide()
+    {
+        PageSlide500.Duration = TimeSpan.FromMilliseconds(GuiConfigUtils.Config.Style.AmTime);
+        PageSlide500.Fade = GuiConfigUtils.Config.Style.AmFade;
+    }
+
+    /// <summary>
+    /// 清理Gui缓存
+    /// </summary>
+    public static void Clear()
+    {
+        ColorSel.Remove();
+        FontSel.Remove();
+        LangSel.Remove();
+        StyleSel.Remove();
     }
 
     public static void StartLock()
@@ -269,6 +291,7 @@ public partial class App : Application
             NowTheme = PlatformSettings!.GetColorValues().ThemeVariant;
 
             ColorSel.Load();
+            StyleSel.Load();
             await LoadImage();
         }
     }
@@ -319,8 +342,7 @@ public partial class App : Application
         var file = GuiConfigUtils.Config.BackImage;
         if (string.IsNullOrWhiteSpace(file))
         {
-            file = NowTheme == PlatformThemeVariant.Light ? "ColorMC.Gui.Resource.Pic.bg.jpg"
-                : "ColorMC.Gui.Resource.Pic.bg1.jpg";
+            file = "https://www.todaybing.com/api/today/cn";
         }
 
         if (GuiConfigUtils.Config.EnableBG)
@@ -333,22 +355,6 @@ public partial class App : Application
         OnPicUpdate();
         ColorSel.Load();
         FuntionUtils.RunGC();
-    }
-
-    public static void DownloaderUpdate(CoreRunState state)
-    {
-        if (state == CoreRunState.Init)
-        {
-            ShowDownload();
-        }
-        else if (state == CoreRunState.Start)
-        {
-            DownloadWindow?.Load();
-        }
-        else if (state == CoreRunState.End)
-        {
-            DownloadWindow?.Window.Close();
-        }
     }
 
     public static void ShowCustom()
@@ -377,7 +383,7 @@ public partial class App : Application
 
                 if (ok)
                 {
-                    ShowCustom(file);
+                    ShowCustom(file, false);
                 }
             }
             catch (Exception e)
@@ -395,12 +401,26 @@ public partial class App : Application
         }
     }
 
-    public static void AWindow(IUserControl con)
+    public static void AWindow(IUserControl con, bool newwindow = false)
     {
         if (ConfigBinding.WindowMode())
         {
-            con.SetBaseModel(AllWindow!.Model);
-            AllWindow.Add(con);
+            if (newwindow)
+            {
+                if (SystemInfo.Os == OsType.Android)
+                {
+                    return;
+                }
+
+                var win = new SelfBaseWindow(con);
+                con.SetBaseModel(win.Model);
+                win.Show();
+            }
+            else
+            {
+                con.SetBaseModel(AllWindow!.Model);
+                AllWindow.Add(con);
+            }
         }
         else
         {
@@ -411,57 +431,26 @@ public partial class App : Application
         }
     }
 
-    public static void AWindow1(IUserControl con)
-    {
-        if (ConfigBinding.WindowMode())
-        {
-            AllWindow?.Add(con);
-        }
-        else
-        {
-            Window? temp = LastWindow;
-            if (temp == null)
-            {
-                if (MainWindow != null && MainWindow?.Window is Window win)
-                {
-                    temp = win;
-                }
-                else if (CustomWindow != null && CustomWindow?.Window is Window win1)
-                {
-                    temp = win1;
-                }
-                else
-                {
-                    temp = AllWindow?.Window as Window;
-                }
-            }
-            if (temp != null)
-            {
-                new SelfBaseWindow(con).ShowDialog(temp);
-            }
-        }
-    }
-
-    public static void ShowCustom(string obj)
+    public static void ShowCustom(string obj, bool newwindow)
     {
         if (CustomWindow != null)
         {
-            CustomWindow.Window.Activate();
+            CustomWindow.Window.TopActivate();
         }
         else
         {
             CustomWindow = new();
-            AWindow(CustomWindow);
+            AWindow(CustomWindow, newwindow);
         }
 
-        CustomWindow?.Load(obj);
+        CustomWindow.Load(obj);
     }
 
-    public static void ShowAddGame(string? group, string? file = null)
+    public static void ShowAddGame(string? group, bool isDir = false, string? file = null)
     {
         if (AddGameWindow != null)
         {
-            AddGameWindow.Window.Activate();
+            AddGameWindow.Window.TopActivate();
         }
         else
         {
@@ -471,28 +460,28 @@ public partial class App : Application
         AddGameWindow.SetGroup(group);
         if (!string.IsNullOrWhiteSpace(file))
         {
-            AddGameWindow?.AddFile(file);
+            AddGameWindow.AddFile(file, isDir);
         }
     }
 
-    public static void ShowDownload()
+    public static Task<bool> StartDownload(ICollection<DownloadItemObj> list)
     {
-        if (DownloadWindow != null)
+        return Dispatcher.UIThread.Invoke(() =>
         {
-            DownloadWindow.Window.Activate();
-        }
-        else
-        {
-            DownloadWindow = new();
+            DownloadWindow?.Window.Close();
+
+            DownloadWindow = new(list);
             AWindow(DownloadWindow);
-        }
+
+            return DownloadWindow.Start();
+        });
     }
 
     public static void ShowUser(bool add = false, string? url = null)
     {
         if (UserWindow != null)
         {
-            UserWindow.Window.Activate();
+            UserWindow.Window.TopActivate();
         }
         else
         {
@@ -514,7 +503,7 @@ public partial class App : Application
     {
         if (MainWindow != null)
         {
-            MainWindow.Window.Activate();
+            MainWindow.Window.TopActivate();
         }
         else
         {
@@ -527,7 +516,7 @@ public partial class App : Application
     {
         if (AddModPackWindow != null)
         {
-            AddModPackWindow.Window.Activate();
+            AddModPackWindow.Window.TopActivate();
         }
         else
         {
@@ -536,15 +525,15 @@ public partial class App : Application
         }
     }
 
-    public static void ShowSetting(SettingType type)
+    public static void ShowSetting(SettingType type, int value = 0)
     {
         if (SettingWindow != null)
         {
-            SettingWindow.Window.Activate();
+            SettingWindow.Window.TopActivate();
         }
         else
         {
-            SettingWindow = new();
+            SettingWindow = new(value);
             AWindow(SettingWindow);
         }
 
@@ -555,7 +544,7 @@ public partial class App : Application
     {
         if (SkinWindow != null)
         {
-            SkinWindow.Window.Activate();
+            SkinWindow.Window.TopActivate();
         }
         else
         {
@@ -569,7 +558,7 @@ public partial class App : Application
     {
         if (GameEditWindows.TryGetValue(obj.UUID, out var win1))
         {
-            win1.Window.Activate();
+            win1.Window.TopActivate();
             win1.SetType(type);
         }
         else
@@ -581,15 +570,18 @@ public partial class App : Application
         }
     }
 
-    public static void ShowAddJava()
+    public static void ShowAddJava(int version)
     {
         if (AddJavaWindow != null)
         {
-            AddJavaWindow.Window.Activate();
+            AddJavaWindow.Window.TopActivate();
         }
         else
         {
-            AddJavaWindow = new();
+            AddJavaWindow = new()
+            { 
+                NeedJava = version
+            };
             AWindow(AddJavaWindow);
         }
     }
@@ -601,7 +593,7 @@ public partial class App : Application
 
         if (AddWindows.TryGetValue(obj.UUID, out var value))
         {
-            value.Window.Activate();
+            value.Window.TopActivate();
             value.GoFile(type1, obj1.PID!);
         }
         else
@@ -617,7 +609,7 @@ public partial class App : Application
     {
         if (AddWindows.TryGetValue(obj.UUID, out var value))
         {
-            value.Window.Activate();
+            value.Window.TopActivate();
             return value.GoSet();
         }
         else
@@ -633,7 +625,7 @@ public partial class App : Application
     {
         if (AddWindows.TryGetValue(obj.UUID, out var value))
         {
-            value.Window.Activate();
+            value.Window.TopActivate();
             value.GoTo(type);
         }
         else
@@ -649,7 +641,7 @@ public partial class App : Application
     {
         if (ServerPackWindows.TryGetValue(obj.UUID, out var value))
         {
-            value.Window.Activate();
+            value.Window.TopActivate();
         }
         else
         {
@@ -659,15 +651,15 @@ public partial class App : Application
         }
     }
 
-    public static void ShowGameLog(GameSettingObj obj, bool loadlast = false)
+    public static void ShowGameLog(GameSettingObj obj)
     {
         if (GameLogWindows.TryGetValue(obj.UUID, out var value))
         {
-            value.Window.Activate();
+            value.Window.TopActivate();
         }
         else
         {
-            var con = new GameLogControl(obj, loadlast);
+            var con = new GameLogControl(obj);
             GameLogWindows.Add(obj.UUID, con);
             AWindow(con);
         }
@@ -677,7 +669,7 @@ public partial class App : Application
     {
         if (ConfigEditWindows.TryGetValue(obj.UUID, out var win1))
         {
-            win1.Window.Activate();
+            win1.Window.TopActivate();
         }
         else
         {
@@ -692,7 +684,7 @@ public partial class App : Application
         string key = obj.Game.UUID + ":" + obj.LevelName;
         if (ConfigEditWindows.TryGetValue(key, out var win1))
         {
-            win1.Window.Activate();
+            win1.Window.TopActivate();
         }
         else
         {
@@ -707,7 +699,7 @@ public partial class App : Application
         string key = obj.UUID;
         if (GameCloudWindows.TryGetValue(key, out var win1))
         {
-            win1.Window.Activate();
+            win1.Window.TopActivate();
             if (world)
             {
                 win1.GoWorld();
@@ -729,7 +721,7 @@ public partial class App : Application
     {
         if (CountWindow != null)
         {
-            CountWindow.Window.Activate();
+            CountWindow.Window.TopActivate();
         }
         else
         {
@@ -742,7 +734,7 @@ public partial class App : Application
     {
         if (GameExportWindows.TryGetValue(obj.UUID, out var value))
         {
-            value.Window.Activate();
+            value.Window.TopActivate();
         }
         else
         {
@@ -752,11 +744,11 @@ public partial class App : Application
         }
     }
 
-    public static void ShowNetFrp(Process? p = null, NetFrpLocalModel? model = null)
+    public static void ShowNetFrp()
     {
         if (NetFrpWindow != null)
         {
-            NetFrpWindow.Window.Activate();
+            NetFrpWindow.Window.TopActivate();
         }
         else
         {
@@ -789,6 +781,10 @@ public partial class App : Application
         {
             Dispatcher.UIThread.Post(win.Window.Close);
         }
+        if (GameLogWindows.TryGetValue(obj.UUID, out var win5))
+        {
+            Dispatcher.UIThread.Post(win5.Window.Close);
+        }
         if (AddWindows.TryGetValue(obj.UUID, out var win1))
         {
             Dispatcher.UIThread.Post(win1.Window.Close);
@@ -817,7 +813,6 @@ public partial class App : Application
 
     public static void Close()
     {
-        FrpProcess?.Kill(true);
         IsClose = true;
         OnClose?.Invoke();
         CloseAllWindow();
@@ -876,17 +871,6 @@ public partial class App : Application
         }
     }
 
-    public static Task<bool> HaveUpdate(string? data)
-    {
-        var window = GetMainWindow();
-        if (window == null)
-        {
-            return Task.FromResult(false);
-        }
-        data ??= "";
-        return window.Model.ShowTextWait(Lang("Gui.Info5"), data);
-    }
-
     public static void UpdateCheckFail()
     {
         var window = GetMainWindow();
@@ -894,7 +878,7 @@ public partial class App : Application
         {
             return;
         }
-        window.Model.Show(Lang("Gui.Error21"));
+        window.Model.Show(Lang("SettingWindow.Tab3.Error2"));
     }
 
     public static IBaseWindow? GetMainWindow()
@@ -975,6 +959,7 @@ public partial class App : Application
 
     public static void CloseAllWindow()
     {
+        (NetFrpWindow?.GetVisualRoot() as Window)?.Close();
         (CountWindow?.GetVisualRoot() as Window)?.Close();
         (AddJavaWindow?.GetVisualRoot() as Window)?.Close();
         (SkinWindow?.GetVisualRoot() as Window)?.Close();

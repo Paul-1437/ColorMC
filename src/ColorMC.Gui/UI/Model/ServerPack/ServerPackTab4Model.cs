@@ -1,11 +1,11 @@
-﻿using ColorMC.Core.LaunchPath;
+﻿using System.Collections.ObjectModel;
+using System.Linq;
+using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs.ServerPack;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-using System.Linq;
 
 namespace ColorMC.Gui.UI.Model.ServerPack;
 
@@ -71,6 +71,12 @@ public partial class ServerPackModel
             Obj.Config.Add(item);
         }
         LoadFile();
+    }
+
+    public void SetTab4Click()
+    {
+        Model.SetChoiseCall(_name, Gen);
+        Model.SetChoiseContent(_name, App.Lang("ServerPackWindow.Tab1.Text10"));
     }
 
     public void LoadFile()

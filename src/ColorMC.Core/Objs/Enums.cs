@@ -35,11 +35,34 @@ public enum Loaders
     Custom
 }
 
+/// <summary>
+/// 游戏版本类型
+/// </summary>
 public enum GameType
 {
+    /// <summary>
+    /// 发布版
+    /// </summary>
     Release,
+    /// <summary>
+    /// 快照版
+    /// </summary>
     Snapshot,
+    /// <summary>
+    /// 其他版本
+    /// </summary>
     Other
+}
+
+/// <summary>
+/// 自定义加载器类型
+/// </summary>
+public enum CustomLoaderType
+{
+    /// <summary>
+    /// 类Forge加载器
+    /// </summary>
+    ForgeLaunch
 }
 
 /// <summary>
@@ -56,7 +79,7 @@ public enum SourceType
 public enum PathType
 {
     BasePath, GamePath, ModPath, ConfigPath, ShaderpacksPath, ResourcepackPath, WorldBackPath,
-    SavePath, SchematicsPath, ScreenshotsPath, RunPath, DownloadPath, JavaPath, PicPath
+    SavePath, SchematicsPath, ScreenshotsPath, RunPath, DownloadPath, JavaPath, PicPath, ServerPackPath, RunDir
 }
 
 /// <summary>
@@ -65,8 +88,8 @@ public enum PathType
 public enum FileType
 {
     ModPack = 0, Mod, World, Shaderpack, Resourcepack, DataPacks, Schematic,
-    Java, Game, Config, AuthConfig, Pic, UI, Optifne, Skin, ServerPack, Music,
-    Text, Live2D, Icon, Head, JavaZip, Live2DCore, Loader
+    Java, Game, Config, AuthConfig, Pic, UI, Optifne, Skin, Music,
+    Text, Live2D, Icon, Head, JavaZip, Live2DCore, Loader, InputConfig
 }
 
 /// <summary>
@@ -91,8 +114,7 @@ public enum LanguageType
 public enum SourceLocal
 {
     Offical = 0,
-    BMCLAPI = 1,
-    MCBBS = 2
+    BMCLAPI = 1
 }
 
 /// <summary>
@@ -366,4 +388,12 @@ public enum CoreRunState
     Read, Init, GetInfo, Start, End,
     Download,
     Error,
+}
+
+/// <summary>
+/// 运行态
+/// </summary>
+public enum DownloadState
+{
+    Init, Start, End
 }

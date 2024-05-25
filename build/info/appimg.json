@@ -2,10 +2,10 @@
     "buildinfo": [
         {
             "prerun": [
-                "cp ./build_out/colormc-a%version%-linux-%arch%.deb ~/.cache/deb2appimage/debs/colormc-a%version%-linux-%arch%.deb"
+                "cp ./build_out/%deb_name% ~/.cache/deb2appimage/debs/%deb_name%"
             ],
             "name": "colormc",
-            "version": "a%version%",
+            "version": "%version%",
             "deps": "",
             "repoarch": "%arch%",
             "distrorepo": "Ubuntu",

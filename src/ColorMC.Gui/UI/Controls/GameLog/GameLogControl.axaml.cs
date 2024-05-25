@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.IO;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -8,8 +10,6 @@ using ColorMC.Core.Objs;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.GameLog;
 using ColorMC.Gui.UI.Windows;
-using System.ComponentModel;
-using System.IO;
 
 namespace ColorMC.Gui.UI.Controls.GameLog;
 
@@ -23,7 +23,6 @@ public partial class GameLogControl : UserControl, IUserControl
             _obj.Name);
 
     private Bitmap _icon;
-    private readonly bool _loadlast;
     public Bitmap GetIcon() => _icon;
 
     public string UseName { get; }
@@ -35,10 +34,9 @@ public partial class GameLogControl : UserControl, IUserControl
         UseName = ToString() ?? "GameLogControl";
     }
 
-    public GameLogControl(GameSettingObj obj, bool loadlast) : this()
+    public GameLogControl(GameSettingObj obj) : this()
     {
         _obj = obj;
-        _loadlast = loadlast;
 
         TextEditor1.TextArea.Background = Brushes.Transparent;
 
@@ -84,6 +82,7 @@ public partial class GameLogControl : UserControl, IUserControl
         }
 
         (DataContext as GameLogModel)!.Load();
+        (DataContext as GameLogModel)!.Load1();
     }
 
     public void Closed()
@@ -126,10 +125,5 @@ public partial class GameLogControl : UserControl, IUserControl
         var amodel = new GameLogModel(model, _obj);
         amodel.PropertyChanged += Model_PropertyChanged;
         DataContext = amodel;
-
-        if (_loadlast)
-        {
-            amodel.LoadLast();
-        }
     }
 }

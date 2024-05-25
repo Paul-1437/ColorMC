@@ -1,14 +1,14 @@
-﻿using Avalonia.Input;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Threading.Tasks;
+using Avalonia.Input;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.GameEdit;
 
@@ -48,7 +48,7 @@ public partial class GameEditModel
             return;
 
         Model.Progress(App.Lang("GameEditWindow.Tab5.Info11"));
-        res1 = await GameBinding.BackupWorld(_obj, item1);
+        res1 = await GameBinding.BackupWorld(_obj, item1, Model.ShowWait);
         Model.ProgressClose();
         if (!res1)
         {
@@ -112,7 +112,7 @@ public partial class GameEditModel
     public async Task EditWorld()
     {
         Model.Progress(App.Lang("GameEditWindow.Tab5.Info13"));
-        var res = await ToolPath.OpenMapEdit();
+        var res = await ToolPath.OpenMapEditAsync();
         Model.ProgressClose();
         if (!res.Item1)
         {

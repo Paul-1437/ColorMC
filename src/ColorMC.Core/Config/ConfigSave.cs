@@ -1,8 +1,8 @@
+using System.Collections.Concurrent;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs.Config;
 using ColorMC.Core.Utils;
 using Newtonsoft.Json;
-using System.Collections.Concurrent;
 
 namespace ColorMC.Core.Config;
 
@@ -14,7 +14,7 @@ public static class ConfigSave
     /// <summary>
     /// 保存队列
     /// </summary>
-    private static readonly ConcurrentBag<ConfigSaveObj> s_saveQue = new();
+    private static readonly ConcurrentBag<ConfigSaveObj> s_saveQue = [];
 
     /// <summary>
     /// 保存线程

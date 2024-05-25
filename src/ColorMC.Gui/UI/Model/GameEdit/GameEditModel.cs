@@ -1,8 +1,8 @@
-﻿using ColorMC.Core.Objs;
+﻿using System.Collections.Generic;
+using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.Objs;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.Generic;
 
 namespace ColorMC.Gui.UI.Model.GameEdit;
 
@@ -57,22 +57,45 @@ public partial class GameEditModel : MenuModel
         DisplayFilter = !DisplayFilter;
     }
 
-    public void SetBackHeadTab()
+    public void SetChoise()
     {
-        Model.SetChoiseContent(_useName, App.Lang("Button.Refash"));
+        Model.SetChoiseContent(_useName, App.Lang("Button.Filter"));
         Model.SetChoiseCall(_useName, ShowFilter);
     }
 
-    public void RemoveBackHead()
+    public void RemoveChoise()
     {
-        Model.RemoveChoiseContent(_useName);
-        Model.RemoveChoiseCall(_useName);
+        Model.RemoveChoiseData(_useName);
     }
 
     public void OpenLoad()
     {
         GameLoad();
         ConfigLoad();
+    }
+    private void PackState(CoreRunState state)
+    {
+        if (state == CoreRunState.Read)
+        {
+            Model.Progress(App.Lang("AddGameWindow.Tab2.Info1"));
+        }
+        else if (state == CoreRunState.Init)
+        {
+            Model.ProgressUpdate(App.Lang("AddGameWindow.Tab2.Info2"));
+        }
+        else if (state == CoreRunState.GetInfo)
+        {
+            Model.ProgressUpdate(App.Lang("AddGameWindow.Tab2.Info3"));
+        }
+        else if (state == CoreRunState.Download)
+        {
+            Model.ProgressUpdate(App.Lang("AddGameWindow.Tab2.Info4"));
+            Model.ProgressUpdate(-1);
+        }
+        else if (state == CoreRunState.End)
+        {
+            Group = "";
+        }
     }
 
     protected override void Close()

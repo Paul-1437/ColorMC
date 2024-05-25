@@ -1,16 +1,16 @@
-﻿using Avalonia.Threading;
-using ColorMC.Core;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using System.Timers;
+using Avalonia.Threading;
+using ColorMC.Core.Downloader;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-using System.Timers;
 using Timer = System.Timers.Timer;
 
 namespace ColorMC.Gui.UI.Model.Download;
@@ -23,6 +23,7 @@ public partial class DownloadModel : TopModel
 
     private long _count;
     private readonly Timer _timer;
+    private readonly ICollection<DownloadItemObj> _list;
 
     [ObservableProperty]
     private string _speed;
@@ -35,10 +36,8 @@ public partial class DownloadModel : TopModel
 
     private readonly string _useName;
 
-    public DownloadModel(BaseModel model) : base(model)
+    public DownloadModel(BaseModel model, ICollection<DownloadItemObj> list) : base(model)
     {
-        ColorMCCore.DownloadItemStateUpdate = DownloadItemStateUpdate;
-
         _useName = ToString() ?? "DownloadModel";
 
         _timer = new(TimeSpan.FromSeconds(1))
@@ -46,6 +45,7 @@ public partial class DownloadModel : TopModel
             AutoReset = true
         };
         _timer.Elapsed += Timer_Elapsed;
+        _list = list;
 
         Model.SetChoiseContent(_useName,
             App.Lang("DownloadWindow.Text1"), App.Lang("DownloadWindow.Text2"));
@@ -115,7 +115,7 @@ public partial class DownloadModel : TopModel
         Speed = UIUtils.MakeSpeedSize(now);
     }
 
-    public void DownloadItemStateUpdate(int index, DownloadItemObj item)
+    public void DownloadItemUpdate(DownloadItemObj item)
     {
         if (item.State == DownloadItemState.Init)
         {
@@ -151,7 +151,14 @@ public partial class DownloadModel : TopModel
         else if (item.State == DownloadItemState.Download)
         {
             long temp = value.Last;
-            value.NowSize = $"{(double)item.NowSize / item.AllSize * 100:0.##} %";
+            if (item.AllSize != 0)
+            {
+                value.NowSize = $"{(double)item.NowSize / item.AllSize * 100:0.##} %";
+            }
+            else
+            {
+                value.NowSize = $"{item.NowSize / 1000 / 1000}:0.## MB";
+            }
             value.Last = item.NowSize;
             _count += item.NowSize - temp;
         }
@@ -172,9 +179,25 @@ public partial class DownloadModel : TopModel
     {
         _timer.Dispose();
         Model.HeadBackEnable = true;
-        Model.RemoveChoiseCall(_useName);
-        Model.RemoveChoiseContent(_useName);
+        Model.RemoveChoiseData(_useName);
         ItemList.Clear();
         _downloadList.Clear();
+    }
+
+    public void DownloaderUpdate(DownloadState state)
+    {
+        if (state == DownloadState.Start)
+        {
+            Load();
+        }
+        else if (state == DownloadState.End)
+        {
+            OnPropertyChanged("WindowClose");
+        }
+    }
+
+    public Task<bool> Start()
+    {
+        return DownloadManager.StartAsync(_list, DownloaderUpdate, DownloadItemUpdate);
     }
 }

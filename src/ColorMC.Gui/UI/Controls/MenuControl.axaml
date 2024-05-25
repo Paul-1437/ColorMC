@@ -15,31 +15,30 @@
         <DockPanel>
             <Border
                 Margin="5,5,5,0"
-                Padding="{setting:Style BorderPadding}"
-                BorderThickness="2"
-                Classes="t1"
-                CornerRadius="{setting:Style ButtonCornerRadius}"
+                Classes="t2"
                 DockPanel.Dock="Top">
                 <StackPanel
                     Name="StackPanel2"
                     Background="Transparent"
                     Orientation="Horizontal">
                     <Button
-                        Width="25"
-                        Height="25"
+                        Width="36"
+                        Height="36"
+                        Margin="-3"
+                        Classes="top"
                         Command="{Binding OpenSide}"
                         ToolTip.Tip="{setting:Localize ToolTip.Text5}"
                         ToolTip.VerticalOffset="-30">
                         <Svg Path="/Resource/Icon/menu.svg" />
                     </Button>
                     <TextBlock
-                        Margin="20,0,0,0"
-                        FontSize="18"
+                        Margin="10,0,0,0"
+                        FontSize="20"
                         Text="{Binding Title}" />
                 </StackPanel>
             </Border>
 
-            <Panel Margin="0,3,0,0" ClipToBounds="True">
+            <Panel Margin="0,5,0,0" ClipToBounds="True">
                 <Decorator Name="Content1" />
                 <Decorator Name="Content2" />
             </Panel>
@@ -63,10 +62,7 @@
                                 Fill="{setting:Colors Font}"
                                 Path="/Resource/Icon/left1.svg"
                                 Stroke="{setting:Colors Font}" />
-                            <TextBlock
-                                Margin="5,0,0,0"
-                                VerticalAlignment="Center"
-                                Text="{setting:Localize Gui.Info32}" />
+                            <TextBlock Margin="5,0,0,0" Text="{setting:Localize MenuControl.Text1}" />
                         </StackPanel>
                     </ListBoxItem>
                     <ListBox
@@ -82,10 +78,7 @@
                                         Fill="{setting:Colors Font}"
                                         Path="{Binding Icon}"
                                         Stroke="{setting:Colors Font}" />
-                                    <TextBlock
-                                        Margin="5,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Text="{Binding Text}" />
+                                    <TextBlock Margin="5,0,0,0" Text="{Binding Text}" />
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

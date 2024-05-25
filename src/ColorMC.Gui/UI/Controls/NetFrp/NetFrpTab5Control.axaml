@@ -12,60 +12,55 @@
     d:DesignWidth="800"
     x:DataType="model:NetFrpModel"
     mc:Ignorable="d">
-    <DockPanel Name="ScrollViewer1" Margin="5,0,5,2">
+    <DockPanel Name="ScrollViewer1" Margin="5,0,5,0">
         <Border
-            Margin="0,0,0,3"
-            Padding="{setting:Style BorderPadding}"
-            Background="{setting:Colors GroupBack}"
-            BorderBrush="{setting:Colors GroupColor}"
-            BorderThickness="2"
-            CornerRadius="{setting:Style ButtonCornerRadius}"
+            Margin="0,0,0,5"
+            Classes="t2"
             DockPanel.Dock="Top">
             <StackPanel>
-                <WrapPanel Orientation="Horizontal">
+                <WrapPanel Margin="0,0,0,-5" Orientation="Horizontal">
                     <TextBox
-                        MinWidth="200"
+                        MinWidth="210"
                         Margin="0,0,5,5"
                         Classes="input1"
                         Text="{Binding KeyOpenFrp}"
                         Watermark="{setting:Localize NetFrpWindow.Tab1.Text1}" />
-                    <Button
-                        Width="100"
-                        Height="25"
-                        Margin="0,0,5,0"
-                        Command="{Binding GetChannelOpenFrp}"
-                        Content="{setting:Localize NetFrpWindow.Tab1.Text6}"
-                        DockPanel.Dock="Right" />
-                    <Button
-                        Width="100"
-                        Height="25"
-                        Margin="0,0,5,0"
-                        Command="{Binding OpenUrlOpenFrp}"
-                        Content="{setting:Localize AddWindow.Control.Text3}" />
-                    <views:HyperLink
-                        Margin="5,0,0,0"
-                        HorizontalAlignment="Stretch"
-                        VerticalAlignment="Center"
-                        Alias="{setting:Localize NetFrpWindow.Tab5.Text1}"
-                        Command="{Binding OpenUrl1}" />
-                </WrapPanel>
-                <WrapPanel Orientation="Horizontal">
-                    <TextBlock Margin="0,0,5,0" Text="{setting:Localize NetFrpWindow.Tab1.Text5}" />
-                    <TextBlock Margin="0,0,5,0" Text="{setting:Localize NetFrpWindow.Tab1.Text7}" />
+                    <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                        <Button
+                            Width="100"
+                            Height="30"
+                            Margin="-2,-2,3,-2"
+                            Classes="top"
+                            Command="{Binding GetChannelOpenFrp}"
+                            Content="{setting:Localize NetFrpWindow.Tab1.Text6}"
+                            DockPanel.Dock="Right" />
+                        <Button
+                            Width="100"
+                            Height="30"
+                            Margin="-2,-2,3,-2"
+                            Classes="top"
+                            Command="{Binding OpenUrlOpenFrp}"
+                            Content="{setting:Localize AddWindow.Control.Text3}" />
+                    </StackPanel>
                 </WrapPanel>
             </StackPanel>
         </Border>
 
-        <DockPanel>
+        <Panel Margin="0,0,0,5">
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsVisible="{Binding IsOpenFrpEmpty}"
+                Text="{setting:Localize NetFrpWindow.Tab1.Text5}" />
             <ScrollViewer>
                 <ItemsControl ItemsSource="{Binding RemotesOpenFrp}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <view:NetFrpRemoteControl Margin="0,0,0,5" DataContext="{Binding}" />
+                            <view:NetFrpRemoteControl Margin="0,0,0,3" DataContext="{Binding}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
-        </DockPanel>
+        </Panel>
     </DockPanel>
 </UserControl>

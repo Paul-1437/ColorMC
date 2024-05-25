@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using ColorMC.Gui.UI.Model.GameExport;
-using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UI.Controls.GameExport;
 
@@ -12,11 +11,6 @@ public partial class Tab2Control : UserControl
         InitializeComponent();
 
         ScrollViewer1.PointerWheelChanged += ScrollViewer1_PointerWheelChanged;
-    }
-
-    public void Opened()
-    {
-        DataGrid1.SetFontColor();
     }
 
     private void ScrollViewer1_PointerWheelChanged(object? sender, PointerWheelEventArgs e)

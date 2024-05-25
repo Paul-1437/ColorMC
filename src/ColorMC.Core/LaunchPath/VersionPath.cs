@@ -22,15 +22,18 @@ public static class VersionPath
     public const string Name4 = "neoforged";
 
     //版本缓存
-    private readonly static Dictionary<string, GameArgObj> s_gameArgs = new();
-    private readonly static Dictionary<string, ForgeInstallObj> s_forgeInstalls = new();
-    private readonly static Dictionary<string, ForgeInstallObj> s_neoForgeInstalls = new();
-    private readonly static Dictionary<string, ForgeLaunchObj> s_forgeLaunchs = new();
-    private readonly static Dictionary<string, ForgeLaunchObj> s_neoForgeLaunchs = new();
-    private readonly static Dictionary<string, FabricLoaderObj> s_fabricLoaders = new();
-    private readonly static Dictionary<string, QuiltLoaderObj> s_quiltLoaders = new();
+    private readonly static Dictionary<string, GameArgObj> s_gameArgs = [];
+    private readonly static Dictionary<string, ForgeInstallObj> s_forgeInstalls = [];
+    private readonly static Dictionary<string, ForgeInstallObj> s_neoForgeInstalls = [];
+    private readonly static Dictionary<string, ForgeLaunchObj> s_forgeLaunchs = [];
+    private readonly static Dictionary<string, ForgeLaunchObj> s_neoForgeLaunchs = [];
+    private readonly static Dictionary<string, FabricLoaderObj> s_fabricLoaders = [];
+    private readonly static Dictionary<string, QuiltLoaderObj> s_quiltLoaders = [];
+    private readonly static Dictionary<string, CustomLoaderObj> s_customLoader = [];
 
     private static VersionObj? _version;
+
+    public static string BaseDir { get; private set; }
 
     private static string ForgeDir => BaseDir + "/" + Name1;
     private static string FabricDir => BaseDir + "/" + Name2;
@@ -41,13 +44,13 @@ public static class VersionPath
     /// 获取游戏版本列表
     /// </summary>
     /// <returns></returns>
-    public static async Task<VersionObj?> GetVersions()
+    public static async Task<VersionObj?> GetVersionsAsync()
     {
         try
         {
             if (_version == null)
             {
-                await ReadVersions();
+                await ReadVersionsAsync();
             }
             return _version;
         }
@@ -57,8 +60,6 @@ public static class VersionPath
             return null;
         }
     }
-
-    public static string BaseDir { get; private set; }
 
     /// <summary>
     /// 初始化
@@ -80,7 +81,7 @@ public static class VersionPath
     /// 从在线获取版本信息
     /// </summary>
     /// <returns></returns>
-    public static async Task GetFromWeb()
+    public static async Task GetFromWebAsync()
     {
         (_version, var data) = await GameAPI.GetVersions();
         if (_version != null)
@@ -103,15 +104,15 @@ public static class VersionPath
     /// 是否存在版本信息
     /// </summary>
     /// <returns>结果</returns>
-    public static async Task<bool> Have()
+    public static async Task<bool> IsHaveVersionInfoAsync()
     {
-        return await GetVersions() != null;
+        return await GetVersionsAsync() != null;
     }
 
     /// <summary>
     /// 读取版本信息
     /// </summary>
-    public static async Task ReadVersions()
+    public static async Task ReadVersionsAsync()
     {
         string file = BaseDir + "/version.json";
         if (File.Exists(file))
@@ -121,7 +122,7 @@ public static class VersionPath
         }
         else
         {
-            await GetFromWeb();
+            await GetFromWebAsync();
         }
     }
 
@@ -138,9 +139,9 @@ public static class VersionPath
     /// 添加版本信息
     /// </summary>
     /// <param name="obj">游戏数据</param>
-    public static async Task<GameArgObj?> AddGame(VersionObj.Versions obj)
+    public static async Task<GameArgObj?> AddGameAsync(VersionObj.Versions obj)
     {
-        var url = UrlHelper.DownloadIndex(BaseClient.Source, obj);
+        var url = UrlHelper.Download(obj.url, BaseClient.Source);
         (var obj1, var data) = await GameAPI.GetGame(url);
         if (obj1 == null)
         {
@@ -161,7 +162,10 @@ public static class VersionPath
         PathHelper.WriteText(Path.GetFullPath($"{FabricDir}/{obj.id}.json"), array);
 
         var key = $"{mc}-{version}";
-        s_fabricLoaders.Add(key, obj);
+        if (!s_fabricLoaders.TryAdd(key, obj))
+        {
+            s_fabricLoaders[key] = obj;
+        }
     }
 
     /// <summary>
@@ -189,11 +193,17 @@ public static class VersionPath
         var key = $"{mc}-{version}";
         if (neo)
         {
-            s_neoForgeLaunchs.Add(key, obj);
+            if (!s_neoForgeLaunchs.TryAdd(key, obj))
+            {
+                s_neoForgeLaunchs[key] = obj;
+            }
         }
         else
         {
-            s_forgeLaunchs.Add(key, obj);
+            if (!s_forgeLaunchs.TryAdd(key, obj))
+            {
+                s_forgeLaunchs[key] = obj;
+            }
         }
     }
 
@@ -223,11 +233,17 @@ public static class VersionPath
         var key = $"{mc}-{version}";
         if (neo)
         {
-            s_neoForgeInstalls.Add(key, obj);
+            if (!s_neoForgeInstalls.TryAdd(key, obj))
+            {
+                s_neoForgeInstalls[key] = obj;
+            }
         }
         else
         {
-            s_forgeInstalls.Add(key, obj);
+            if (!s_forgeInstalls.TryAdd(key, obj))
+            {
+                s_forgeInstalls[key] = obj;
+            }
         }
     }
 
@@ -243,7 +259,23 @@ public static class VersionPath
         PathHelper.WriteText(Path.GetFullPath($"{QuiltDir}/{obj.id}.json"), data);
 
         var key = $"{mc}-{version}";
-        s_quiltLoaders.Add(key, obj);
+        if (!s_quiltLoaders.TryAdd(key, obj))
+        {
+            s_quiltLoaders[key] = obj;
+        }
+    }
+
+    /// <summary>
+    /// 添加自定义加载器信息
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="uuid"></param>
+    public static void AddGame(CustomLoaderObj obj, string uuid)
+    {
+        if (!s_customLoader.TryAdd(uuid, obj))
+        {
+            s_customLoader[uuid] = obj;
+        }
     }
 
     /// <summary>
@@ -273,9 +305,9 @@ public static class VersionPath
     /// 更新json
     /// </summary>
     /// <param name="version">游戏版本</param>
-    public static async Task<GameArgObj?> CheckUpdate(string version)
+    public static async Task<GameArgObj?> CheckUpdateAsync(string version)
     {
-        var ver = await GetVersions();
+        var ver = await GetVersionsAsync();
         if (ver == null)
         {
             return null;
@@ -293,7 +325,7 @@ public static class VersionPath
             temp.Close();
             if (sha1 != data.sha1)
             {
-                return await AddGame(data);
+                return await AddGameAsync(data);
             }
 
             return GetVersion(version);
@@ -497,5 +529,20 @@ public static class VersionPath
         var obj = JsonConvert.DeserializeObject<QuiltLoaderObj>(PathHelper.ReadText(file)!)!;
         s_quiltLoaders.Add(key, obj);
         return obj;
+    }
+
+    /// <summary>
+    /// 获取自定义加载器数据
+    /// </summary>
+    /// <param name="uuid"></param>
+    /// <returns></returns>
+    public static CustomLoaderObj? GetCustomLoaderObj(string uuid)
+    {
+        if (s_customLoader.TryGetValue(uuid, out var temp))
+        {
+            return temp;
+        }
+
+        return null;
     }
 }

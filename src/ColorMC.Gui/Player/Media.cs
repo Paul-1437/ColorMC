@@ -1,13 +1,13 @@
-using ColorMC.Core.Net;
-using ColorMC.Core.Objs;
-using ColorMC.Core.Utils;
-using ColorMC.Gui.Player.Decoder.Mp3;
 using System;
 using System.Buffers.Binary;
 using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using ColorMC.Core.Net;
+using ColorMC.Core.Objs;
+using ColorMC.Core.Utils;
+using ColorMC.Gui.Player.Decoder.Mp3;
 
 namespace ColorMC.Gui.Player;
 
@@ -57,7 +57,7 @@ public static class Media
         }
         else
         {
-            s_player = new OpenalPlayer();
+            s_player = new OpenALPlayer();
         }
         App.OnClose += Close;
     }
@@ -131,6 +131,8 @@ public static class Media
         });
 
         s_cancel = new();
+
+        Decoding = true;
 
         var file = File.OpenRead(filePath);
         var temp = new byte[4];
@@ -223,6 +225,8 @@ public static class Media
                 index += size;
             }
         }
+
+        Decoding = false;
 
         return (true, null);
     }

@@ -14,19 +14,12 @@
     ToolTip.Tip="{setting:Localize ToolTip.Text49}"
     ToolTip.VerticalOffset="-30"
     mc:Ignorable="d">
-    <Panel Margin="1" Background="{setting:Colors TranBack}">
+    <Panel>
         <Rectangle
             Fill="{setting:Colors Back}"
             IsVisible="{Binding Top}"
             RadiusX="{setting:Style Radius}"
             RadiusY="{setting:Style Radius}" />
-        <Rectangle
-            Fill="{setting:Colors TranBack}"
-            IsVisible="{Binding IsSelect}"
-            RadiusX="{setting:Style Radius}"
-            RadiusY="{setting:Style Radius}"
-            Stroke="{setting:Colors Main}"
-            StrokeThickness="2" />
         <Panel Margin="5">
             <Border
                 Width="90"
@@ -73,16 +66,19 @@
             VerticalAlignment="Top"
             Orientation="Horizontal">
             <Button
-                Width="25"
-                Height="25"
-                Margin="0,0,3,0"
+                Width="30"
+                Height="30"
+                Margin="-2,-3,3,-2"
+                Classes="top"
                 Command="{Binding OpenWeb}"
                 IsVisible="{Binding EnableButton}">
                 <Svg Path="/Resource/Icon/Item/web.svg" />
             </Button>
             <Button
-                Width="25"
-                Height="25"
+                Width="30"
+                Height="30"
+                Margin="-2,-3,-2,-2"
+                Classes="top"
                 Command="{Binding Install}"
                 IsEnabled="{Binding HaveDownload}"
                 IsVisible="{Binding EnableButton, FallbackValue=true}">
@@ -92,6 +88,7 @@
 
         <TextBlock
             Margin="3"
+            Padding="3"
             HorizontalAlignment="Left"
             VerticalAlignment="Bottom"
             Background="{setting:Colors Bottom1}"

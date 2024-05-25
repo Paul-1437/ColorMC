@@ -24,10 +24,10 @@ public static class QuiltAPI
                 return s_supportVersion;
 
             string url = $"{UrlHelper.GetQuiltMeta(local)}/game";
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return null;
             }
@@ -61,10 +61,10 @@ public static class QuiltAPI
         try
         {
             string url = UrlHelper.GetQuiltMeta(local);
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return null;
             }
@@ -86,10 +86,10 @@ public static class QuiltAPI
         try
         {
             string url = $"{UrlHelper.GetQuiltMeta(local)}/loader/{mc}";
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return null;
             }
@@ -122,10 +122,10 @@ public static class QuiltAPI
         try
         {
             string url = $"{UrlHelper.GetQuiltMeta(local)}/loader/{mc}/{version}/profile/json";
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return null;
             }

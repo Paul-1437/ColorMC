@@ -1,13 +1,12 @@
-using ColorMC.Core;
-using ColorMC.Core.Downloader;
-using ColorMC.Core.Helpers;
-using ColorMC.Core.Net.Apis;
-using ColorMC.Core.Objs;
-using ColorMC.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using ColorMC.Core;
+using ColorMC.Core.Helpers;
+using ColorMC.Core.Net.Apis;
+using ColorMC.Core.Objs;
+using ColorMC.Core.Utils;
 
 namespace ColorMC.Gui.Utils;
 
@@ -76,7 +75,7 @@ public static class UpdateChecker
         catch (Exception e)
         {
             App.UpdateCheckFail();
-            Logs.Error(App.Lang("Gui.Error21"), e);
+            Logs.Error(App.Lang("SettingWindow.Tab3.Error2"), e);
         }
 
         return (false, false, null);
@@ -127,7 +126,7 @@ public static class UpdateChecker
             }
         };
 
-        var res = await DownloadManager.Start(list);
+        var res = await App.StartDownload(list);
         if (res)
         {
             App.Reboot();
@@ -150,7 +149,7 @@ public static class UpdateChecker
             var obj = await ColorMCAPI.GetUpdateSha1();
             if (obj == null || obj.TryGetValue("res", out _))
             {
-                App.ShowError(App.Lang("Gui.Error21"), "Json Error");
+                App.ShowError(App.Lang("SettingWindow.Tab3.Error2"), "Json Error");
                 return (false, null);
             }
 
@@ -177,7 +176,7 @@ public static class UpdateChecker
         }
         catch (Exception e)
         {
-            App.ShowError(App.Lang("Gui.Error21"), e);
+            App.ShowError(App.Lang("SettingWindow.Tab3.Error2"), e);
         }
 
         return (null, null);

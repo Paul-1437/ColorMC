@@ -3,7 +3,6 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using ColorMC.Gui.UI.Flyouts;
 using ColorMC.Gui.UI.Model.Setting;
-using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UI.Controls.Setting;
 
@@ -23,11 +22,6 @@ public partial class Tab5Control : UserControl
         {
             model.WhellChange(e.Delta.Y);
         }
-    }
-
-    public void Opened()
-    {
-        DataGrid1.SetFontColor();
     }
 
     private void DataGrid1_CellPointerPressed(object? sender,

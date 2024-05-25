@@ -3,7 +3,6 @@ using Avalonia.Input;
 using Avalonia.Threading;
 using ColorMC.Gui.UI.Flyouts;
 using ColorMC.Gui.UI.Model.ServerPack;
-using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UI.Controls.ServerPack;
 
@@ -15,11 +14,6 @@ public partial class Tab4Control : UserControl
 
         DataGrid1.CellPointerPressed += DataGrid1_CellPointerPressed;
         ScrollViewer1.PointerWheelChanged += ScrollViewer1_PointerWheelChanged;
-    }
-
-    public void Opened()
-    {
-        DataGrid1.SetFontColor();
     }
 
     private void DataGrid1_CellPointerPressed(object? sender, DataGridCellPointerPressedEventArgs e)

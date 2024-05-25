@@ -1,12 +1,12 @@
-﻿using Avalonia.Input;
+﻿using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using Avalonia.Input;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.GameEdit;
 
@@ -42,7 +42,7 @@ public partial class GameEditModel
 
         if (res == false)
         {
-            Model.Show(App.Lang("Gui.Error12"));
+            Model.Show(App.Lang("GameEditWindow.Tab11.Error1"));
             return;
         }
 

@@ -1,8 +1,8 @@
+using System.Text;
 using ColorMC.Core.Helpers;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using ICSharpCode.SharpZipLib.Zip;
-using System.Text;
 using Crc32 = ICSharpCode.SharpZipLib.Checksum.Crc32;
 
 namespace ColorMC.Core.Utils;
@@ -10,7 +10,8 @@ namespace ColorMC.Core.Utils;
 /// <summary>
 /// 压缩包处理
 /// </summary>
-public class ZipUtils
+public class ZipUtils(ColorMCCore.ZipUpdate? ZipUpdate = null, 
+    ColorMCCore.Request? GameRequest = null)
 {
     private int Size = 0;
     private int Now = 0;
@@ -22,7 +23,7 @@ public class ZipUtils
     /// <param name="zipFile">文件名</param>
     /// <param name="filter">过滤</param>
     /// <returns></returns>
-    public async Task ZipFile(string zipDir, string zipFile, List<string>? filter = null)
+    public async Task ZipFileAsync(string zipDir, string zipFile, List<string>? filter = null)
     {
         if (zipDir[^1] != Path.DirectorySeparatorChar)
             zipDir += Path.DirectorySeparatorChar;
@@ -30,7 +31,7 @@ public class ZipUtils
         s.SetLevel(9);
         Size = PathHelper.GetAllFile(zipDir).Count;
         Now = 0;
-        await Zip(zipDir, s, zipDir, filter);
+        await ZipAsync(zipDir, s, zipDir, filter);
         await s.FinishAsync(CancellationToken.None);
         s.Close();
     }
@@ -43,7 +44,7 @@ public class ZipUtils
     /// <param name="staticFile"></param>
     /// <param name="filter"></param>
     /// <returns></returns>
-    private async Task Zip(string strFile, ZipOutputStream s,
+    private async Task ZipAsync(string strFile, ZipOutputStream s,
         string staticFile, List<string>? filter)
     {
         if (strFile[^1] != Path.DirectorySeparatorChar) strFile += Path.DirectorySeparatorChar;
@@ -57,12 +58,12 @@ public class ZipUtils
             }
             if (Directory.Exists(file))
             {
-                await Zip(file, s, staticFile, filter);
+                await ZipAsync(file, s, staticFile, filter);
             }
             else
             {
                 Now++;
-                ColorMCCore.UnZipItem?.Invoke(Path.GetFileName(file), Now, Size);
+                ZipUpdate?.Invoke(Path.GetFileName(file), Now, Size);
                 using var fs = PathHelper.OpenRead(file)!;
 
                 byte[] buffer = new byte[fs.Length];
@@ -89,7 +90,7 @@ public class ZipUtils
     /// <param name="zipList">压缩的文件</param>
     /// <param name="path">替换的前置路径</param>
     /// <returns></returns>
-    public async Task ZipFile(string zipFile, List<string> zipList, string path)
+    public async Task ZipFileAsync(string zipFile, List<string> zipList, string path)
     {
         using var s = new ZipOutputStream(PathHelper.OpenWrite(zipFile));
         s.SetLevel(9);
@@ -111,7 +112,7 @@ public class ZipUtils
             else
             {
                 Now++;
-                ColorMCCore.UnZipItem?.Invoke(item, Now, Size);
+                ZipUpdate?.Invoke(item, Now, Size);
                 using var fs = PathHelper.OpenRead(item)!;
 
                 byte[] buffer = new byte[fs.Length];
@@ -136,7 +137,7 @@ public class ZipUtils
     /// </summary>
     /// <param name="path">解压路径</param>
     /// <param name="local">文件名</param>
-    public async Task<bool> Unzip(string path, string local, Stream stream)
+    public async Task<bool> UnzipAsync(string path, string local, Stream stream)
     {
         if (local.EndsWith("tar.gz"))
         {
@@ -154,7 +155,7 @@ public class ZipUtils
             foreach (ZipEntry theEntry in s)
             {
                 Now++;
-                ColorMCCore.UnZipItem?.Invoke(theEntry.Name, Now, Size);
+                ZipUpdate?.Invoke(theEntry.Name, Now, Size);
 
                 var file = $"{path}/{theEntry.Name}";
                 var info = new FileInfo(file);
@@ -165,11 +166,11 @@ public class ZipUtils
                 {
                     if (PathHelper.FileHasInvalidChars(info.Name))
                     {
-                        if (ColorMCCore.GameRequest == null)
+                        if (GameRequest == null)
                         {
                             return false;
                         }
-                        var res = await ColorMCCore.GameRequest.Invoke(string.Format(
+                        var res = await GameRequest.Invoke(string.Format(
                             LanguageHelper.Get("Core.Zip.Info1"), theEntry.Name));
                         if (!res)
                         {
@@ -198,7 +199,7 @@ public class ZipUtils
         if (entry != null && message == null)
         {
             Now++;
-            ColorMCCore.UnZipItem?.Invoke(entry.Name, Now, Size);
+            ZipUpdate?.Invoke(entry.Name, Now, Size);
         }
     }
 }

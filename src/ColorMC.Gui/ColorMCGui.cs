@@ -1,3 +1,10 @@
+using System;
+using System.IO;
+using System.IO.MemoryMappedFiles;
+using System.Net;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -7,13 +14,6 @@ using ColorMC.Core.Utils;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.MemoryMappedFiles;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Tmds.DBus.Protocol;
 
 namespace ColorMC.Gui;
@@ -21,8 +21,8 @@ namespace ColorMC.Gui;
 public static class ColorMCGui
 {
     public static string RunDir { get; private set; }
-
     public static string[] BaseSha1 { get; private set; }
+    public static string InputDir { get; private set; }
 
     public static RunType RunType { get; private set; } = RunType.AppBuilder;
 
@@ -40,7 +40,8 @@ public static class ColorMCGui
     public static void Main(string[] args)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 |
+            SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
         try
         {
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
@@ -49,12 +50,19 @@ public static class ColorMCGui
 
             RunType = RunType.Program;
 
-            RunDir = SystemInfo.Os switch
+            if (string.IsNullOrWhiteSpace(InputDir))
             {
-                OsType.Linux => $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/ColorMC/",
-                OsType.MacOS => "/Users/shared/ColorMC/",
-                _ => AppContext.BaseDirectory
-            };
+                RunDir = SystemInfo.Os switch
+                {
+                    OsType.Linux => $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/ColorMC/",
+                    OsType.MacOS => "/Users/shared/ColorMC/",
+                    _ => AppContext.BaseDirectory
+                };
+            }
+            else
+            {
+                RunDir = InputDir;
+            }
 
             Console.WriteLine($"RunDir:{RunDir}");
 
@@ -70,7 +78,7 @@ public static class ColorMCGui
                 }
             }
 
-            string name = RunDir + "lock";
+            var name = RunDir + "lock";
             if (File.Exists(name))
             {
                 try
@@ -92,10 +100,12 @@ public static class ColorMCGui
 
             BuildAvaloniaApp()
                  .StartWithClassicDesktopLifetime(args);
+
+            Console.WriteLine();
         }
         catch (Exception e)
         {
-            PathBinding.OpFile(Logs.SaveCrash("Gui Crash", e));
+            PathBinding.OpFile(Logs.Crash("Gui Crash", e));
             App.Close();
         }
     }
@@ -107,7 +117,7 @@ public static class ColorMCGui
             Logs.Error(App.Lang("Gui.Error25"), e.Exception);
             return;
         }
-        Logs.SaveCrash(App.Lang("Gui.Error25"), e.Exception);
+        Logs.Crash(App.Lang("Gui.Error25"), e.Exception);
     }
 
     public static void StartPhone(string local)
@@ -129,7 +139,8 @@ public static class ColorMCGui
     {
         string name = RunDir + "lock";
         using var temp = File.Open(name, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-        using var file = MemoryMappedFile.CreateFromFile(temp, null, 100, MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
+        using var file = MemoryMappedFile.CreateFromFile(temp, null, 100,
+            MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
         using var reader = file.CreateViewAccessor();
         reader.Write(0, false);
         while (!App.IsClose)
@@ -151,6 +162,11 @@ public static class ColorMCGui
         BaseSha1 = data;
     }
 
+    public static void SetInputDir(string dir)
+    {
+        InputDir = dir;
+    }
+
     public static AppBuilder BuildAvaloniaApp()
     {
         if (RunType == RunType.AppBuilder)
@@ -164,27 +180,44 @@ public static class ColorMCGui
         var opt = new Win32PlatformOptions();
         if (SystemInfo.IsArm)
         {
-            opt.RenderingMode = new List<Win32RenderingMode>() { Win32RenderingMode.Wgl };
+            opt.RenderingMode = [Win32RenderingMode.Wgl];
         }
-        if (config.ShouldRenderOnUIThread != null)
+        if (config.ShouldRenderOnUIThread is { } value)
         {
-            opt.ShouldRenderOnUIThread = config.ShouldRenderOnUIThread == true;
+            opt.ShouldRenderOnUIThread = value;
+        }
+        if (config.OverlayPopups is { } value1)
+        {
+            opt.OverlayPopups = value1;
         }
 
         var config1 = GuiConfigUtils.Config.Render.X11;
         var opt1 = new X11PlatformOptions();
-        if (config1.UseDBusMenu != null)
+        if (config1.UseDBusMenu is { } value2)
         {
-            opt1.UseDBusMenu = config1.UseDBusMenu == true;
+            opt1.UseDBusMenu = value2;
         }
-        if (config1.UseDBusFilePicker != null)
+        if (config1.UseDBusFilePicker is { } value3)
         {
-            opt1.UseDBusFilePicker = config1.UseDBusFilePicker == true;
+            opt1.UseDBusFilePicker = value3;
         }
-        if (config1.OverlayPopups != null)
+        if (config1.OverlayPopups is { } value4)
         {
-            opt1.OverlayPopups = config1.OverlayPopups == true;
+            opt1.OverlayPopups = value4;
         }
+        if (SystemInfo.IsArm)
+        {
+            opt1.RenderingMode = [X11RenderingMode.Egl];
+        }
+        else if (config1.SoftwareRender == true)
+        {
+            opt1.RenderingMode = [X11RenderingMode.Software];   
+        }
+
+        var opt2 = new MacOSPlatformOptions()
+        {
+            DisableDefaultApplicationMenuItems = true,
+        };
 
         return AppBuilder.Configure<App>()
             .With(new FontManagerOptions
@@ -193,6 +226,7 @@ public static class ColorMCGui
             })
             .With(opt)
             .With(opt1)
+            .With(opt2)
             .LogToTrace()
             .UsePlatformDetect();
     }

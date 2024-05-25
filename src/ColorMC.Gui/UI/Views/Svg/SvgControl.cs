@@ -1,3 +1,4 @@
+using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -6,7 +7,6 @@ using Avalonia.Svg.Skia;
 using ColorMC.Core.Utils;
 using ShimSkiaSharp;
 using Svg.Skia;
-using System;
 
 namespace ColorMC.Gui.UI.Views.Svg;
 
@@ -15,7 +15,7 @@ namespace ColorMC.Gui.UI.Views.Svg;
 /// </summary>
 public class SvgControl : Control
 {
-    private readonly Uri _baseUri;
+    private readonly Uri? _baseUri;
     private SKSvg? _svg;
 
     /// <summary>
@@ -109,7 +109,7 @@ public class SvgControl : Control
     /// Initializes a new instance of the <see cref="Svg"/> class.
     /// </summary>
     /// <param name="baseUri">The base URL for the XAML context.</param>
-    public SvgControl(Uri baseUri)
+    public SvgControl(Uri? baseUri)
     {
         _baseUri = baseUri;
     }
@@ -135,7 +135,6 @@ public class SvgControl : Control
             : default;
 
         return Stretch.CalculateSize(availableSize, sourceSize, StretchDirection);
-
     }
 
     protected override Size ArrangeOverride(Size finalSize)
@@ -193,7 +192,6 @@ public class SvgControl : Control
         }
     }
 
-    /// <inheritdoc/>
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);

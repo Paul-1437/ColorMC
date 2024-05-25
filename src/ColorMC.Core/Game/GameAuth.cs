@@ -21,42 +21,38 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> LoginWithOAuth()
+        string? Message, Exception? Ex)> LoginOAuthAsync(ColorMCCore.LoginOAuthCode loginOAuth)
     {
-        AuthState now = AuthState.OAuth;
+        var now = AuthState.OAuth;
         try
         {
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.OAuth);
-            var (done, code, url) = await OAuthAPI.GetCode();
+            var (done, code, url) = await OAuthAPI.GetCodeAsync();
             if (done != LoginState.Done)
             {
                 return (AuthState.OAuth, done, null, url!, null);
             }
-            ColorMCCore.LoginOAuthCode?.Invoke(url!, code!);
-            (done, var obj) = await OAuthAPI.RunGetCode();
+            loginOAuth(url!, code!);
+            (done, var obj) = await OAuthAPI.RunGetCodeAsync();
             if (done != LoginState.Done)
             {
                 return (AuthState.OAuth, done, null,
                     LanguageHelper.Get("Core.Login.Error1"), null);
             }
             now = AuthState.XBox;
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.XBox);
-            (done, var XNLToken, var XBLUhs) = await OAuthAPI.GetXBLAsync(obj!.access_token);
+            (done, var xnlToken, var xblUhs) = await OAuthAPI.GetXBLAsync(obj!.access_token);
             if (done != LoginState.Done)
             {
                 return (AuthState.XBox, done, null,
                     LanguageHelper.Get("Core.Login.Error2"), null);
             }
             now = AuthState.XSTS;
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.XSTS);
-            (done, var xsts, var xsts1) = await OAuthAPI.GetXSTSAsync(XNLToken!);
+            (done, var xsts, var xsts1) = await OAuthAPI.GetXSTSAsync(xnlToken!);
             if (done != LoginState.Done)
             {
                 return (AuthState.XSTS, done, null,
                     LanguageHelper.Get("Core.Login.Error3"), null);
             }
             now = AuthState.Token;
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.Token);
             (done, var token) = await OAuthAPI.GetMinecraftAsync(xsts1!, xsts!);
             if (done != LoginState.Done)
             {
@@ -82,7 +78,7 @@ public static class GameAuth
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Login.Error6");
+            var text = LanguageHelper.Get("Core.Login.Error6");
             Logs.Error(text, e);
             return (now, LoginState.Crash, null, text, e);
         }
@@ -106,7 +102,7 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> RefreshWithOAuth(LoginObj obj)
+        string? Message, Exception? Ex)> RefreshOAuthAsync(LoginObj obj)
     {
         AuthState now = AuthState.OAuth;
         try
@@ -116,29 +112,24 @@ public static class GameAuth
             {
                 return (AuthState.Profile, LoginState.Done, obj, null, null);
             }
-
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.OAuth);
             var (done, auth) = await OAuthAPI.RefreshTokenAsync(obj.Text1);
             if (done != LoginState.Done)
             {
                 return (AuthState.OAuth, done, null,
                     LanguageHelper.Get("Core.Login.Error1"), null);
             }
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.XBox);
             (done, var XNLToken, var XBLUhs) = await OAuthAPI.GetXBLAsync(auth!.access_token);
             if (done != LoginState.Done)
             {
                 return (AuthState.XBox, done, null,
                     LanguageHelper.Get("Core.Login.Error2"), null);
             }
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.XSTS);
             (done, var XSTSToken, var XSTSUhs) = await OAuthAPI.GetXSTSAsync(XNLToken!);
             if (done != LoginState.Done)
             {
                 return (AuthState.XSTS, done, null,
                     LanguageHelper.Get("Core.Login.Error3"), null);
             }
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.Token);
             (done, var token) = await OAuthAPI.GetMinecraftAsync(XSTSUhs!, XSTSToken!);
             if (done != LoginState.Done)
             {
@@ -162,7 +153,7 @@ public static class GameAuth
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Login.Error8");
+            var text = LanguageHelper.Get("Core.Login.Error8");
             Logs.Error(text, e);
             return (now, LoginState.Crash, null, text, e);
         }
@@ -180,12 +171,11 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> LoginWithNide8(string server, string user, string pass)
+        string? Message, Exception? Ex)> LoginNide8Async(string server, string user, string pass)
     {
         try
         {
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.Token);
-            var (State, Obj, Msg) = await Nide8.Authenticate(server, FuntionUtils.NewUUID(), user, pass);
+            var (State, Obj, Msg) = await Nide8.AuthenticateAsync(server, FuntionUtils.NewUUID(), user, pass);
             if (State != LoginState.Done)
             {
                 return (AuthState.Token, State, null,
@@ -197,7 +187,7 @@ public static class GameAuth
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Login.Error10");
+            var text = LanguageHelper.Get("Core.Login.Error10");
             Logs.Error(text, e);
             return (AuthState.Profile, LoginState.Crash, null, text, e);
         }
@@ -213,11 +203,11 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> RefreshWithNide8(LoginObj obj)
+        string? Message, Exception? Ex)> RefreshNide8Async(LoginObj obj)
     {
         try
         {
-            var (State, Obj, Msg) = await Nide8.Refresh(obj);
+            var (State, Obj, Msg) = await Nide8.RefreshAsync(obj);
             if (State != LoginState.Done)
             {
                 return (AuthState.Token, State, null,
@@ -227,7 +217,7 @@ public static class GameAuth
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Login.Error12");
+            var text = LanguageHelper.Get("Core.Login.Error12");
             Logs.Error(text, e);
             return (AuthState.Profile, LoginState.Crash, null, text, e);
         }
@@ -245,12 +235,11 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> LoginWithAuthlibInjector(string server, string user, string pass)
+        string? Message, Exception? Ex)> LoginAuthlibInjectorAsync(string server, string user, string pass)
     {
         try
         {
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.Token);
-            var (State, Obj, Msg) = await AuthlibInjector.Authenticate(FuntionUtils.NewUUID(), user, pass, server);
+            var (State, Obj, Msg) = await AuthlibInjector.AuthenticateAsync(FuntionUtils.NewUUID(), user, pass, server);
             if (State != LoginState.Done)
             {
                 return (AuthState.Token, State, null,
@@ -262,7 +251,7 @@ public static class GameAuth
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Login.Error14");
+            var text = LanguageHelper.Get("Core.Login.Error14");
             Logs.Error(text, e);
             return (AuthState.Profile, LoginState.Crash, null, text, e);
         }
@@ -278,11 +267,11 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> RefreshWithAuthlibInjector(LoginObj obj)
+        string? Message, Exception? Ex)> RefreshAuthlibInjectorAsync(LoginObj obj)
     {
         try
         {
-            var (State, Obj, Msg) = await AuthlibInjector.Refresh(obj);
+            var (State, Obj, Msg) = await AuthlibInjector.RefreshAsync(obj);
             if (State != LoginState.Done)
             {
                 return (AuthState.Token, State, null,
@@ -293,7 +282,7 @@ public static class GameAuth
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Login.Error16");
+            var text = LanguageHelper.Get("Core.Login.Error16");
             Logs.Error(text, e);
             return (AuthState.Profile, LoginState.Crash, null, text, e);
         }
@@ -311,12 +300,11 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> LoginWithLittleSkin(string user, string pass, string? server = null)
+        string? Message, Exception? Ex)> LoginLittleSkinAsync(string user, string pass, string? server = null)
     {
         try
         {
-            ColorMCCore.AuthStateUpdate?.Invoke(AuthState.Token);
-            var (State, Obj, Msg) = await LittleSkin.Authenticate(FuntionUtils.NewUUID(), user, pass, server);
+            var (State, Obj, Msg) = await LittleSkin.AuthenticateAsync(FuntionUtils.NewUUID(), user, pass, server);
             if (State != LoginState.Done)
             {
                 return (AuthState.Token, State, null,
@@ -328,7 +316,7 @@ public static class GameAuth
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Login.Error18");
+            var text = LanguageHelper.Get("Core.Login.Error18");
             Logs.Error(text, e);
             return (AuthState.Profile, LoginState.Crash, null, text, e);
         }
@@ -344,11 +332,11 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> RefreshWithLittleSkin(LoginObj obj)
+        string? Message, Exception? Ex)> RefreshLittleSkinAsync(LoginObj obj)
     {
         try
         {
-            var (State, Obj, Msg) = await LittleSkin.Refresh(obj);
+            var (State, Obj, Msg) = await LittleSkin.RefreshAsync(obj);
             if (State != LoginState.Done)
             {
                 return (AuthState.Token, State, null,
@@ -359,7 +347,7 @@ public static class GameAuth
         }
         catch (Exception e)
         {
-            string text = LanguageHelper.Get("Core.Login.Error20");
+            var text = LanguageHelper.Get("Core.Login.Error20");
             Logs.Error(text, e);
             return (AuthState.Profile, LoginState.Crash, null, text, e);
         }
@@ -375,14 +363,14 @@ public static class GameAuth
     /// Message错误信息
     /// Ex异常</returns>
     public static async Task<(AuthState AuthState, LoginState LoginState, LoginObj? Obj,
-        string? Message, Exception? Ex)> RefreshToken(this LoginObj obj)
+        string? Message, Exception? Ex)> RefreshTokenAsync(this LoginObj obj)
     {
         return obj.AuthType switch
         {
-            AuthType.OAuth => await RefreshWithOAuth(obj),
-            AuthType.Nide8 => await RefreshWithNide8(obj),
-            AuthType.AuthlibInjector => await RefreshWithAuthlibInjector(obj),
-            AuthType.LittleSkin or AuthType.SelfLittleSkin => await RefreshWithLittleSkin(obj),
+            AuthType.OAuth => await RefreshOAuthAsync(obj),
+            AuthType.Nide8 => await RefreshNide8Async(obj),
+            AuthType.AuthlibInjector => await RefreshAuthlibInjectorAsync(obj),
+            AuthType.LittleSkin or AuthType.SelfLittleSkin => await RefreshLittleSkinAsync(obj),
             _ => (AuthState.Token, LoginState.Done, obj, null, null),
         };
     }

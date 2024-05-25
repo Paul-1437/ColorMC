@@ -1,7 +1,7 @@
-﻿using ColorMC.Gui.Objs;
+﻿using System.Collections.Generic;
+using ColorMC.Gui.Objs;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.Generic;
 
 namespace ColorMC.Gui.UI.Model;
 
@@ -22,7 +22,7 @@ public abstract partial class MenuModel : TopModel
     /// 切换目标视图
     /// </summary>
     [ObservableProperty]
-    private int _nowView;
+    private int _nowView = -1;
 
     public bool IsWhell;
 

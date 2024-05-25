@@ -1,13 +1,13 @@
+using System;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Net;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using SkiaSharp;
-using System;
-using System.IO;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.Utils;
 
@@ -49,7 +49,7 @@ public static class ImageUtils
         {
             try
             {
-                var data1 = await BaseClient.GetStream(url);
+                var data1 = await BaseClient.GetStreamAsync(url);
                 if (data1.Item1)
                 {
                     using var image1 = SKBitmap.Decode(data1.Item2!);

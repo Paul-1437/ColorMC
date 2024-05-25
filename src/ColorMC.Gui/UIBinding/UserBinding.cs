@@ -1,5 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using ColorMC.Core;
 using ColorMC.Core.Game;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.LaunchPath;
@@ -9,12 +16,6 @@ using ColorMC.Core.Objs.Login;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.Utils;
 using SkiaSharp;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UIBinding;
 
@@ -65,8 +66,8 @@ public static class UserBinding
         };
     }
 
-    public static async Task<(bool, string?)> AddUser(AuthType type, string? input1,
-        string? input2 = null, string? input3 = null)
+    public static async Task<(bool, string?)> AddUser(AuthType type, ColorMCCore.LoginOAuthCode loginOAuth,
+        string? input1, string? input2 = null, string? input3 = null)
     {
         if (type == AuthType.Offline)
         {
@@ -81,11 +82,11 @@ public static class UserBinding
         }
         var (_, State1, Obj, Message, Ex) = type switch
         {
-            AuthType.OAuth => await GameAuth.LoginWithOAuth(),
-            AuthType.Nide8 => await GameAuth.LoginWithNide8(input1!, input2!, input3!),
-            AuthType.AuthlibInjector => await GameAuth.LoginWithAuthlibInjector(input1!, input2!, input3!),
-            AuthType.LittleSkin => await GameAuth.LoginWithLittleSkin(input1!, input2!),
-            AuthType.SelfLittleSkin => await GameAuth.LoginWithLittleSkin(input1!, input2!, input3!),
+            AuthType.OAuth => await GameAuth.LoginOAuthAsync(loginOAuth),
+            AuthType.Nide8 => await GameAuth.LoginNide8Async(input1!, input2!, input3!),
+            AuthType.AuthlibInjector => await GameAuth.LoginAuthlibInjectorAsync(input1!, input2!, input3!),
+            AuthType.LittleSkin => await GameAuth.LoginLittleSkinAsync(input1!, input2!),
+            AuthType.SelfLittleSkin => await GameAuth.LoginLittleSkinAsync(input1!, input2!, input3!),
             _ => (AuthState.Profile, LoginState.Error, null, null, null)
         };
 
@@ -148,7 +149,7 @@ public static class UserBinding
 
         obj.AccessToken = "";
 
-        return (await obj.RefreshToken()).LoginState == LoginState.Done;
+        return (await obj.RefreshTokenAsync()).LoginState == LoginState.Done;
     }
 
     public static void SetLastUser(string uuid, AuthType type)
@@ -299,9 +300,9 @@ public static class UserBinding
         {
             case AuthType.Offline:
                 var file = await PathBinding.SelectFile(FileType.Head);
-                if (file != null)
+                if (file.Item1 != null)
                 {
-                    obj.SaveSkin(file);
+                    obj.SaveSkin(file.Item1);
                 }
                 break;
             case AuthType.OAuth:
@@ -370,6 +371,6 @@ public static class UserBinding
 
     public static async Task<bool> TestLogin(LoginObj user)
     {
-        return (await user.RefreshToken()).LoginState == LoginState.Done;
+        return (await user.RefreshTokenAsync()).LoginState == LoginState.Done;
     }
 }

@@ -1,13 +1,17 @@
+using System;
+using System.ComponentModel;
 using Avalonia;
+using Avalonia.Animation;
+using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.UI.Model.Items;
-using System;
-using System.ComponentModel;
 
 namespace ColorMC.Gui.UI.Controls.Items;
 
@@ -22,10 +26,79 @@ public partial class GameControl : UserControl
         PointerEntered += GameControl_PointerEntered;
         PointerExited += GameControl_PointerExited;
 
-        PointerPressed += GameControl_PointerPressed;
-        PointerReleased += GameControl_PointerReleased;
+        AddHandler(PointerPressedEvent, GameControl_PointerPressed, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        AddHandler(PointerReleasedEvent, GameControl_PointerReleased, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+
         PointerMoved += GameControl_PointerMoved;
         DoubleTapped += GameControl_DoubleTapped;
+    }
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+    {
+        base.OnApplyTemplate(e);
+        Opacity = 0;
+        Dispatcher.UIThread.Post(FadeIn);
+    }
+
+    private void FadeIn()
+    {
+        var animation = new Animation
+        {
+            FillMode = FillMode.Forward,
+            Easing = new CircularEaseInOut(),
+            Children =
+            {
+                new KeyFrame
+                {
+                    Setters =
+                    {
+                        new Setter
+                        {
+                            Property = OpacityProperty,
+                            Value = 0.0d
+                        },
+                        new Setter
+                        {
+                            Property = TranslateTransform.YProperty,
+                            Value = 10d
+                        }
+                    },
+                    Cue = new Cue(0d)
+                },
+                new KeyFrame
+                {
+                    Setters =
+                    {
+                        new Setter
+                        {
+                            Property = OpacityProperty,
+                            Value = 1.0d
+                        },
+                        new Setter
+                        {
+                            Property = TranslateTransform.YProperty,
+                            Value = 10d
+                        }
+                    },
+                    Cue = new Cue(0.5d)
+                },
+                new KeyFrame
+                {
+                    Setters =
+                    {
+                        new Setter
+                        {
+                            Property = TranslateTransform.YProperty,
+                            Value = 0d
+                        }
+                    },
+                    Cue = new Cue(1d)
+                }
+            },
+            Duration = TimeSpan.FromMilliseconds(500)
+        };
+
+        animation.RunAsync(this);
     }
 
     private void GameModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -71,13 +144,14 @@ public partial class GameControl : UserControl
         {
             return;
         }
-        LongPressed.Cancel();
+
         var pro = e.GetCurrentPoint(this);
         if (pro.Properties.IsLeftButtonPressed && DataContext is GameItemModel model && !model.IsNew)
         {
             var pos = pro.Position;
             if (Math.Sqrt(Math.Pow(Math.Abs(pos.X - point.X), 2) + Math.Pow(Math.Abs(pos.Y - point.Y), 2)) > 30)
             {
+                LongPressed.Cancel();
                 model.Move(e);
                 e.Handled = true;
             }
@@ -98,9 +172,9 @@ public partial class GameControl : UserControl
 
     private void GameControl_DoubleTapped(object? sender, TappedEventArgs e)
     {
-        e.Handled = true;
         if (DataContext is GameItemModel model)
         {
+            e.Handled = true;
             model.Launch();
         }
     }
@@ -108,7 +182,6 @@ public partial class GameControl : UserControl
     private void GameControl_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         press = true;
-        e.Handled = true;
         if (DataContext is GameItemModel model)
         {
             if (model.IsNew)
@@ -123,6 +196,7 @@ public partial class GameControl : UserControl
 
             if (pro.Properties.IsRightButtonPressed)
             {
+                e.Handled = true;
                 Flyout((sender as Control)!);
             }
             else
@@ -131,6 +205,7 @@ public partial class GameControl : UserControl
                 {
                     return;
                 }
+
                 LongPressed.Pressed(() => Flyout((sender as Control)!));
             }
         }

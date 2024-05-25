@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -5,8 +6,6 @@ using Avalonia.Threading;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.Add;
 using ColorMC.Gui.UI.Windows;
-using ColorMC.Gui.Utils;
-using System.ComponentModel;
 
 namespace ColorMC.Gui.UI.Controls.Add;
 
@@ -106,8 +105,6 @@ public partial class AddModPackControl : UserControl, IUserControl
     public void Opened()
     {
         Window.SetTitle(Title);
-
-        PackFiles.SetFontColor();
 
         (DataContext as AddModPackControlModel)!.Source = 0;
     }

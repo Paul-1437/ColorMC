@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using ColorMC.Core.Objs;
 
 namespace ColorMC.Gui.Objs;
@@ -141,6 +142,7 @@ public record ServerCustom
 public record WindowsRender
 {
     public bool? ShouldRenderOnUIThread { get; set; }
+    public bool? OverlayPopups { get; set; }
 }
 
 /// <summary>
@@ -151,6 +153,7 @@ public record X11Render
     public bool? UseDBusMenu { get; set; }
     public bool? UseDBusFilePicker { get; set; }
     public bool? OverlayPopups { get; set; }
+    public bool? SoftwareRender { get; set; }
 }
 
 /// <summary>
@@ -213,6 +216,16 @@ public record Live2DSetting
     /// 显示位置
     /// </summary>
     public int Pos { get; set; }
+    /// <summary>
+    /// 低帧率模式
+    /// </summary>
+    public bool LowFps { get; set; }
+}
+
+public record InputObj
+{
+    public bool Enable { get; set; }
+    public string? NowConfig { get; set; }
 }
 
 /// <summary>
@@ -330,7 +343,12 @@ public record GuiConfigObj
     /// </summary>
     public StyleSetting Style { get; set; }
     /// <summary>
+    /// 手柄绑定
+    /// </summary>
+    public InputObj Input { get; set; }
+    /// <summary>
     /// 服务器云同步密钥
     /// </summary>
     public string ServerKey { get; set; }
 }
+

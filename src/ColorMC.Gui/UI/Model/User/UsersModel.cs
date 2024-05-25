@@ -1,32 +1,32 @@
-﻿using Avalonia.Input;
-using Avalonia.Threading;
-using ColorMC.Core;
-using ColorMC.Core.Helpers;
-using ColorMC.Core.Objs;
-using ColorMC.Core.Utils;
-using ColorMC.Gui.Objs;
-using ColorMC.Gui.UIBinding;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using DialogHostAvalonia;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Web;
+using Avalonia.Input;
+using Avalonia.Threading;
+using ColorMC.Core.Helpers;
+using ColorMC.Core.Objs;
+using ColorMC.Core.Utils;
+using ColorMC.Gui.UI.Model.Items;
+using ColorMC.Gui.UIBinding;
+using ColorMC.Gui.Utils;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using DialogHostAvalonia;
 
 namespace ColorMC.Gui.UI.Model.User;
 
 public partial class UsersControlModel : TopModel
 {
     public List<string> UserTypeList { get; init; } = UserBinding.GetUserTypes();
-    public ObservableCollection<UserDisplayObj> UserList { get; init; } = [];
+    public ObservableCollection<UserDisplayModel> UserList { get; init; } = [];
 
     [ObservableProperty]
-    private UserDisplayObj? _item;
+    private UserDisplayModel? _item;
 
     [ObservableProperty]
-    private int _type;
+    private AuthType _type;
 
     [ObservableProperty]
     private bool _enableName;
@@ -38,15 +38,17 @@ public partial class UsersControlModel : TopModel
     private bool _enableType;
     [ObservableProperty]
     private bool _isAdding;
+    [ObservableProperty]
+    private bool _canRegister;
 
     [ObservableProperty]
     private string _watermarkName;
     [ObservableProperty]
-    private string _name;
+    private string? _name;
     [ObservableProperty]
-    private string _user;
+    private string? _user;
     [ObservableProperty]
-    private string _password;
+    private string? _password;
 
     private bool _cancel;
     private bool _isOAuth;
@@ -56,9 +58,9 @@ public partial class UsersControlModel : TopModel
         Load();
     }
 
-    partial void OnPasswordChanging(string value)
+    partial void OnPasswordChanging(string? value)
     {
-        if (value.EndsWith(Environment.NewLine))
+        if (value?.EndsWith(Environment.NewLine) == true)
         {
             Password = value.TrimEnd();
 
@@ -66,9 +68,9 @@ public partial class UsersControlModel : TopModel
         }
     }
 
-    partial void OnUserChanging(string value)
+    partial void OnUserChanging(string? value)
     {
-        if (value.EndsWith(Environment.NewLine))
+        if (value?.EndsWith(Environment.NewLine) == true)
         {
             User = value.TrimEnd();
 
@@ -76,9 +78,9 @@ public partial class UsersControlModel : TopModel
         }
     }
 
-    partial void OnNameChanging(string value)
+    partial void OnNameChanging(string? value)
     {
-        if (value.EndsWith(Environment.NewLine))
+        if (value?.EndsWith(Environment.NewLine) == true)
         {
             Name = value.TrimEnd();
 
@@ -86,11 +88,11 @@ public partial class UsersControlModel : TopModel
         }
     }
 
-    partial void OnTypeChanged(int value)
+    partial void OnTypeChanged(AuthType value)
     {
         switch (value)
         {
-            case 0:
+            case AuthType.Offline:
                 EnableName = false;
                 WatermarkName = "";
                 Name = "";
@@ -98,8 +100,9 @@ public partial class UsersControlModel : TopModel
                 User = "";
                 EnablePassword = false;
                 Password = "";
+                CanRegister = false;
                 break;
-            case 1:
+            case AuthType.OAuth:
                 EnableName = false;
                 WatermarkName = "";
                 Name = "";
@@ -107,8 +110,9 @@ public partial class UsersControlModel : TopModel
                 User = "";
                 EnablePassword = false;
                 Password = "";
+                CanRegister = true;
                 break;
-            case 2:
+            case AuthType.Nide8:
                 EnableName = true;
                 WatermarkName = App.Lang("UserWindow.Info9");
                 Name = "";
@@ -116,8 +120,9 @@ public partial class UsersControlModel : TopModel
                 User = "";
                 EnablePassword = true;
                 Password = "";
+                CanRegister = true;
                 break;
-            case 3:
+            case AuthType.AuthlibInjector:
                 EnableName = true;
                 WatermarkName = App.Lang("UserWindow.Info10");
                 Name = "";
@@ -125,8 +130,9 @@ public partial class UsersControlModel : TopModel
                 User = "";
                 EnablePassword = true;
                 Password = "";
+                CanRegister = false;
                 break;
-            case 4:
+            case AuthType.LittleSkin:
                 EnableName = false;
                 WatermarkName = "";
                 Name = "";
@@ -134,8 +140,9 @@ public partial class UsersControlModel : TopModel
                 User = "";
                 EnablePassword = true;
                 Password = "";
+                CanRegister = true;
                 break;
-            case 5:
+            case AuthType.SelfLittleSkin:
                 EnableName = true;
                 WatermarkName = App.Lang("UserWindow.Info11");
                 Name = "";
@@ -143,6 +150,7 @@ public partial class UsersControlModel : TopModel
                 User = "";
                 EnablePassword = true;
                 Password = "";
+                CanRegister = false;
                 break;
             default:
                 EnableName = false;
@@ -152,6 +160,20 @@ public partial class UsersControlModel : TopModel
                 User = "";
                 EnablePassword = false;
                 Password = "";
+                CanRegister = false;
+                break;
+        }
+    }
+
+    [RelayCommand]
+    public void Register()
+    {
+        switch (Type)
+        {
+            case AuthType.OAuth:
+            case AuthType.Nide8:
+            case AuthType.LittleSkin:
+                WebBinding.OpenRegister(Type, Name);
                 break;
         }
     }
@@ -160,18 +182,17 @@ public partial class UsersControlModel : TopModel
     public void SetAdd()
     {
         EnableType = true;
-
-        if (ConfigBinding.IsLockLogin())
+        var server = ConfigBinding.GetAllConfig().Item2.ServerCustom;
+        if (server.LockLogin)
         {
-            ConfigBinding.GetLockLogin(out var type, out var url);
-            Type = type + 1;
-            Name = url;
+            Type = (AuthType)(server.LoginType + 1);
+            Name = server.LoginUrl;
             EnableType = false;
         }
         else
         {
             Name = "";
-            Type = -1;
+            Type = (AuthType)(-1);
             EnableType = true;
         }
 
@@ -188,30 +209,29 @@ public partial class UsersControlModel : TopModel
         IsAdding = true;
         switch (Type)
         {
-            case 0:
+            case AuthType.Offline:
                 var name = User;
                 _isOAuth = false;
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    Model.Show(App.Lang("Gui.Error8"));
+                    Model.Show(App.Lang("SettingWindow.Tab5.Error2"));
                     break;
                 }
-                var res = await UserBinding.AddUser(AuthType.Offline, name, null);
+                var res = await UserBinding.AddUser(AuthType.Offline, LoginOAuthCode, name, null);
                 if (!res.Item1)
                 {
                     Model.Show(res.Item2!);
                     break;
                 }
-                Model.Notify(App.Lang("Gui.Info4"));
+                Model.Notify(App.Lang("UserWindow.Info12"));
                 Name = "";
                 ok = true;
                 break;
-            case 1:
+            case AuthType.OAuth:
                 _cancel = false;
-                ColorMCCore.LoginOAuthCode = LoginOAuthCode;
                 _isOAuth = true;
                 Model.Progress(App.Lang("UserWindow.Info1"));
-                res = await UserBinding.AddUser(AuthType.OAuth, null);
+                res = await UserBinding.AddUser(AuthType.OAuth, LoginOAuthCode, null);
                 Model.ProgressClose();
                 if (_cancel)
                 {
@@ -222,12 +242,12 @@ public partial class UsersControlModel : TopModel
                     Model.Show(res.Item2!);
                     break;
                 }
-                Model.Notify(App.Lang("Gui.Info4"));
+                Model.Notify(App.Lang("UserWindow.Info12"));
                 Name = "";
                 _isOAuth = false;
                 ok = true;
                 break;
-            case 2:
+            case AuthType.Nide8:
                 var server = Name;
                 _isOAuth = false;
                 if (server?.Length != 32)
@@ -238,11 +258,11 @@ public partial class UsersControlModel : TopModel
                 if (string.IsNullOrWhiteSpace(User) ||
                     string.IsNullOrWhiteSpace(Password))
                 {
-                    Model.Show(App.Lang("Gui.Error8"));
+                    Model.Show(App.Lang("SettingWindow.Tab5.Error2"));
                     break;
                 }
                 Model.Progress(App.Lang("UserWindow.Info2"));
-                res = await UserBinding.AddUser(AuthType.Nide8, server,
+                res = await UserBinding.AddUser(AuthType.Nide8, LoginOAuthCode, server,
                     User, Password);
                 Model.ProgressClose();
                 if (!res.Item1)
@@ -250,11 +270,11 @@ public partial class UsersControlModel : TopModel
                     Model.Show(res.Item2!);
                     break;
                 }
-                Model.Notify(App.Lang("Gui.Info4"));
+                Model.Notify(App.Lang("UserWindow.Info12"));
                 Name = "";
                 ok = true;
                 break;
-            case 3:
+            case AuthType.AuthlibInjector:
                 server = Name;
                 _isOAuth = false;
                 if (string.IsNullOrWhiteSpace(server))
@@ -265,11 +285,11 @@ public partial class UsersControlModel : TopModel
                 if (string.IsNullOrWhiteSpace(User) ||
                    string.IsNullOrWhiteSpace(Password))
                 {
-                    Model.Show(App.Lang("Gui.Error8"));
+                    Model.Show(App.Lang("SettingWindow.Tab5.Error2"));
                     break;
                 }
                 Model.Progress(App.Lang("UserWindow.Info2"));
-                res = await UserBinding.AddUser(AuthType.AuthlibInjector, server,
+                res = await UserBinding.AddUser(AuthType.AuthlibInjector, LoginOAuthCode, server,
                     User, Password);
                 Model.ProgressClose();
                 if (!res.Item1)
@@ -277,20 +297,20 @@ public partial class UsersControlModel : TopModel
                     Model.Show(res.Item2!);
                     break;
                 }
-                Model.Notify(App.Lang("Gui.Info4"));
+                Model.Notify(App.Lang("UserWindow.Info12"));
                 Name = "";
                 ok = true;
                 break;
-            case 4:
+            case AuthType.LittleSkin:
                 _isOAuth = false;
                 if (string.IsNullOrWhiteSpace(User) ||
                    string.IsNullOrWhiteSpace(Password))
                 {
-                    Model.Show(App.Lang("Gui.Error8"));
+                    Model.Show(App.Lang("SettingWindow.Tab5.Error2"));
                     break;
                 }
                 Model.Progress(App.Lang("UserWindow.Info2"));
-                res = await UserBinding.AddUser(AuthType.LittleSkin,
+                res = await UserBinding.AddUser(AuthType.LittleSkin, LoginOAuthCode,
                     User, Password);
                 Model.ProgressClose();
                 if (!res.Item1)
@@ -298,10 +318,10 @@ public partial class UsersControlModel : TopModel
                     Model.Show(res.Item2!);
                     break;
                 }
-                Model.Notify(App.Lang("Gui.Info4"));
+                Model.Notify(App.Lang("UserWindow.Info12"));
                 ok = true;
                 break;
-            case 5:
+            case AuthType.SelfLittleSkin:
                 server = Name;
                 _isOAuth = false;
                 if (string.IsNullOrWhiteSpace(server))
@@ -312,11 +332,11 @@ public partial class UsersControlModel : TopModel
                 if (string.IsNullOrWhiteSpace(User) ||
                    string.IsNullOrWhiteSpace(Password))
                 {
-                    Model.Show(App.Lang("Gui.Error8"));
+                    Model.Show(App.Lang("SettingWindow.Tab5.Error2"));
                     break;
                 }
                 Model.Progress(App.Lang("UserWindow.Info2"));
-                res = await UserBinding.AddUser(AuthType.SelfLittleSkin,
+                res = await UserBinding.AddUser(AuthType.SelfLittleSkin, LoginOAuthCode,
                     User, Password, server);
                 Model.ProgressClose();
                 if (!res.Item1)
@@ -324,7 +344,7 @@ public partial class UsersControlModel : TopModel
                     Model.Show(res.Item2!);
                     break;
                 }
-                Model.Notify(App.Lang("Gui.Info4"));
+                Model.Notify(App.Lang("UserWindow.Info12"));
                 Name = "";
                 ok = true;
                 break;
@@ -347,7 +367,7 @@ public partial class UsersControlModel : TopModel
         CloseShow();
     }
 
-    public void Remove(UserDisplayObj item)
+    public void Remove(UserDisplayModel item)
     {
         UserBinding.Remove(item.UUID, item.AuthType);
         Load();
@@ -364,7 +384,7 @@ public partial class UsersControlModel : TopModel
         Select(Item);
     }
 
-    public void Select(UserDisplayObj item)
+    public void Select(UserDisplayModel item)
     {
         UserBinding.SetLastUser(item.UUID, item.AuthType);
 
@@ -393,11 +413,11 @@ public partial class UsersControlModel : TopModel
             return;
 
         SetAdd();
-        Type = 3;
+        Type = AuthType.AuthlibInjector;
         Name = HttpUtility.UrlDecode(url.Replace("authlib-injector:yggdrasil-server:", ""));
     }
 
-    public async void Refresh(UserDisplayObj obj)
+    public async void Refresh(UserDisplayModel obj)
     {
         Model.Progress(App.Lang("UserWindow.Info3"));
         var res = await UserBinding.ReLogin(obj.UUID, obj.AuthType);
@@ -411,15 +431,15 @@ public partial class UsersControlModel : TopModel
 
             switch (Type)
             {
-                case 2:
-                case 3:
-                case 5:
+                case AuthType.Nide8:
+                case AuthType.AuthlibInjector:
+                case AuthType.SelfLittleSkin:
                     OnTypeChanged(Type);
                     SetAdd();
                     User = user.Text2;
                     Name = user.Text1;
                     break;
-                case 4:
+                case AuthType.LittleSkin:
                     OnTypeChanged(Type);
                     SetAdd();
                     User = user.Text2;
@@ -432,9 +452,9 @@ public partial class UsersControlModel : TopModel
         }
     }
 
-    public void ReLogin(UserDisplayObj obj)
+    public void ReLogin(UserDisplayModel obj)
     {
-        Type = obj.AuthType.ToInt();
+        Type = obj.AuthType;
 
         EnableType = false;
         EnableName = false;
@@ -475,7 +495,7 @@ public partial class UsersControlModel : TopModel
                 _cancel = true;
                 UserBinding.OAuthCancel();
             });
-        BaseBinding.OpUrl(url);
+        BaseBinding.OpUrl($"{url}?otc={code}");
         await BaseBinding.CopyTextClipboard(code);
     }
 
@@ -488,7 +508,7 @@ public partial class UsersControlModel : TopModel
         }
     }
 
-    public async void Edit(UserDisplayObj obj)
+    public async void Edit(UserDisplayModel obj)
     {
         if (obj.AuthType != AuthType.Offline)
         {

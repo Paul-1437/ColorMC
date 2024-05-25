@@ -21,6 +21,9 @@
             <DataTemplate DataType="model:MainModel">
                 <views2:MainGroupControl DataContext="{Binding}" />
             </DataTemplate>
+            <DataTemplate DataType="model:JoystickSettingModel">
+                <views2:JoystickSettingControl DataContext="{Binding}" />
+            </DataTemplate>
         </dialog:DialogHost.DataTemplates>
         <Panel>
             <views2:Live2dControl
@@ -32,9 +35,7 @@
                 <Border
                     Margin="0,0,0,3"
                     Padding="3"
-                    BorderThickness="2"
-                    Classes="t1"
-                    CornerRadius="{setting:Style ButtonCornerRadius}"
+                    Classes="t2"
                     DockPanel.Dock="Top"
                     IsVisible="{Binding !IsNotGame, FallbackValue=true}">
                     <DockPanel>
@@ -73,14 +74,13 @@
                             <TextBlock Text="{Binding UserId}" />
                             <TextBlock Text="{Binding UserType}" />
                         </StackPanel>
-                        <StackPanel
-                            HorizontalAlignment="Right"
-                            DockPanel.Dock="Right"
-                            Orientation="Horizontal">
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                             <StackPanel IsVisible="{Binding TopSide}" Orientation="Horizontal">
                                 <Button
-                                    Width="38"
-                                    Height="38"
+                                    Width="42"
+                                    Height="42"
+                                    Margin="-1,-4,-1,-4"
+                                    Classes="top"
                                     Command="{Binding Upgrade}"
                                     CornerRadius="{setting:Style ButtonCornerRadius}"
                                     IsVisible="{Binding HaveUpdate}"
@@ -89,9 +89,10 @@
                                     <Svg Path="/Resource/Icon/upgrade.svg" />
                                 </Button>
                                 <Button
-                                    Width="38"
-                                    Height="38"
-                                    Margin="3,0,0,0"
+                                    Width="42"
+                                    Height="42"
+                                    Margin="-1,-4,-1,-4"
+                                    Classes="top"
                                     Command="{Binding NewInfo}"
                                     CornerRadius="{setting:Style ButtonCornerRadius}"
                                     ToolTip.Tip="{setting:Localize ToolTip.Text74}"
@@ -99,9 +100,10 @@
                                     <Svg Path="/Resource/Icon/new.svg" />
                                 </Button>
                                 <Button
-                                    Width="38"
-                                    Height="38"
-                                    Margin="3,0,0,0"
+                                    Width="42"
+                                    Height="42"
+                                    Margin="-1,-4,-1,-4"
+                                    Classes="top"
                                     Command="{Binding MusicPause}"
                                     CornerRadius="{setting:Style ButtonCornerRadius}"
                                     IsVisible="{Binding MusicDisplay}"
@@ -110,9 +112,10 @@
                                     <Svg Path="/Resource/Icon/play.svg" />
                                 </Button>
                                 <Button
-                                    Width="38"
-                                    Height="38"
-                                    Margin="3,0,0,0"
+                                    Width="42"
+                                    Height="42"
+                                    Margin="-1,-4,-1,-4"
+                                    Classes="top"
                                     Command="{Binding OpenNetFrp}"
                                     CornerRadius="{setting:Style ButtonCornerRadius}"
                                     ToolTip.Tip="{setting:Localize ToolTip.Text72}"
@@ -120,9 +123,10 @@
                                     <Svg Path="/Resource/Icon/net.svg" />
                                 </Button>
                                 <Button
-                                    Width="38"
-                                    Height="38"
-                                    Margin="3,0,0,0"
+                                    Width="42"
+                                    Height="42"
+                                    Margin="-1,-4,-1,-4"
+                                    Classes="top"
                                     Command="{Binding OpenGuide}"
                                     CornerRadius="{setting:Style ButtonCornerRadius}"
                                     ToolTip.Tip="{setting:Localize ToolTip.Text70}"
@@ -130,9 +134,10 @@
                                     <Svg Path="/Resource/Icon/book.svg" />
                                 </Button>
                                 <Button
-                                    Width="38"
-                                    Height="38"
-                                    Margin="3,0,0,0"
+                                    Width="42"
+                                    Height="42"
+                                    Margin="-1,-4,-1,-4"
+                                    Classes="top"
                                     Command="{Binding ShowSkin}"
                                     CornerRadius="{setting:Style ButtonCornerRadius}"
                                     ToolTip.Tip="{setting:Localize ToolTip.Text9}"
@@ -140,9 +145,10 @@
                                     <Svg Path="/Resource/Icon/skin.svg" />
                                 </Button>
                                 <Button
-                                    Width="38"
-                                    Height="38"
-                                    Margin="3,0,0,0"
+                                    Width="42"
+                                    Height="42"
+                                    Margin="-1,-4,-1,-4"
+                                    Classes="top"
                                     Command="{Binding ShowCount}"
                                     CornerRadius="{setting:Style ButtonCornerRadius}"
                                     IsVisible="{Binding !IsPhone}"
@@ -151,9 +157,10 @@
                                     <Svg Path="/Resource/Icon/count.svg" />
                                 </Button>
                                 <Button
-                                    Width="38"
-                                    Height="38"
-                                    Margin="3,0,0,0"
+                                    Width="42"
+                                    Height="42"
+                                    Margin="-1,-4,-2,-4"
+                                    Classes="top"
                                     Command="{Binding ShowSetting}"
                                     CornerRadius="{setting:Style ButtonCornerRadius}"
                                     ToolTip.Tip="{setting:Localize ToolTip.Text13}"
@@ -162,9 +169,10 @@
                                 </Button>
                             </StackPanel>
                             <Button
-                                Width="38"
-                                Height="38"
-                                Margin="3,0,0,0"
+                                Width="42"
+                                Height="42"
+                                Margin="0,-4,-2,-4"
+                                Classes="top"
                                 Command="{Binding OpenSide}"
                                 CornerRadius="{setting:Style ButtonCornerRadius}"
                                 IsVisible="{Binding TopSide2}"
@@ -182,9 +190,7 @@
                     IsVisible="{Binding MotdDisplay, FallbackValue=true}" />
                 <Decorator Name="Content1" />
             </DockPanel>
-
             <Decorator Name="Start" IsVisible="False" />
-
             <Panel
                 Name="Grid2"
                 Background="{setting:Colors BG1}"
@@ -192,7 +198,6 @@
                 <TextBlock
                     Name="Label1"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
                     FontSize="30"
                     Text="test" />
             </Panel>

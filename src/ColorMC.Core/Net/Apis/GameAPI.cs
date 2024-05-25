@@ -1,9 +1,9 @@
+using System.Text;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
 using ColorMC.Core.Utils;
 using Newtonsoft.Json;
-using System.Text;
 
 namespace ColorMC.Core.Net.Apis;
 
@@ -20,10 +20,10 @@ public static class GameAPI
     {
         try
         {
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return (null, null);
             }
@@ -44,10 +44,10 @@ public static class GameAPI
     {
         try
         {
-            var data = await BaseClient.GetBytes(url);
+            var data = await BaseClient.GetBytesAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return (null, null);
             }
@@ -70,10 +70,10 @@ public static class GameAPI
         try
         {
             string url = UrlHelper.GameVersion(local);
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return (null, null);
             }

@@ -1,12 +1,12 @@
-﻿using ColorMC.Gui.Net.Apis;
+﻿using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using ColorMC.Gui.Net.Apis;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.NetFrp;
 
@@ -14,6 +14,9 @@ public partial class NetFrpModel
 {
     [ObservableProperty]
     private string _keySakura;
+
+    [ObservableProperty]
+    private bool _isSakuraEmpty = true;
 
     private bool _isLoadSakura;
 
@@ -30,6 +33,8 @@ public partial class NetFrpModel
     [RelayCommand]
     public async Task GetChannelSakura()
     {
+        IsSakuraEmpty = true;
+
         if (string.IsNullOrWhiteSpace(KeySakura))
         {
             Model.Show(App.Lang("NetFrpWindow.Tab1.Error3"));
@@ -49,6 +54,8 @@ public partial class NetFrpModel
         {
             RemotesSakura.Add(new(KeySakura, item));
         }
+
+        IsSakuraEmpty = RemotesSakura.Count == 0;
     }
 
     [RelayCommand]
@@ -86,5 +93,7 @@ public partial class NetFrpModel
         {
             RemotesSakura.Add(new(KeySakura, item));
         }
+
+        IsSakuraEmpty = RemotesSakura.Count == 0;
     }
 }

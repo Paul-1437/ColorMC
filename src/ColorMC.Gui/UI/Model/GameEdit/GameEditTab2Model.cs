@@ -1,12 +1,12 @@
-﻿using AvaloniaEdit.Utils;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using AvaloniaEdit.Utils;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace ColorMC.Gui.UI.Model.GameEdit;
 
@@ -47,6 +47,8 @@ public partial class GameEditModel
     private string? _proxyPassword;
     [ObservableProperty]
     private string? _jvmEnv;
+    [ObservableProperty]
+    private string? _gameTitle;
 
     [ObservableProperty]
     private ushort? _proxyPort;
@@ -62,20 +64,90 @@ public partial class GameEditModel
     private uint? _width;
     [ObservableProperty]
     private uint? _height;
+    [ObservableProperty]
+    private int _titleDelay;
 
     [ObservableProperty]
     private bool _enableGc;
     [ObservableProperty]
     private bool _enableJvmName;
-
     [ObservableProperty]
     private bool _perRun;
     [ObservableProperty]
     private bool _postRun;
     [ObservableProperty]
     private bool? _maxWindow;
+    [ObservableProperty]
+    private bool _removeJvmArg;
+    [ObservableProperty]
+    private bool _removeGameArg;
+    [ObservableProperty]
+    private bool _randomTitle;
+    [ObservableProperty]
+    private bool _cycTitle;
 
     private bool _configLoad;
+
+
+    partial void OnCycTitleChanged(bool value)
+    {
+        if (_configLoad)
+            return;
+
+        _obj.Window ??= new();
+        _obj.Window.CycTitle = value;
+        _obj.Save();
+    }
+
+    partial void OnRandomTitleChanged(bool value)
+    {
+        if (_configLoad)
+            return;
+
+        _obj.Window ??= new();
+        _obj.Window.RandomTitle = value;
+        _obj.Save();
+    }
+
+    partial void OnTitleDelayChanged(int value)
+    {
+        if (_configLoad)
+            return;
+
+        _obj.Window ??= new();
+        _obj.Window.TitleDelay = value;
+        _obj.Save();
+    }
+
+    partial void OnGameTitleChanged(string? value)
+    {
+        if (_configLoad)
+            return;
+
+        _obj.Window ??= new();
+        _obj.Window.GameTitle = value;
+        _obj.Save();
+    }
+
+    partial void OnRemoveJvmArgChanged(bool value)
+    {
+        if (_configLoad)
+            return;
+
+        _obj.JvmArg ??= new();
+        _obj.JvmArg.RemoveJvmArg = value;
+        _obj.Save();
+    }
+
+    partial void OnRemoveGameArgChanged(bool value)
+    {
+        if (_configLoad)
+            return;
+
+        _obj.JvmArg ??= new();
+        _obj.JvmArg.RemoveGameArg = value;
+        _obj.Save();
+    }
 
     partial void OnJvmEnvChanged(string? value)
     {
@@ -353,9 +425,9 @@ public partial class GameEditModel
     public async Task OpenJava()
     {
         var file = await PathBinding.SelectFile(FileType.Java);
-        if (file != null)
+        if (file.Item1 != null)
         {
-            JvmLocal = file;
+            JvmLocal = file.Item1;
         }
     }
 
@@ -398,6 +470,8 @@ public partial class GameEditModel
             JvmEnv = config.JvmEnv;
             PostRunCmd = config.LaunchPostData;
             PerRunCmd = config.LaunchPreData;
+            RemoveJvmArg = config.RemoveJvmArg ?? false;
+            RemoveGameArg = config.RemoveGameArg ?? false;
 
             PerRun = config.LaunchPre;
             PostRun = config.LaunchPost;
@@ -424,12 +498,17 @@ public partial class GameEditModel
             Width = config1.Width;
             Height = config1.Height;
             MaxWindow = config1.FullScreen;
+            GameTitle = config1.GameTitle;
+            RandomTitle = config1.RandomTitle;
+            CycTitle = config1.CycTitle;
+            TitleDelay = config1.TitleDelay;
         }
         else
         {
             Width = null;
             Height = null;
             MaxWindow = false;
+            GameTitle = null;
         }
 
         var config2 = _obj.StartServer;

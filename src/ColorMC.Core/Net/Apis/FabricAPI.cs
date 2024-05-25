@@ -21,10 +21,10 @@ public static class FabricAPI
         try
         {
             string url = UrlHelper.GetFabricMeta(local);
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return null;
             }
@@ -47,10 +47,10 @@ public static class FabricAPI
         try
         {
             string url = $"{UrlHelper.GetFabricMeta(local)}/loader/{mc}/{version}/profile/json";
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return null;
             }
@@ -72,10 +72,10 @@ public static class FabricAPI
         try
         {
             string url = $"{UrlHelper.GetFabricMeta(local)}/loader/{mc}";
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return null;
             }
@@ -89,6 +89,9 @@ public static class FabricAPI
             {
                 list1.Add(item.loader.version);
             }
+
+            StringHelper.VersionSort(list1);
+
             return list1;
         }
         catch (Exception e)
@@ -109,10 +112,10 @@ public static class FabricAPI
                 return s_supportVersion;
 
             string url = $"{UrlHelper.GetFabricMeta(local)}/game";
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return null;
             }

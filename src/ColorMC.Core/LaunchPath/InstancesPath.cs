@@ -1,14 +1,9 @@
 using ColorMC.Core.Config;
-using ColorMC.Core.Downloader;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
-using ColorMC.Core.Objs.CurseForge;
-using ColorMC.Core.Objs.Modrinth;
 using ColorMC.Core.Objs.OtherLaunch;
 using ColorMC.Core.Utils;
-using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json;
-using System.Text;
 
 namespace ColorMC.Core.LaunchPath;
 
@@ -20,7 +15,6 @@ public static class InstancesPath
     public const string Name = "instances";
     public const string Name1 = "game.json";
     public const string Name2 = ".minecraft";
-    public const string Name3 = "modinfo.json";
     public const string Name4 = "modpack.json";
     public const string Name5 = "options.txt";
     public const string Name6 = "servers.dat";
@@ -42,6 +36,7 @@ public static class InstancesPath
     public const string Name22 = "log4j-rce-patch.xml";
     public const string Name23 = "temp";
     public const string Name24 = "cache";
+    public const string Name25 = "loader.jar";
 
     public const string DefaultGroup = " ";
 
@@ -84,7 +79,7 @@ public static class InstancesPath
     /// 添加游戏实例到组
     /// </summary>
     /// <param name="obj">游戏实例</param>
-    private static void AddToGroup(this GameSettingObj obj)
+    public static void AddToGroup(this GameSettingObj obj)
     {
         while (string.IsNullOrWhiteSpace(obj.UUID)
             || s_installGames.ContainsKey(obj.UUID))
@@ -221,6 +216,11 @@ public static class InstancesPath
         return s_installGames.Values.FirstOrDefault(a => a.Name == name);
     }
 
+    public static bool HaveGameWithName(string name)
+    {
+        return s_installGames.ContainsKey(name);
+    }
+
     /// <summary>
     /// 保存游戏实例
     /// </summary>
@@ -266,17 +266,7 @@ public static class InstancesPath
     }
 
     /// <summary>
-    /// 获取游戏实例mod信息文件
-    /// </summary>
-    /// <param name="obj">游戏实例</param>
-    /// <returns>文件路径</returns>
-    public static string GetModJsonFile(this GameSettingObj obj)
-    {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name3}");
-    }
-
-    /// <summary>
-    /// 获取游戏实例整合包文件
+    /// 获取游戏实例整合包信息文件
     /// </summary>
     /// <param name="obj">游戏实例</param>
     /// <returns>文件路径</returns>
@@ -491,28 +481,34 @@ public static class InstancesPath
     }
 
     /// <summary>
+    /// 获取自定义加载器路径
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public static string GetGameLoaderFile(this GameSettingObj obj)
+    {
+        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name25}");
+    }
+
+    /// <summary>
     /// 新建游戏版本
     /// </summary>
     /// <param name="game">游戏实例</param>
     /// <returns>结果</returns>
-    public static async Task<GameSettingObj?> CreateGame(this GameSettingObj game)
+    public static async Task<GameSettingObj?> CreateGame(this GameSettingObj game,
+        ColorMCCore.Request request, ColorMCCore.GameOverwirte overwirte)
     {
         var value = s_installGames.Values.FirstOrDefault(item => item.DirName == game.Name);
         if (value != null)
         {
-            if (ColorMCCore.GameOverwirte == null)
-            {
-                return null;
-            }
-
-            if (await ColorMCCore.GameOverwirte.Invoke(game) == false)
+            if (await overwirte(game) == false)
             {
                 return null;
             }
 
             if (s_installGames.Remove(value.UUID, out var temp))
             {
-                if (!await Remove(temp))
+                if (!await Remove(temp, request))
                 {
                     return null;
                 }
@@ -521,7 +517,7 @@ public static class InstancesPath
         game.DirName = game.Name;
 
         var dir = game.GetBasePath();
-        if (!await PathHelper.DeleteFiles(dir))
+        if (!await PathHelper.DeleteFilesAsync(dir, request))
         {
             return null;
         }
@@ -698,11 +694,12 @@ public static class InstancesPath
     /// <param name="obj">原始实例</param>
     /// <param name="name">新的名字</param>
     /// <returns>复制结果</returns>
-    public static async Task<GameSettingObj?> Copy(this GameSettingObj obj, string name)
+    public static async Task<GameSettingObj?> Copy(this GameSettingObj obj, string name,
+        ColorMCCore.Request request, ColorMCCore.GameOverwirte overwirte)
     {
         var obj1 = obj.CopyObj();
         obj1.Name = name;
-        obj1 = await CreateGame(obj1);
+        obj1 = await CreateGame(obj1, request, overwirte);
         if (obj1 != null)
         {
             await PathHelper.CopyDir(GetGamePath(obj), GetGamePath(obj1));
@@ -711,10 +708,10 @@ public static class InstancesPath
             {
                 PathHelper.CopyFile(file, obj1.GetIconFile());
             }
-            file = obj.GetModJsonFile();
+            file = obj.GetModPackJsonFile();
             if (File.Exists(file))
             {
-                PathHelper.CopyFile(file, obj1.GetModJsonFile());
+                PathHelper.CopyFile(file, obj1.GetModPackJsonFile());
             }
             file = obj.GetModInfoJsonFile();
             if (File.Exists(file))
@@ -865,438 +862,11 @@ public static class InstancesPath
     /// 删除游戏实例
     /// </summary>
     /// <param name="obj">游戏实例</param>
-    public static Task<bool> Remove(this GameSettingObj obj)
+    public static Task<bool> Remove(this GameSettingObj obj, ColorMCCore.Request request)
     {
         obj.RemoveFromGroup();
         PathHelper.Delete(obj.GetGameJsonFile());
-        return PathHelper.DeleteFiles(obj.GetBasePath());
-    }
-
-    /// <summary>
-    /// 导入整合包
-    /// </summary>
-    /// <param name="dir">压缩包路径</param>
-    /// <param name="type">类型</param>
-    /// <param name="type">名字</param>
-    /// <param name="type">群组</param>
-    public static async Task<(bool, GameSettingObj?)> InstallZip(string dir, PackType type, string? name, string? group)
-    {
-        GameSettingObj? game = null;
-        bool import = false;
-        Stream? stream4 = null;
-        try
-        {
-            stream4 = PathHelper.OpenRead(dir);
-            switch (type)
-            {
-                //ColorMC格式
-                case PackType.ColorMC:
-                    {
-                        ColorMCCore.PackState?.Invoke(CoreRunState.Read);
-                        using ZipFile zFile = new(stream4);
-                        using var stream1 = new MemoryStream();
-                        bool find = false;
-                        foreach (ZipEntry e in zFile)
-                        {
-                            if (e.IsFile && e.Name == "game.json")
-                            {
-                                using var stream = zFile.GetInputStream(e);
-                                await stream.CopyToAsync(stream1);
-                                find = true;
-                                break;
-                            }
-                        }
-
-                        if (!find)
-                            break;
-
-                        game = JsonConvert.DeserializeObject<GameSettingObj>
-                            (Encoding.UTF8.GetString(stream1.ToArray()));
-
-                        if (game == null)
-                            break;
-
-                        if (s_installGames.ContainsKey(game.Name))
-                        {
-                            break;
-                        }
-
-                        foreach (ZipEntry e in zFile)
-                        {
-                            if (e.IsFile)
-                            {
-                                using var stream = zFile.GetInputStream(e);
-                                var path = game.GetBasePath();
-                                string file = Path.GetFullPath(path + '\\' + e.Name);
-                                FileInfo info2 = new(file);
-                                info2.Directory?.Create();
-                                using FileStream stream2 = new(file, FileMode.Create,
-                                    FileAccess.ReadWrite, FileShare.ReadWrite);
-                                await stream.CopyToAsync(stream2);
-                            }
-                        }
-
-                        game.AddToGroup();
-
-                        ColorMCCore.PackState?.Invoke(CoreRunState.End);
-                        import = true;
-                        break;
-                    }
-                //Curseforge压缩包
-                case PackType.CurseForge:
-                    (import, game) = await ModPackHelper.DownloadCurseForgeModPack(dir, name, group);
-
-                    ColorMCCore.PackState?.Invoke(CoreRunState.End);
-                    break;
-                //Modrinth压缩包
-                case PackType.Modrinth:
-                    (import, game) = await ModPackHelper.DownloadModrinthModPack(dir, name, group);
-
-                    ColorMCCore.PackState?.Invoke(CoreRunState.End);
-                    break;
-                //MMC压缩包
-                case PackType.MMC:
-                    {
-                        ColorMCCore.PackState?.Invoke(CoreRunState.Read);
-                        using ZipFile zFile = new(stream4);
-                        using var stream1 = new MemoryStream();
-                        using var stream2 = new MemoryStream();
-                        bool find = false;
-                        bool find1 = false;
-                        string path = "";
-                        foreach (ZipEntry e in zFile)
-                        {
-                            if (e.IsFile && !find && e.Name.EndsWith("mmc-pack.json"))
-                            {
-                                using var stream = zFile.GetInputStream(e);
-                                await stream.CopyToAsync(stream1);
-                                path = e.Name[..^Path.GetFileName(e.Name).Length];
-                                find = true;
-                            }
-
-                            if (e.IsFile && !find1 && e.Name.EndsWith("instance.cfg"))
-                            {
-                                using var stream = zFile.GetInputStream(e);
-                                await stream.CopyToAsync(stream2);
-                                find1 = true;
-                            }
-
-                            if (find && find1)
-                                break;
-                        }
-
-                        if (!find || !find1)
-                            break;
-
-                        var mmc = JsonConvert.DeserializeObject<MMCObj>
-                            (Encoding.UTF8.GetString(stream1.ToArray()));
-                        if (mmc == null)
-                            break;
-
-                        var mmc1 = Encoding.UTF8.GetString(stream2.ToArray());
-
-                        game = mmc.ToColorMC(mmc1, out var icon);
-
-                        if (!string.IsNullOrWhiteSpace(name))
-                        {
-                            game.Name = name;
-                        }
-                        if (!string.IsNullOrWhiteSpace(group))
-                        {
-                            game.GroupName = group;
-                        }
-                        if (string.IsNullOrWhiteSpace(game.Name))
-                        {
-                            game.Name = new FileInfo(dir).Name;
-                        }
-                        if (!string.IsNullOrWhiteSpace(icon))
-                        {
-                            game.Icon = icon + ".png";
-                        }
-                        game = await CreateGame(game);
-
-                        if (game == null)
-                            break;
-
-                        foreach (ZipEntry e in zFile)
-                        {
-                            if (e.IsFile && e.Name.StartsWith(path))
-                            {
-                                using var stream = zFile.GetInputStream(e);
-                                string file = Path.GetFullPath(game.GetBasePath() + "/" +
-                                    e.Name[path.Length..]);
-                                FileInfo info2 = new(file);
-                                info2.Directory?.Create();
-                                using FileStream stream3 = new(file, FileMode.Create,
-                                    FileAccess.ReadWrite, FileShare.ReadWrite);
-                                await stream.CopyToAsync(stream3);
-                            }
-                        }
-
-                        ColorMCCore.PackState?.Invoke(CoreRunState.End);
-                        import = true;
-                        break;
-                    }
-                //HMCL压缩包
-                case PackType.HMCL:
-                    {
-                        ColorMCCore.PackState?.Invoke(CoreRunState.Read);
-                        using ZipFile zFile = new(stream4);
-                        using var stream1 = new MemoryStream();
-                        using var stream2 = new MemoryStream();
-                        bool find = false;
-                        bool find1 = false;
-                        foreach (ZipEntry e in zFile)
-                        {
-                            if (e.IsFile && e.Name == "mcbbs.packmeta")
-                            {
-                                using var stream = zFile.GetInputStream(e);
-                                await stream.CopyToAsync(stream1);
-                                find = true;
-                            }
-
-                            if (e.IsFile && e.Name == "manifest.json")
-                            {
-                                using var stream = zFile.GetInputStream(e);
-                                await stream.CopyToAsync(stream2);
-                                find1 = true;
-                            }
-
-                            if (find && find1)
-                                break;
-                        }
-
-                        if (!find)
-                            break;
-
-                        var obj = JsonConvert.DeserializeObject<HMCLObj>
-                            (Encoding.UTF8.GetString(stream1.ToArray()));
-
-                        if (obj == null)
-                            break;
-
-                        game = obj.ToColorMC();
-                        if (!string.IsNullOrWhiteSpace(name))
-                        {
-                            game.Name = name;
-                        }
-                        if (!string.IsNullOrWhiteSpace(group))
-                        {
-                            game.GroupName = group;
-                        }
-
-                        game = await CreateGame(game);
-
-                        if (game == null)
-                            break;
-
-                        string overrides = "overrides";
-
-                        if (find1)
-                        {
-                            var obj1 = JsonConvert.DeserializeObject<CurseForgePackObj>
-                                (Encoding.UTF8.GetString(stream2.ToArray()));
-                            if (obj1 != null)
-                            {
-                                overrides = obj1.overrides;
-                            }
-                        }
-
-                        foreach (ZipEntry e in zFile)
-                        {
-                            if (e.IsFile && e.Name.StartsWith(overrides))
-                            {
-                                string file = Path.GetFullPath(string.Concat(game.GetGamePath(),
-                                    e.Name.AsSpan(overrides.Length)));
-                                if (e.Name.EndsWith("icon.png"))
-                                {
-                                    file = game.GetIconFile();
-                                }
-                                using var stream = zFile.GetInputStream(e);
-
-                                FileInfo info2 = new(file);
-                                info2.Directory?.Create();
-                                using FileStream stream3 = new(file, FileMode.Create,
-                                    FileAccess.ReadWrite, FileShare.ReadWrite);
-                                await stream.CopyToAsync(stream3);
-                            }
-                        }
-
-                        ColorMCCore.PackState?.Invoke(CoreRunState.End);
-                        import = true;
-                        break;
-                    }
-                //直接解压
-                case PackType.ZipPack:
-                    {
-                        ColorMCCore.PackState?.Invoke(CoreRunState.Read);
-
-                        name ??= Path.GetFileName(dir);
-
-                        ColorMCCore.PackState?.Invoke(CoreRunState.Start);
-                        game = await CreateGame(new()
-                        {
-                            GroupName = group,
-                            Name = name!
-                        });
-
-                        if (game != null)
-                        {
-                            await new ZipUtils().Unzip(game!.GetGamePath(), dir, stream4!);
-                            ColorMCCore.PackState?.Invoke(CoreRunState.End);
-                            import = true;
-                        }
-                        break;
-                    }
-            }
-        }
-        catch (Exception e)
-        {
-            ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Pack.Error2"), e, false);
-            Logs.Error(LanguageHelper.Get("Core.Pack.Error2"), e);
-        }
-        finally
-        {
-            stream4?.Dispose();
-        }
-        if (!import && game != null)
-        {
-            await game.Remove();
-        }
-        ColorMCCore.PackState?.Invoke(CoreRunState.End);
-        return (import, game);
-    }
-
-    /// <summary>
-    /// 安装Modrinth压缩包
-    /// </summary>
-    /// <param name="data">整合包信息</param>
-    /// <param name="name">名字</param>
-    /// <param name="group">群组</param>
-    /// <returns>结果</returns>
-    public static async Task<(bool, GameSettingObj?)> InstallModrinth(ModrinthVersionObj data, string? name, string? group)
-    {
-        var file = data.files.FirstOrDefault(a => a.primary) ?? data.files[0];
-        var item = new DownloadItemObj()
-        {
-            Url = file.url,
-            Name = file.filename,
-            SHA1 = file.hashes.sha1,
-            Local = Path.GetFullPath(DownloadManager.DownloadDir + "/" + file.filename),
-        };
-
-        var res1 = await DownloadManager.Start(new() { item });
-        if (!res1)
-            return (false, null);
-
-        var res2 = await InstallZip(item.Local, PackType.Modrinth, name, group);
-        if (res2.Item1)
-        {
-            res2.Item2!.PID = data.project_id;
-            res2.Item2.FID = data.id;
-            res2.Item2.Save();
-        }
-
-        return res2;
-    }
-
-    /// <summary>
-    /// 安装curseforge压缩包
-    /// </summary>
-    /// <param name="data">整合包信息</param>
-    /// <param name="name">名字</param>
-    /// <param name="group">群组</param>
-    /// <returns>结果</returns>
-    public static async Task<(bool, GameSettingObj?)> InstallCurseForge(CurseForgeModObj.Data data, string? name, string? group)
-    {
-        data.FixDownloadUrl();
-
-        var item = new DownloadItemObj()
-        {
-            Url = data.downloadUrl,
-            Name = data.fileName,
-            Local = Path.GetFullPath(DownloadManager.DownloadDir + "/" + data.fileName),
-        };
-
-        var res1 = await DownloadManager.Start(new() { item });
-        if (!res1)
-            return (false, null);
-
-        var res2 = await InstallZip(item.Local, PackType.CurseForge, name, group);
-        if (res2.Item1)
-        {
-            res2.Item2!.PID = data.modId.ToString();
-            res2.Item2.FID = data.id.ToString();
-            res2.Item2.Save();
-        }
-
-        return res2;
-    }
-
-    /// <summary>
-    /// 升级整合包
-    /// </summary>
-    /// <param name="obj">游戏实例</param>
-    /// <param name="data">数据</param>
-    /// <returns>结果</returns>
-    public static async Task<bool> UpdateModPack(this GameSettingObj obj, CurseForgeModObj.Data data)
-    {
-        data.FixDownloadUrl();
-
-        var item = new DownloadItemObj()
-        {
-            Url = data.downloadUrl,
-            Name = data.fileName,
-            Local = Path.GetFullPath(DownloadManager.DownloadDir + "/" + data.fileName),
-        };
-
-        var res = await DownloadManager.Start(new() { item });
-        if (!res)
-            return false;
-
-        res = await ModPackHelper.UpdateCurseForgeModPack(obj, item.Local);
-        if (res)
-        {
-            obj.PID = data.modId.ToString();
-            obj.FID = data.id.ToString();
-            obj.Save();
-            obj.SaveModInfo();
-        }
-
-        return res;
-    }
-
-    /// <summary>
-    /// 升级整合包
-    /// </summary>
-    /// <param name="obj">游戏实例</param>
-    /// <param name="data"></param>
-    /// <returns>升级结果</returns>
-    public static async Task<bool> UpdateModPack(this GameSettingObj obj, ModrinthVersionObj data)
-    {
-        var file = data.files.FirstOrDefault(a => a.primary) ?? data.files[0];
-        var item = new DownloadItemObj()
-        {
-            Url = file.url,
-            Name = file.filename,
-            SHA1 = file.hashes.sha1,
-            Local = Path.GetFullPath(DownloadManager.DownloadDir + "/" + file.filename),
-        };
-
-        var res = await DownloadManager.Start(new() { item });
-        if (!res)
-            return false;
-
-        res = await ModPackHelper.UpdateModrinthModPack(obj, item.Local);
-        if (res)
-        {
-            obj.PID = data.project_id;
-            obj.FID = data.id;
-            obj.Save();
-            obj.SaveModInfo();
-        }
-
-        return res;
+        return PathHelper.DeleteFilesAsync(obj.GetBasePath(), request);
     }
 
     /// <summary>
@@ -1306,13 +876,17 @@ public static class InstancesPath
     /// <param name="local">目标地址</param>
     /// <param name="unselect">未选择的文件</param>
     /// <returns></returns>
-    public static async Task<(bool, Exception?)> CopyFile(this GameSettingObj obj, string local, List<string> unselect)
+    public static async Task<(bool, Exception?)> CopyFile(this GameSettingObj obj,
+        string local, List<string>? unselect)
     {
         try
         {
             local = Path.GetFullPath(local);
             var list = PathHelper.GetAllFile(local);
-            list.RemoveAll(item => unselect.Contains(item.FullName));
+            if (unselect != null)
+            {
+                list.RemoveAll(item => unselect.Contains(item.FullName));
+            }
             int basel = local.Length;
             var local1 = obj.GetGamePath();
             await Task.Run(() =>
@@ -1333,5 +907,63 @@ public static class InstancesPath
             Logs.Error(temp, e);
             return (false, e);
         }
+    }
+
+    /// <summary>
+    /// 获取自定义加载器数据
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public static async Task<string?> GetGameLoaderInfo(this GameSettingObj obj)
+    {
+        var file = obj.GetGameLoaderFile();
+        if (File.Exists(file))
+        {
+            var res = await DownloadItemHelper.DecodeLoaderJarAsync(obj);
+
+            var name = res.name;
+
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
+            if (VersionPath.GetCustomLoaderObj(obj.UUID) == null)
+            {
+                return null;
+            }
+
+            return name;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 设置游戏实例自定义加载器
+    /// </summary>
+    /// <param name="obj">游戏实例</param>
+    /// <param name="path">自定义加载器路径</param>
+    /// <returns></returns>
+    public static async Task<(bool, string?)> SetGameLoader(this GameSettingObj obj, string path)
+    {
+        if (!File.Exists(path))
+        {
+            return (false, LanguageHelper.Get("Core.Game.Error16"));
+        }
+
+        var list = await DownloadItemHelper.DecodeLoaderJarAsync(obj, path);
+
+        if (list.Item1 == null)
+        {
+            return (false, LanguageHelper.Get("Core.Game.Error17"));
+        }
+
+        var local = obj.GetGameLoaderFile();
+        PathHelper.Delete(local);
+
+        PathHelper.CopyFile(path, local);
+
+        return (true, null);
     }
 }

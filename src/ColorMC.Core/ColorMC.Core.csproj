@@ -17,6 +17,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Objs\ColorMC\**" />
+      <EmbeddedResource Remove="Objs\ColorMC\**" />
+      <None Remove="Objs\ColorMC\**" />
+    </ItemGroup>
+
+    <ItemGroup>
         <None Remove="Resources\Language\core_en-us.json" />
         <None Remove="Resources\Language\core_zh-cn.json" />
         <None Remove="Resources\Language\en-us" />
@@ -30,9 +36,12 @@
 
     <ItemGroup>
         <PackageReference Include="Heijden.Dns.Portable" Version="2.0.19" />
-        <PackageReference Include="HtmlAgilityPack" Version="1.11.54" />
-        <PackageReference Include="Jint" Version="3.0.0-beta-2057" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.61" />
+        <PackageReference Include="Jint" Version="3.1.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="DotNetty.Buffers" Version="0.7.6" />
+		<PackageReference Include="DotNetty.Common" Version="0.7.6" />
+		<PackageReference Include="DotNetty.Handlers" Version="0.7.6" />
         <PackageReference Include="SharpZipLib" Version="1.4.2" />
         <PackageReference Include="Tomlyn" Version="0.17.0" />
     </ItemGroup>
@@ -50,9 +59,5 @@
             <Generator>ResXFileCodeGenerator</Generator>
             <LastGenOutput>Resource1.Designer.cs</LastGenOutput>
         </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Objs\ColorMC\" />
     </ItemGroup>
 </Project>

@@ -1,6 +1,6 @@
+using System.Text;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
-using System.Text;
 
 namespace ColorMC.Core.Helpers;
 
@@ -17,7 +17,7 @@ public static class PathHelper
     public static bool FileHasInvalidChars(string name)
     {
         return string.IsNullOrWhiteSpace(name) || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
-            || name.All('.'.Equals) || name.Length > 50;
+            || (name.All('.'.Equals) && name.StartsWith('.') && name.EndsWith('.')) || name.Length > 80;
     }
 
     /// <summary>
@@ -144,21 +144,17 @@ public static class PathHelper
     /// <summary>
     /// 删除文件夹
     /// </summary>
-    public static async Task<bool> DeleteFiles(string local, bool req = true)
+    public static async Task<bool> DeleteFilesAsync(string local, ColorMCCore.Request request)
     {
         if (!Directory.Exists(local))
         {
             return true;
         }
 
-        if (req && ColorMCCore.GameRequest != null)
+        var res = await request(string.Format(LanguageHelper.Get("Core.Info2"), local));
+        if (!res)
         {
-            var res = await ColorMCCore.GameRequest.Invoke(
-                string.Format(LanguageHelper.Get("Core.Info2"), local));
-            if (!res)
-            {
-                return false;
-            }
+            return false;
         }
 
         return await Task.Run(() =>
@@ -204,7 +200,7 @@ public static class PathHelper
     {
         if (SystemInfo.Os == OsType.Android && local.StartsWith("content://"))
         {
-            return ColorMCCore.PhoneReadFile?.Invoke(local);
+            return ColorMCCore.PhoneReadFile(local);
         }
         if (File.Exists(local))
         {

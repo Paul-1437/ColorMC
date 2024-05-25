@@ -25,10 +25,10 @@ public static class OptifineAPI
         {
             var type = BaseClient.Source;
             var list = new List<OptifineObj>();
-            var data = await BaseClient.GetString(url);
+            var data = await BaseClient.GetStringAsync(url);
             if (data.Item1 == false)
             {
-                ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
                 return (null, null);
             }
@@ -36,7 +36,8 @@ public static class OptifineAPI
             {
                 HtmlDocument html = new();
                 html.LoadHtml(data.Item2!);
-                var list1 = html.DocumentNode.SelectNodes("//table/tr/td/span/div/table/tr");
+                var list2 = html.DocumentNode.SelectNodes("//tr");
+                var list1 = list2.Where(item => item?.GetClasses()?.Contains("downloadLine") == true);
                 if (list1 == null)
                     return (null, null);
 
@@ -122,11 +123,11 @@ public static class OptifineAPI
         {
             if (obj.Local == SourceLocal.Offical)
             {
-                _ = BaseClient.GetString(obj.Url1);
-                var data = await BaseClient.GetString(obj.Url2);
+                _ = BaseClient.GetStringAsync(obj.Url1);
+                var data = await BaseClient.GetStringAsync(obj.Url2);
                 if (data.Item1 == false)
                 {
-                    ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.Error7"),
+                    ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                         new Exception(obj.Url2), false);
                     return null;
                 }
@@ -144,7 +145,7 @@ public static class OptifineAPI
         }
         catch (Exception e)
         {
-            ColorMCCore.OnError?.Invoke(LanguageHelper.Get("Core.Http.OptiFine.Error2"), e, false);
+            ColorMCCore.OnError(LanguageHelper.Get("Core.Http.OptiFine.Error2"), e, false);
         }
 
         return null;
@@ -173,7 +174,7 @@ public static class OptifineAPI
             Url = data
         };
 
-        var res = await DownloadManager.Start(new() { item1 });
+        var res = await DownloadManager.StartAsync([item1]);
         if (!res)
         {
             return (false, LanguageHelper.Get("Core.Http.OptiFine.Error4"));

@@ -1,6 +1,8 @@
-using Avalonia;
 using System;
 using System.Collections.Generic;
+using Avalonia;
+using Avalonia.Media;
+using Avalonia.Platform;
 
 namespace ColorMC.Gui.Utils.LaunchSetting;
 
@@ -13,6 +15,10 @@ public static class StyleSel
 
     private static readonly double s_fontTitleSize = 17;
     private static readonly Thickness s_borderPadding = new(6, 6, 15, 6);
+    private static readonly Thickness s_borderPadding1 = new(6);
+
+    private static readonly BoxShadows s_shadow = BoxShadows.Parse("0 1 3 0 #999999");
+    private static readonly BoxShadows s_shadow1 = BoxShadows.Parse("0 1 3 0 #EEEEEE");
 
     private static CornerRadius s_buttonCornerRadius = new(3);
     private static CornerRadius s_picRadius = new(0);
@@ -39,6 +45,14 @@ public static class StyleSel
         else if (key == "BorderPadding")
         {
             return s_borderPadding;
+        }
+        else if (key == "BorderPadding1")
+        {
+            return s_borderPadding1;
+        }
+        else if (key == "ButtonLight")
+        {
+            return App.NowTheme == PlatformThemeVariant.Light ? s_shadow : s_shadow1;
         }
         return null;
     }
