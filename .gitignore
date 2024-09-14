@@ -1,2 +1,6 @@
 
 *.wxs
+.DS_Store
+build/.DS_Store
+build/info/.DS_Store
+.DS_Store
