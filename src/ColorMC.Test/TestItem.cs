@@ -8,7 +8,9 @@ using ColorMC.Core.Net.Motd;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Login;
 using ColorMC.Core.Utils;
-using System.Diagnostics;
+using ColorMC.Gui.MusicPlayer;
+using ColorMC.Gui.Skin;
+using SkiaSharp;
 using System.IO.Compression;
 
 namespace ColorMC.Test;
@@ -17,9 +19,10 @@ public static class TestItem
 {
     private static DesktopGameHandel? Start(GameSettingObj obj, LoginObj obj1)
     {
-        return obj.StartGameAsync(obj1, null, Program.Download,
-                (_) => Task.FromResult(true), (_) => { }, (_) => Task.FromResult(true), (_) => { },
-                (_) => Task.FromResult(true), (_, _) => { }, 0, CancellationToken.None).Result as DesktopGameHandel;
+        return obj.StartGameAsync(new GameLaunchArg 
+        { 
+            Auth = obj1 
+        }, CancellationToken.None).Result as DesktopGameHandel;
     }
 
     public static void Item1()
@@ -38,20 +41,24 @@ public static class TestItem
         else
         {
             //GameDownload.Download(version.versions.First()).Wait();
-            var list = DownloadItemHelper.DownloadAsync(version.versions.Where(a => a.id == "1.12.2").First()).Result;
-            if (list.State != GetDownloadState.End)
+            var list = DownloadItemHelper.BuildVersionDownloadAsync(version.versions.Where(a => a.id == "1.12.2").First()).Result;
+            if (list == null)
             {
                 Console.WriteLine("下载列表获取失败");
                 return;
             }
-            DownloadManager.StartAsync(list.List!).Wait();
+            DownloadManager.StartAsync(list).Wait();
         }
     }
 
     public static void Item3()
     {
-        var list = ModPackHelper.DownloadCurseForgeModPackAsync("H:\\ColonyVenture-1.13.zip", null, null,
-            Program.Download, (_) => Task.FromResult(true), (_, _) => { }, (_) => { }).Result;
+        var list = ModPackHelper.InstallCurseForgeModPackAsync(new InstallModPackZipArg
+        {
+            Zip = "H:\\ColonyVenture-1.13.zip",
+            Request = Program.Download,
+            Overwirte = (_) => Task.FromResult(true)
+        }).Result;
     }
 
     public static void Item4()
@@ -65,12 +72,12 @@ public static class TestItem
         {
             var item = res.loader.First();
             var list = DownloadItemHelper.BuildFabricAsync("1.19.2", item.version).Result;
-            if (list.State != GetDownloadState.End)
+            if (list == null)
             {
                 Console.WriteLine("下载列表获取失败");
                 return;
             }
-            DownloadManager.StartAsync(list.List!).Wait();
+            DownloadManager.StartAsync(list).Wait();
         }
     }
 
@@ -108,8 +115,7 @@ public static class TestItem
     public static void Item7()
     {
         var data = InstancesPath.Games.First();
-        var list = CheckHelpers.CheckGameFileAsync(data, new LoginObj(),
-            (_, _) => { }, CancellationToken.None).Result;
+        var list = CheckHelpers.CheckGameFileAsync(data, CancellationToken.None).Result;
         if (list == null)
         {
             Console.WriteLine("文件检查失败");
@@ -140,7 +146,7 @@ public static class TestItem
                 Loader = Loaders.Forge,
                 LoaderVersion = "14.23.5.2860"
             };
-            var process = Start(game, login.Obj!);
+            var process = Start(game, login.Auth!);
             process?.Process.WaitForExit();
         }
     }
@@ -178,7 +184,7 @@ public static class TestItem
 
         CancellationToken token = CancellationToken.None;
 
-        BaseClient.Source = SourceLocal.Offical;
+        WebClient.Source = SourceLocal.Offical;
 
         DesktopGameHandel? process;
         //process = game.StartGame(login).Result;
@@ -320,7 +326,7 @@ public static class TestItem
     public static void Item11()
     {
         var login = GameAuth.LoginNide8Async("f0930d6ac12f11ea908800163e095b49", "402067010@qq.com", "123456").Result;
-        if (login.Obj == null)
+        if (login.Auth == null)
         {
             Console.WriteLine("登录错误");
         }
@@ -334,7 +340,7 @@ public static class TestItem
                 Loader = Loaders.Forge,
                 LoaderVersion = "40.1.85"
             };
-            var process = Start(game, login.Obj);
+            var process = Start(game, login.Auth);
             process?.Process.WaitForExit();
         }
     }
@@ -459,9 +465,13 @@ public static class TestItem
         var list1 = ModrinthAPI.GetFileVersions(item.project_id, "", Loaders.Fabric).Result;
         var item1 = list1!.First();
 
-        InstallGameHelper.InstallModrinth(item1, null, null,
-            (a, b, c) => { }, Program.Download, (_) => Task.FromResult(true), (_, _) => { },
-            (_) => { }).Wait();
+        AddGameHelper.InstallModrinth(new DownloadModrinthArg
+        {
+            Data = item1,
+            Data1 = item,
+            Request = Program.Download,
+            Overwirte = (_) => Task.FromResult(true),
+        }).Wait();
     }
 
     public static void Item22()
@@ -481,7 +491,7 @@ public static class TestItem
 
     public static void Item24()
     {
-        var list = ColorMCAPI.GetMcModFromName("魔法", 0).Result;
+        var list = ColorMCAPI.GetMcMod("魔法", 0, Loaders.Normal, "1.12.2", "", 0).Result;
     }
 
     public static void Item25()
@@ -579,7 +589,6 @@ public static class TestItem
             }
         };
         var server = new LanServer("25565", "测试服务器");
-
     }
 
     public static void Item34()
@@ -595,6 +604,29 @@ public static class TestItem
 
     public static void Item35()
     {
-        
+        var sdl = Silk.NET.SDL.Sdl.GetApi();
+        var res = sdl.Init(Silk.NET.SDL.Sdl.InitAudio);
+
+        Media.Init(sdl);
+        Media.PlayMusic("H:\\music.mp3", false, 100);
+    }
+    public static void Item36()
+    {
+        var image = Skin3DHeadB.MakeHeadImage(SKBitmap.Decode("D:\\skin\\Skins\\color_yr.png"));
+        using var stream = File.OpenWrite("output.png");
+        image.CopyTo(stream);
+    }
+
+    public static void Item37()
+    {
+        SystemInfo.Os = OsType.Linux;
+        SystemInfo.IsArm = true;
+
+        var list = CheckHelpers.CheckGameFileAsync(new()
+        { 
+            Version = "1.21.1",
+            DirName = "test1",
+            Name = "test1"
+        }, CancellationToken.None).Result;
     }
 }

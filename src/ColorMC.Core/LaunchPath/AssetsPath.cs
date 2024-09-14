@@ -16,7 +16,7 @@ public static class AssetsPath
     public const string Name2 = "objects";
     public const string Name3 = "skins";
 
-    private readonly static Dictionary<string, AssetsObj> s_assets = [];
+    private static readonly Dictionary<string, AssetsObj> s_assets = [];
 
     /// <summary>
     /// 基础路径
@@ -34,8 +34,8 @@ public static class AssetsPath
     /// <param name="dir">运行目录</param>
     public static void Init(string dir)
     {
-        BaseDir = dir + "/" + Name;
-        ObjectsDir = BaseDir + "/" + Name2;
+        BaseDir = Path.GetFullPath(dir + "/" + Name);
+        ObjectsDir = Path.GetFullPath(BaseDir + "/" + Name2);
 
         Directory.CreateDirectory(BaseDir);
 

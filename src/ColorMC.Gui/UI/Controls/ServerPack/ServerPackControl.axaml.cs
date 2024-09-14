@@ -1,9 +1,8 @@
 using System.ComponentModel;
-using System.IO;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
-using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.ServerPack;
 using ColorMC.Gui.UIBinding;
@@ -19,14 +18,6 @@ public partial class ServerPackControl : MenuControl
     private Tab3Control _tab3;
     private Tab4Control _tab4;
 
-    private Bitmap _icon;
-    public override Bitmap GetIcon() => _icon;
-
-    public override string Title => string.Format(App.Lang("ServerPackWindow.Title"),
-           _obj.Name);
-
-    public override string UseName { get; }
-
     public ServerPackControl()
     {
         UseName = ToString() ?? "ServerPackControl";
@@ -35,18 +26,14 @@ public partial class ServerPackControl : MenuControl
     public ServerPackControl(GameSettingObj obj) : this()
     {
         _obj = obj;
+        Title = string.Format(App.Lang("ServerPackWindow.Title"),
+           _obj.Name);
+        UseName += ":" + obj.UUID;
     }
 
     public override void Opened()
     {
         Window.SetTitle(Title);
-
-        var icon = _obj.GetIconFile();
-        if (File.Exists(icon))
-        {
-            _icon = new(icon);
-            Window.SetIcon(_icon);
-        }
 
         if (DataContext is ServerPackModel model)
         {
@@ -56,12 +43,10 @@ public partial class ServerPackControl : MenuControl
 
     public override void Closed()
     {
-        _icon?.Dispose();
-
-        App.ServerPackWindows.Remove(_obj.UUID);
+        WindowManager.ServerPackWindows.Remove(_obj.UUID);
     }
 
-    protected override MenuModel SetModel(BaseModel model)
+    public override TopModel GenModel(BaseModel model)
     {
         var pack = GameBinding.GetServerPack(_obj);
         if (pack == null)
@@ -80,17 +65,9 @@ public partial class ServerPackControl : MenuControl
         return new ServerPackModel(model, pack);
     }
 
-    protected override Control ViewChange(bool iswhell, int old, int index)
+    protected override Control ViewChange(int old, int index)
     {
         var model = (DataContext as ServerPackModel)!;
-        switch (old)
-        {
-            case 1:
-            case 2:
-            case 4:
-                model.RemoveChoise();
-                break;
-        }
         switch (model.NowView)
         {
             case 0:
@@ -98,18 +75,20 @@ public partial class ServerPackControl : MenuControl
                 return _tab1 ??= new();
             case 1:
                 model.LoadMod();
-                model.SetTab2Click();
                 return _tab2 ??= new();
             case 2:
-                model.LoadConfigList();
-                model.SetTab3Click();
+                model.LoadResourceList();
                 return _tab3 ??= new();
             case 3:
                 model.LoadFile();
-                model.SetTab4Click();
                 return _tab4 ??= new();
             default:
                 throw new InvalidEnumArgumentException();
         }
+    }
+    public override Bitmap GetIcon()
+    {
+        var icon = ImageManager.GetGameIcon(_obj);
+        return icon ?? ImageManager.GameIcon;
     }
 }

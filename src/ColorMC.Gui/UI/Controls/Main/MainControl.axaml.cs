@@ -2,35 +2,37 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Animations;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.Main;
-using ColorMC.Gui.UI.Windows;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UI.Controls.Main;
 
-public partial class MainControl : UserControl, IUserControl
+public partial class MainControl : BaseUserControl
 {
-    public IBaseWindow Window => App.FindRoot(VisualRoot);
-
-    public string Title => "ColorMC";
-
     public readonly SelfPageSlideSide SidePageSlide300 = new(TimeSpan.FromMilliseconds(300));
 
-    public string UseName { get; }
+    private MainOneGameControl? _oneGame;
+    private MinecraftNewsControl? _news;
+    private MainEmptyControl? _emptyGame;
+    private MainGamesControl? _games;
 
     public MainControl()
     {
         InitializeComponent();
 
+        Title = "ColorMC";
         UseName = ToString() ?? "MainControl";
 
         AddHandler(DragDrop.DragEnterEvent, DragEnter);
@@ -38,17 +40,23 @@ public partial class MainControl : UserControl, IUserControl
         AddHandler(DragDrop.DropEvent, Drop);
 
         SizeChanged += MainControl_SizeChanged;
+        BaseBinding.LoadDone += LoadDone;
     }
 
-    public Task<bool> OnKeyDown(object? sender, KeyEventArgs e)
+    public override Task<bool> OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.F && e.KeyModifiers == KeyModifiers.Control)
         {
-            if (DataContext is MainModel model)
+            if (DataContext is MainModel model
+                && Content1.Child is MainGamesControl con)
             {
-                model.Search();
-                if (Content1.Child is MainGamesControl con)
+                if (model.GameSearch)
                 {
+                    model.SearchClose();
+                }
+                else
+                {
+                    model.Search();
                     Dispatcher.UIThread.Post(() =>
                     {
                         con.Search.Focus();
@@ -67,19 +75,6 @@ public partial class MainControl : UserControl, IUserControl
         {
             model.Live2dWidth = (int)(Bounds.Width * ((float)config.Width / 100));
             model.Live2dHeight = (int)(Bounds.Height * ((float)config.Height / 100));
-
-            if (Bounds.Width > 500 && model.TopSide2 != false)
-            {
-                model.TopSide2 = false;
-                model.TopSide = true;
-                model.TopSide1 = true;
-            }
-            else if (Bounds.Width <= 500 && model.TopSide2 != true)
-            {
-                model.TopSide2 = true;
-                model.TopSide = false;
-                model.TopSide1 = true;
-            }
         }
     }
 
@@ -111,7 +106,7 @@ public partial class MainControl : UserControl, IUserControl
             else if (item.Name.EndsWith(".zip") || item.Name.EndsWith(".mrpack"))
             {
                 Grid2.IsVisible = true;
-                Label1.Text = App.Lang("Text.Import");
+                Label1.Text = App.Lang("MainWindow.Text25");
             }
         }
     }
@@ -137,7 +132,7 @@ public partial class MainControl : UserControl, IUserControl
             }
             if (str.StartsWith("authlib-injector:yggdrasil-server:"))
             {
-                App.ShowUser(false, str);
+                WindowManager.ShowUser(false, url: str);
             }
             else if (str.StartsWith("cloudkey:") || str.StartsWith("cloudKey:"))
             {
@@ -155,11 +150,11 @@ public partial class MainControl : UserControl, IUserControl
                 return;
             if (item is IStorageFolder forder && Directory.Exists(forder.GetPath()))
             {
-                App.ShowAddGame(null, true, forder.GetPath());
+                WindowManager.ShowAddGame(null, true, forder.GetPath());
             }
             else if (item.Name.EndsWith(".zip") || item.Name.EndsWith(".mrpack"))
             {
-                App.ShowAddGame(null, false, item.GetPath());
+                WindowManager.ShowAddGame(null, false, item.GetPath());
             }
         }
     }
@@ -167,42 +162,45 @@ public partial class MainControl : UserControl, IUserControl
     private void SwitchView()
     {
         var model = (DataContext as MainModel)!;
-        if (model.IsOneGame || model.IsGameError)
+        if (model.NewsDisplay)
         {
-            if (Content1.Child is not MainOneGameControl)
-            {
-                Content1.Child = new MainOneGameControl();
-            }
+            _news ??= new();
+            Content1.Child = _news;
+        }
+        else if (model.IsOneGame || model.IsGameError)
+        {
+            _oneGame ??= new();
+            Content1.Child = _oneGame;
+        }
+        else if (model.IsNotGame && Content1.Child is not MainEmptyControl)
+        {
+            _emptyGame ??= new();
+            Content1.Child = _emptyGame;
+            model.LoadEmptyGame();
         }
         else
         {
-            if (model.IsNotGame && Content1.Child is not MainEmptyControl)
-            {
-                Content1.Child = new MainEmptyControl()
-                {
-                    DataContext = new MainEmptyModel(model.Model)
-                };
-            }
-            else if (Content1.Child is not MainGamesControl)
-            {
-                Content1.Child = new MainGamesControl();
-            }
+            _games ??= new();
+            Content1.Child = _games;
         }
     }
 
-    public void WindowStateChange(WindowState state)
+    public override void WindowStateChange(WindowState state)
     {
-        (DataContext as MainModel)!.Render = state != WindowState.Minimized;
+        if (DataContext is MainModel model)
+        {
+            model.Render = state != WindowState.Minimized;
+        }
     }
 
-    public void Closed()
+    public override void Closed()
     {
-        App.MainWindow = null;
+        WindowManager.MainWindow = null;
 
         App.Close();
     }
 
-    public void Opened()
+    public override async void Opened()
     {
         Window.SetTitle(Title);
 
@@ -210,9 +208,13 @@ public partial class MainControl : UserControl, IUserControl
 
         if (BaseBinding.NewStart)
         {
+            MainView.Opacity = 0;
             var con1 = new MainStartControl();
             Start.Child = con1;
-            con1.Start(Start);
+            Start.IsVisible = true;
+            await con1.Start();
+            await ThemeManager.CrossFade300.Start(Start, MainView, CancellationToken.None);
+            Start.IsVisible = false;
         }
 
         if (ColorMCGui.IsCrash)
@@ -222,7 +224,7 @@ public partial class MainControl : UserControl, IUserControl
         }
     }
 
-    public async Task<bool> Closing()
+    public override async Task<bool> Closing()
     {
         var model = (DataContext as MainModel)!;
         if (model.IsLaunch)
@@ -235,7 +237,7 @@ public partial class MainControl : UserControl, IUserControl
             return true;
         }
 
-        if (BaseBinding.IsGameRuning())
+        if (GameManager.IsGameRuning())
         {
             App.Hide();
             return true;
@@ -314,22 +316,73 @@ public partial class MainControl : UserControl, IUserControl
         (DataContext as MainModel)!.ShowMessage(message);
     }
 
-    public void SetBaseModel(BaseModel model)
+    public override TopModel GenModel(BaseModel model)
     {
         var amodel = new MainModel(model);
         amodel.PropertyChanged += Amodel_PropertyChanged;
-        DataContext = amodel;
 
         var config = GuiConfigUtils.Config.Live2D;
         amodel.Live2dWidth = (int)(Bounds.Width * ((float)config.Width / 100));
         amodel.Live2dHeight = (int)(Bounds.Height * ((float)config.Height / 100));
+
+        return amodel;
     }
 
     private void Amodel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == "SwitchView")
+        if (e.PropertyName == MainModel.SwitchView)
         {
             SwitchView();
+        }
+        else if (e.PropertyName == TopModel.MinModeName)
+        {
+            if (DataContext is MainModel model)
+            {
+                if (model.MinMode)
+                {
+                    //HeadTop.Children.Remove(Buttons);
+                    //ContentTop.Children.Add(Buttons);
+                    TopRight.IsVisible = false;
+
+                    TopRight.Child = null;
+                    ContentTop.Children.Add(HeadButton);
+                    HeadButton.Margin = new(0, 0, 0, 10);
+
+                    Right.Child = null;
+                    ContentTop.Children.Add(RightSide);
+                    model.SideDisplay = false;
+                }
+                else
+                {
+                    //ContentTop.Children.Remove(Buttons);
+                    //HeadTop.Children.Add(Buttons);
+                    TopRight.IsVisible = true;
+
+                    ContentTop.Children.Remove(HeadButton);
+                    TopRight.Child = HeadButton;
+                    HeadButton.Margin = new(0);
+
+                    ContentTop.Children.Remove(RightSide);
+                    Right.Child = RightSide;
+                    if (!model.NewsDisplay)
+                    {
+                        model.SideDisplay = true;
+                    }
+                }
+            }
+        }
+    }
+
+    public override Bitmap GetIcon()
+    {
+        return ImageManager.GameIcon;
+    }
+
+    public void IconChange(string uuid)
+    {
+        if (DataContext is MainModel model)
+        {
+            model.IconChange(uuid);
         }
     }
 }

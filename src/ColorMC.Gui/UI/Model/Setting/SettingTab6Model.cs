@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using Avalonia.Media;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
+using ColorMC.Gui.Objs;
+using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
-using ColorMC.Gui.Utils.LaunchSetting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DialogHostAvalonia;
 
 namespace ColorMC.Gui.UI.Model.Setting;
 
@@ -19,7 +21,12 @@ public partial class SettingModel
 
     public ObservableCollection<string> GameList { get; init; } = [];
 
-    public List<string> LoginList { get; init; } = UserBinding.GetLoginType();
+    public ObservableCollection<LockLoginModel> Locks { get; init; } = [];
+
+    public string[] LoginList { get; init; } = LanguageBinding.GetLockLoginType();
+
+    [ObservableProperty]
+    private LockLoginModel? _lockSelect;
 
     [ObservableProperty]
     private Color _motdFontColor;
@@ -29,11 +36,7 @@ public partial class SettingModel
     [ObservableProperty]
     private string _serverIP;
     [ObservableProperty]
-    private string? _fileUI;
-    [ObservableProperty]
     private string? _music;
-    [ObservableProperty]
-    private string? _loginUrl;
 
     [ObservableProperty]
     private ushort? _serverPort;
@@ -49,8 +52,6 @@ public partial class SettingModel
     [ObservableProperty]
     private bool _enableOneLogin;
     [ObservableProperty]
-    private bool _enableOneLoginUrl;
-    [ObservableProperty]
     private bool _enableMusic;
     [ObservableProperty]
     private bool _slowVolume;
@@ -58,19 +59,22 @@ public partial class SettingModel
     private bool _runPause;
     [ObservableProperty]
     private bool _enableUI;
+    [ObservableProperty]
+    private bool _loop;
 
     [ObservableProperty]
     private int _game = -1;
     [ObservableProperty]
     private int _volume;
-    [ObservableProperty]
-    private int _login = -1;
 
     private bool _serverLoad = true;
 
-    partial void OnLoginUrlChanged(string? value)
+    partial void OnLoopChanged(bool value)
     {
-        SetLoginLock();
+        if (_serverLoad)
+            return;
+
+        SetMusic();
     }
 
     partial void OnEnableUIChanged(bool value)
@@ -78,22 +82,7 @@ public partial class SettingModel
         if (_serverLoad)
             return;
 
-        ConfigBinding.SetUI(value, FileUI);
-    }
-
-    partial void OnLoginChanged(int value)
-    {
-        var type = (AuthType)(value + 1);
-        if (type is AuthType.Nide8 or AuthType.AuthlibInjector or AuthType.SelfLittleSkin)
-        {
-            EnableOneLoginUrl = true;
-        }
-        else
-        {
-            EnableOneLoginUrl = false;
-        }
-
-        SetLoginLock();
+        ConfigBinding.SetUI(value);
     }
 
     partial void OnEnableOneLoginChanged(bool value)
@@ -126,14 +115,6 @@ public partial class SettingModel
     partial void OnRunPauseChanged(bool value)
     {
         SetMusic();
-    }
-
-    partial void OnFileUIChanged(string? value)
-    {
-        if (_serverLoad)
-            return;
-
-        ConfigBinding.SetUI(EnableUI, value);
     }
 
     partial void OnMotdFontColorChanged(Color value)
@@ -180,51 +161,21 @@ public partial class SettingModel
         SetIP();
     }
 
-    [RelayCommand]
-    public async Task SelectUI()
-    {
-        var file = await PathBinding.SelectFile(FileType.UI);
-        if (file.Item1 != null)
-        {
-            FileUI = file.Item1;
-        }
-    }
-
-    [RelayCommand]
-    public void Delete()
-    {
-        FileUI = "";
-    }
 
     [RelayCommand]
     public void Test()
     {
-        if (string.IsNullOrWhiteSpace(FileUI))
+        var res = BaseBinding.TestCustomWindow();
+        if (!res)
         {
-            Model.Show(App.Lang("SettingWindow.Tab5.Error2"));
-            return;
-        }
-        var res = BaseBinding.TestCustomWindow(FileUI);
-        if (!res.Item1)
-        {
-            Model.Show(res.Item2!);
+            Model.Show(App.Lang("BaseBinding.Error8"));
         }
     }
 
     [RelayCommand]
-    public async Task Save()
+    public void UIGuide()
     {
-        var str = await PathBinding.SaveFile(FileType.UI, null);
-        if (str == null)
-            return;
-
-        if (str == false)
-        {
-            Model.Show(App.Lang("SettingWindow.Tab6.Error3"));
-            return;
-        }
-
-        Model.Notify(App.Lang("SettingWindow.Tab6.Info4"));
+        WebBinding.OpenWeb(WebType.UIGuide);
     }
 
     [RelayCommand]
@@ -254,13 +205,72 @@ public partial class SettingModel
     [RelayCommand]
     public async Task SelectMusic()
     {
-        var file = await PathBinding.SelectFile(FileType.Music);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Music);
         if (file.Item1 == null)
         {
             return;
         }
 
         Music = file.Item1;
+    }
+
+    [RelayCommand]
+    public async Task AddLockLogin()
+    {
+        var model = new AddLockLoginModel();
+        var res = await DialogHost.Show(model, "AddLockLogin");
+        if (res is true)
+        {
+            if (model.Index == 0)
+            {
+                foreach (var item in Locks)
+                {
+                    if (item.AuthType == AuthType.OAuth)
+                    {
+                        Model.Show(App.Lang("SettingWindow.Tab6.Error4"));
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(model.InputText)
+                    || string.IsNullOrWhiteSpace(model.InputText1))
+                {
+                    Model.Show(App.Lang("SettingWindow.Tab6.Error5"));
+                    return;
+                }
+                foreach (var item in Locks)
+                {
+                    if (item.Name == model.InputText)
+                    {
+                        Model.Show(App.Lang("SettingWindow.Tab6.Error6"));
+                        return;
+                    }
+                }
+            }
+
+            Locks.Add(new(this, new()
+            {
+                Name = model.InputText,
+                Data = model.InputText1,
+                Type = (AuthType)(model.Index + 1)
+            }));
+
+            SetLoginLock();
+        }
+    }
+
+    public void Delete(LockLoginModel model)
+    {
+        Locks.Remove(model);
+
+        SetLoginLock();
     }
 
     public void LoadServer()
@@ -280,11 +290,11 @@ public partial class SettingModel
         GameList.Clear();
         GameList.AddRange(list1);
 
-        if (ConfigBinding.GetAllConfig().Item2?.ServerCustom is { } config)
+        var config = GuiConfigUtils.Config.ServerCustom;
+        if (config is { })
         {
             ServerIP = config.IP;
             ServerPort = config.Port;
-            FileUI = config.UIFile;
             Music = config.Music;
 
             EnableMotd = config.Motd;
@@ -294,6 +304,7 @@ public partial class SettingModel
             EnableUI = config.EnableUI;
             RunPause = config.RunPause;
             SlowVolume = config.SlowVolume;
+            Loop = config.MusicLoop;
 
             MotdFontColor = ColorSel.MotdColor.ToColor();
             MotdBackColor = ColorSel.MotdBackColor.ToColor();
@@ -308,9 +319,13 @@ public partial class SettingModel
 
             Volume = config.Volume;
 
-            LoginUrl = config.LoginUrl;
-            Login = config.LoginType;
             EnableOneLogin = config.LockLogin;
+
+            Locks.Clear();
+            foreach (var item in config.LockLogins)
+            {
+                Locks.Add(new(this, item));
+            }
         }
 
         _serverLoad = false;
@@ -321,7 +336,7 @@ public partial class SettingModel
         if (_serverLoad)
             return;
 
-        ConfigBinding.SetMusic(EnableMusic, SlowVolume, Music, Volume, RunPause);
+        ConfigBinding.SetMusic(EnableMusic, SlowVolume, Music, Volume, RunPause, Loop);
     }
 
     private void SetLoginLock()
@@ -329,7 +344,13 @@ public partial class SettingModel
         if (_serverLoad)
             return;
 
-        ConfigBinding.SetLoginLock(EnableOneLogin, Login, LoginUrl!);
+        var list = new List<LockLoginSetting>();
+        foreach (var item in Locks)
+        {
+            list.Add(item.login);
+        }
+
+        ConfigBinding.SetLoginLock(EnableOneLogin, list);
     }
 
     private void SetIP()

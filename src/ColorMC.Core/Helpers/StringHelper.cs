@@ -10,6 +10,9 @@ namespace ColorMC.Core.Helpers;
 /// </summary>
 public static partial class StringHelper
 {
+    [GeneratedRegex("\\b\\d+(.\\d+)+\\b")]
+    public static partial Regex VersionRegex();
+
     /// <summary>
     /// 截取字符串
     /// </summary>
@@ -196,6 +199,10 @@ public static partial class StringHelper
         return builder.ToString();
     }
 
+    /// <summary>
+    /// 版本号排序
+    /// </summary>
+    /// <param name="list"></param>
     public static void VersionSort(List<string> list)
     {
         var regex = VersionRegex();
@@ -220,6 +227,63 @@ public static partial class StringHelper
         }
     }
 
-    [GeneratedRegex("\\b\\d+(.\\d+)+\\b")]
-    public static partial Regex VersionRegex();
+    /// <summary>
+    /// 从Steam获取字符串
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <returns></returns>
+    public static async Task<string> GetStringAsync(Stream stream1)
+    {
+        var head = Encoding.UTF8.GetPreamble();
+        using var stream = new MemoryStream();
+        await stream1.CopyToAsync(stream);
+        stream.Seek(0, SeekOrigin.Begin);
+        if (head.Length == 0)
+        {
+            return Encoding.UTF8.GetString(stream.ToArray());
+        }
+        else
+        {
+            var temp = new byte[head.Length];
+            await stream.ReadExactlyAsync(temp);
+            for (int a = 0; a < temp.Length; a++)
+            {
+                if (temp[a] != head[a])
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    return Encoding.UTF8.GetString(stream.ToArray());
+                }
+            }
+
+            var temp1 = stream.ToArray();
+            return Encoding.UTF8.GetString(temp1, head.Length, temp1.Length - head.Length);
+        }
+    }
+
+    public static string RemovePartAfterSymbol(string input, char symbol)
+    {
+        int index = input.IndexOf(symbol);
+        if (index >= 0)
+        {
+            return input[..index];
+        }
+        return input; // 如果没有找到符号，就返回原始字符串
+    }
+
+    public static string ReplaceFirst(string input, string oldValue, string newValue)
+    {
+        if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(oldValue))
+        {
+            return input;
+        }
+
+        int index = input.IndexOf(oldValue);
+
+        if (index < 0)
+        {
+            return input;
+        }
+
+        return input.Substring(0, index) + newValue + input.Substring(index + oldValue.Length);
+    }
 }

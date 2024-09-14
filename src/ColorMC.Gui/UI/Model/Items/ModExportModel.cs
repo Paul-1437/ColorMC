@@ -2,7 +2,6 @@ using System.ComponentModel;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
-using ColorMC.Core.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ColorMC.Gui.UI.Model.Items;
@@ -19,7 +18,7 @@ public partial class ModExportModel : ObservableObject
     [ObservableProperty]
     private string? _fID;
 
-    private BaseModel _model;
+    private readonly BaseModel _model;
 
     public ModExportModel(BaseModel model, string? pid, string? fid)
     {
@@ -27,22 +26,22 @@ public partial class ModExportModel : ObservableObject
         _fID = fid;
         _model = model;
 
+        if (string.IsNullOrWhiteSpace(PID) || string.IsNullOrWhiteSpace(FID))
+        {
+            Source = null;
+        }
+        else
+        {
+            Source = DownloadItemHelper.TestSourceType(PID, FID);
+        }
+
         Reload();
     }
 
     public string Name => Obj.name;
     public string Modid => Obj.modid;
     public string Loader => Obj.Loader.GetName();
-    public SourceType? Source
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(PID) || string.IsNullOrWhiteSpace(FID))
-                return null;
-            return FuntionUtils.CheckNotNumber(PID) || FuntionUtils.CheckNotNumber(FID) ?
-                SourceType.Modrinth : SourceType.CurseForge;
-        }
-    }
+    public SourceType? Source { get; init; }
 
     partial void OnPIDChanged(string? value)
     {
@@ -62,7 +61,7 @@ public partial class ModExportModel : ObservableObject
         {
             if (Obj1 == null)
             {
-                _model.Show(App.Lang("Gui.Error52"));
+                _model.Show(App.Lang("GameEditWindow.Tab4.Error5"));
                 Export = false;
             }
         }

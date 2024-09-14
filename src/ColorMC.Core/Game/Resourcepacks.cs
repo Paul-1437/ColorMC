@@ -1,4 +1,3 @@
-using System.Text;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
@@ -14,60 +13,6 @@ namespace ColorMC.Core.Game;
 /// </summary>
 public static class Resourcepacks
 {
-    /// <summary>
-    /// 获取资源包
-    /// </summary>
-    /// <param name="file">文件流</param>
-    /// <returns>资源包</returns>
-    private static async Task<ResourcepackObj?> ReadResourcepackAsync(Stream file)
-    {
-        using var zFile = new ZipFile(file);
-        var item1 = zFile.GetEntry("pack.mcmeta");
-        if (item1 != null)
-        {
-            using var stream1 = zFile.GetInputStream(item1);
-            using var stream = new MemoryStream();
-            await stream1.CopyToAsync(stream);
-            var data = Encoding.UTF8.GetString(stream.ToArray());
-            var obj1 = JObject.Parse(data);
-            if (obj1 != null)
-            {
-                var obj = new ResourcepackObj();
-                if (obj1.ContainsKey("pack"))
-                {
-                    var obj2 = obj1["pack"] as JObject;
-                    if (obj2!["pack_format"] is { } item2)
-                    {
-                        obj.pack_format = (int)item2;
-                    }
-                    if (obj2.ContainsKey("description"))
-                    {
-                        var obj3 = obj2["description"]!;
-                        if (obj3.Type == JTokenType.String)
-                        {
-                            obj.description = obj3.ToString();
-                        }
-                        else if (obj3.Type == JTokenType.Object)
-                        {
-                            obj.description = obj3["fallback"]?.ToString() ?? "";
-                        }
-                    }
-                }
-                item1 = zFile.GetEntry("pack.png");
-                if (item1 != null)
-                {
-                    using var stream2 = zFile.GetInputStream(item1);
-                    using var stream3 = new MemoryStream();
-                    await stream2.CopyToAsync(stream3);
-                    obj.Icon = stream3.ToArray();
-                }
-                return obj;
-            }
-        }
-
-        return null;
-    }
-
     /// <summary>
     /// 获取材质包列表
     /// </summary>
@@ -85,7 +30,7 @@ public static class Resourcepacks
             return list;
         }
 
-        await Parallel.ForEachAsync(info.GetFiles(), async (item, _) =>
+        await Parallel.ForEachAsync(info.GetFiles(), async (item, cancel) =>
         {
             using var stream = PathHelper.OpenRead(item.FullName)!;
             string sha1 = HashHelper.GenSha1(stream);
@@ -95,16 +40,22 @@ public static class Resourcepacks
             }
             try
             {
+                string sha256s = "";
+                if (sha256)
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    sha256s = HashHelper.GenSha256(stream);
+                }
+
                 stream.Seek(0, SeekOrigin.Begin);
-                var obj = await ReadResourcepackAsync(stream);
+                var obj = await ReadResourcepackAsync(stream, cancel);
                 if (obj != null)
                 {
                     obj.Local = Path.GetFullPath(item.FullName);
                     obj.Sha1 = sha1;
                     if (sha256)
                     {
-                        stream.Seek(0, SeekOrigin.Begin);
-                        obj.Sha256 = HashHelper.GenSha256(stream);
+                        obj.Sha256 = sha256s;
                     }
                     list.Add(obj);
                 }
@@ -162,8 +113,65 @@ public static class Resourcepacks
         return ok;
     }
 
+    /// <summary>
+    /// 删除材质包
+    /// </summary>
+    /// <param name="obj"></param>
     public static void Delete(this ResourcepackObj obj)
     {
         PathHelper.Delete(obj.Local);
     }
+
+    /// <summary>
+    /// 获取资源包
+    /// </summary>
+    /// <param name="file">文件流</param>
+    /// <returns>资源包</returns>
+    private static async Task<ResourcepackObj?> ReadResourcepackAsync(Stream file, CancellationToken cancel)
+    {
+        using var zFile = new ZipFile(file);
+        var item1 = zFile.GetEntry("pack.mcmeta");
+        if (item1 != null)
+        {
+            using var stream1 = zFile.GetInputStream(item1);
+            var data = await StringHelper.GetStringAsync(stream1);
+            var obj1 = JObject.Parse(data);
+            if (obj1 != null)
+            {
+                var obj = new ResourcepackObj();
+                if (obj1.ContainsKey("pack"))
+                {
+                    var obj2 = obj1["pack"] as JObject;
+                    if (obj2!["pack_format"] is { } item2)
+                    {
+                        obj.pack_format = (int)item2;
+                    }
+                    if (obj2.ContainsKey("description"))
+                    {
+                        var obj3 = obj2["description"]!;
+                        if (obj3.Type == JTokenType.String)
+                        {
+                            obj.description = obj3.ToString();
+                        }
+                        else if (obj3.Type == JTokenType.Object)
+                        {
+                            obj.description = obj3["fallback"]?.ToString() ?? "";
+                        }
+                    }
+                }
+                item1 = zFile.GetEntry("pack.png");
+                if (item1 != null)
+                {
+                    using var stream2 = zFile.GetInputStream(item1);
+                    using var stream3 = new MemoryStream();
+                    await stream2.CopyToAsync(stream3, cancel);
+                    obj.Icon = stream3.ToArray();
+                }
+                return obj;
+            }
+        }
+
+        return null;
+    }
+
 }

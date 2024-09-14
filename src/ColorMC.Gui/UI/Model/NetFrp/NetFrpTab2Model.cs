@@ -28,7 +28,7 @@ public partial class NetFrpModel
         IsLocalEmpty = true;
     }
 
-    public async void StartThisLan(NetFrpLocalModel local)
+    public async void StartThisFrp(NetFrpLocalModel local)
     {
         if (RemotesSakura.Count == 0 && RemotesOpenFrp.Count == 0)
         {
@@ -58,14 +58,14 @@ public partial class NetFrpModel
         var item1 = list1[Index];
         local.IsStart = true;
         var res1 = await BaseBinding.StartFrp(item1, local);
-        if (!res1.Item1)
+        if (!res1.Res)
         {
             Model.Show(App.Lang("NetFrpWindow.Tab2.Error1"));
         }
         else
         {
             local.IsStart = false;
-            SetProcess(res1.Item2!, local, res1.Item3!);
+            SetProcess(res1.Process!, local, res1.IP!);
             Model.Notify(App.Lang("NetFrpWindow.Tab2.Info2"));
             NowView = 4;
         }
@@ -98,11 +98,5 @@ public partial class NetFrpModel
             }
             Locals.Add(item);
         });
-    }
-
-    public void SetTab2Click()
-    {
-        Model.SetChoiseCall(_name, CleanLocal);
-        Model.SetChoiseContent(_name, App.Lang("NetFrpWindow.Tab2.Text2"));
     }
 }

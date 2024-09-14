@@ -3,10 +3,10 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using ColorMC.Core.Helpers;
-using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Net;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
+using ColorMC.Gui.Frp;
 using ColorMC.Gui.Objs.Frp;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
@@ -23,7 +23,7 @@ public static class OpenFrpApi
     {
         try
         {
-            var data = await BaseClient.LoginClient.GetStringAsync($"{Url}?action=getallproxies&user={key}");
+            var data = await WebClient.LoginClient.GetStringAsync($"{Url}?action=getallproxies&user={key}");
 
             return JsonConvert.DeserializeObject<OpenFrpChannelObj>(data);
         }
@@ -39,7 +39,7 @@ public static class OpenFrpApi
     {
         try
         {
-            var data = await BaseClient.LoginClient.GetStringAsync($"{Url}?action=getproxy&proxy={id}&user={key}");
+            var data = await WebClient.LoginClient.GetStringAsync($"{Url}?action=getproxy&proxy={id}&user={key}");
 
             return JsonConvert.DeserializeObject<OpenFrpChannelInfoObj>(data);
         }
@@ -106,13 +106,13 @@ public static class OpenFrpApi
         return (new()
         {
             Name = $"OpenFrp {data1}",
-            Local = FrpPath.GetOpenFrpLocal(data.data.latest_full, true) + data1,
+            Local = FrpLaunch.GetOpenFrpLocal(data.data.latest_full, true) + data1,
             Url = data.data.source[0].value + data.data.latest + data1,
             Later = (stream) =>
             {
                 Unzip(stream, data.data.latest_full, data1);
             }
-        }, FrpPath.GetOpenFrpLocal(data.data.latest_full));
+        }, FrpLaunch.GetOpenFrpLocal(data.data.latest_full));
     }
 
     private static void Unzip(Stream stream, string version, string file)
@@ -129,7 +129,7 @@ public static class OpenFrpApi
                     continue;
                 }
 
-                using var filestream = PathHelper.OpenWrite(FrpPath.GetOpenFrpLocal(version));
+                using var filestream = PathHelper.OpenWrite(FrpLaunch.GetOpenFrpLocal(version), true);
                 tarArchive.CopyEntryContents(filestream);
 
                 break;
@@ -148,9 +148,7 @@ public static class OpenFrpApi
                     continue;
                 }
 
-                using var filestream = PathHelper.OpenWrite(FrpPath.GetOpenFrpLocal(version));
-                using var stream1 = s.GetInputStream(item);
-                stream1.CopyTo(filestream);
+                PathHelper.WriteBytes(FrpLaunch.GetOpenFrpLocal(version), s.GetInputStream(item));
                 break;
             }
         }
@@ -160,7 +158,7 @@ public static class OpenFrpApi
     {
         try
         {
-            var data = await BaseClient.LoginClient.GetStringAsync($"https://console.openfrp.net/web/commonQuery/get?key=software");
+            var data = await WebClient.LoginClient.GetStringAsync($"https://console.openfrp.net/web/commonQuery/get?key=software");
 
             return JsonConvert.DeserializeObject<OpenFrpDownloadObj>(data);
         }

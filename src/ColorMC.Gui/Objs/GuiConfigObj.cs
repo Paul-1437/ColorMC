@@ -1,4 +1,4 @@
-using System.ComponentModel;
+using System.Collections.Generic;
 using ColorMC.Core.Objs;
 
 namespace ColorMC.Gui.Objs;
@@ -9,10 +9,6 @@ namespace ColorMC.Gui.Objs;
 public record StyleSetting
 {
     /// <summary>
-    /// 按钮圆角程度
-    /// </summary>
-    public int ButtonCornerRadius { get; set; }
-    /// <summary>
     /// 页面切换动画时间
     /// </summary>
     public int AmTime { get; set; }
@@ -20,28 +16,12 @@ public record StyleSetting
     /// 过度淡化
     /// </summary>
     public bool AmFade { get; set; }
-    /// <summary>
-    /// 是否启用图片圆角
-    /// </summary>
-    public bool EnablePicRadius { get; set; }
-    /// <summary>
-    /// 是否启用边框圆角
-    /// </summary>
-    public bool EnableBorderRadius { get; set; }
-}
-
-/// <summary>
-/// 主界面设置
-/// </summary>
-public record MainWindowSetting
-{
-
 }
 
 /// <summary>
 /// 上一个启动的账户
 /// </summary>
-public record LastUser
+public record LastUserSetting
 {
     /// <summary>
     /// 账户UUID
@@ -54,9 +34,28 @@ public record LastUser
 }
 
 /// <summary>
+/// 登录模型
+/// </summary>
+public record LockLoginSetting
+{
+    /// <summary>
+    /// 账户类型
+    /// </summary>
+    public AuthType Type { get; set; }
+    /// <summary>
+    /// 锁定地址
+    /// </summary>
+    public string Data { get; set; }
+    /// <summary>
+    /// 登录模型名字
+    /// </summary>
+    public string Name { get; set; }
+}
+
+/// <summary>
 /// 服务器自定义
 /// </summary>
-public record ServerCustom
+public record ServerCustomSetting
 {
     /// <summary>
     /// Motd的地址
@@ -96,10 +95,6 @@ public record ServerCustom
     /// 是否启用自定义UI
     /// </summary>
     public bool EnableUI { get; set; }
-    /// <summary>
-    /// 自定义UI文件
-    /// </summary>
-    public string? UIFile { get; set; }
 
     /// <summary>
     /// 播放背景音乐
@@ -118,6 +113,10 @@ public record ServerCustom
     /// </summary>
     public bool SlowVolume { get; set; }
     /// <summary>
+    /// 循环播放
+    /// </summary>
+    public bool MusicLoop { get; set; }
+    /// <summary>
     /// 游戏启动后暂停
     /// </summary>
     public bool RunPause { get; set; }
@@ -127,71 +126,49 @@ public record ServerCustom
     /// </summary>
     public bool LockLogin { get; set; }
     /// <summary>
-    /// 登录实例类型
+    /// 登录模型实例
     /// </summary>
-    public int LoginType { get; set; }
-    /// <summary>
-    /// 登录实例网址
-    /// </summary>
-    public string LoginUrl { get; set; }
+    public List<LockLoginSetting> LockLogins { get; set; }
 }
 
 /// <summary>
 /// Windows窗口渲染设置
 /// </summary>
-public record WindowsRender
+public record WindowsRenderSetting
 {
     public bool? ShouldRenderOnUIThread { get; set; }
     public bool? OverlayPopups { get; set; }
+    public bool? Wgl { get; set; }
+    public bool? UseVulkan { get; set; }
+    public bool? UseSoftware { get; set; }
 }
 
 /// <summary>
 /// X11窗口渲染设置
 /// </summary>
-public record X11Render
+public record X11RenderSetting
 {
     public bool? UseDBusMenu { get; set; }
     public bool? UseDBusFilePicker { get; set; }
     public bool? OverlayPopups { get; set; }
-    public bool? SoftwareRender { get; set; }
+    public bool? UseEgl { get; set; }
+    public bool? UseVulkan { get; set; }
+    public bool? UseSoftware { get; set; }
 }
 
 /// <summary>
 /// 渲染设置
 /// </summary>
-public record Render
+public record RenderSetting
 {
     /// <summary>
     /// Windows设置
     /// </summary>
-    public WindowsRender Windows { get; set; }
+    public WindowsRenderSetting Windows { get; set; }
     /// <summary>
     /// X11设置
     /// </summary>
-    public X11Render X11 { get; set; }
-}
-
-/// <summary>
-/// 启动器颜色设置
-/// </summary>
-public record ColorSetting
-{
-    /// <summary>
-    /// 背景色
-    /// </summary>
-    public string ColorBack { get; set; }
-    /// <summary>
-    /// 透明背景色
-    /// </summary>
-    public string ColorTranBack { get; set; }
-    /// <summary>
-    /// 字体颜色1
-    /// </summary>
-    public string ColorFont1 { get; set; }
-    /// <summary>
-    /// 字体颜色2
-    /// </summary>
-    public string ColorFont2 { get; set; }
+    public X11RenderSetting X11 { get; set; }
 }
 
 public record Live2DSetting
@@ -222,10 +199,17 @@ public record Live2DSetting
     public bool LowFps { get; set; }
 }
 
-public record InputObj
+public record InputSetting
 {
     public bool Enable { get; set; }
     public string? NowConfig { get; set; }
+}
+
+public record HeadSetting
+{
+    public HeadType Type { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
 }
 
 /// <summary>
@@ -236,7 +220,7 @@ public record GuiConfigObj
     /// <summary>
     /// 使用的账户
     /// </summary>
-    public LastUser? LastUser { get; set; }
+    public LastUserSetting? LastUser { get; set; }
     /// <summary>
     /// 是否启用背景图
     /// </summary>
@@ -273,11 +257,11 @@ public record GuiConfigObj
     /// <summary>
     /// 服务器设置
     /// </summary>
-    public ServerCustom ServerCustom { get; set; }
+    public ServerCustomSetting ServerCustom { get; set; }
     /// <summary>
     /// 渲染设置
     /// </summary>
-    public Render Render { get; set; }
+    public RenderSetting Render { get; set; }
 
     /// <summary>
     /// 主题色类型
@@ -287,15 +271,6 @@ public record GuiConfigObj
     /// 主题色
     /// </summary>
     public string ColorMain { get; set; }
-
-    /// <summary>
-    /// 亮色
-    /// </summary>
-    public ColorSetting ColorLight { get; set; }
-    /// <summary>
-    /// 暗色
-    /// </summary>
-    public ColorSetting ColorDark { get; set; }
 
     /// <summary>
     /// 启用RGB模式
@@ -331,13 +306,13 @@ public record GuiConfigObj
     /// </summary>
     public string LastLaunch { get; set; }
     /// <summary>
+    /// 头像展示设置
+    /// </summary>
+    public HeadSetting Head { get; set; }
+    /// <summary>
     /// Live2D设置
     /// </summary>
     public Live2DSetting Live2D { get; set; }
-    /// <summary>
-    /// 主界面设置
-    /// </summary>
-    public MainWindowSetting Gui { get; set; }
     /// <summary>
     /// 样式设置
     /// </summary>
@@ -345,7 +320,7 @@ public record GuiConfigObj
     /// <summary>
     /// 手柄绑定
     /// </summary>
-    public InputObj Input { get; set; }
+    public InputSetting Input { get; set; }
     /// <summary>
     /// 服务器云同步密钥
     /// </summary>

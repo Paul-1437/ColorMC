@@ -4,39 +4,42 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     xmlns:vm="clr-namespace:ColorMC.Gui.UI.Model.Dialog"
     x:DataType="vm:NbtDialogEditModel"
-    Design.Width="350"
+    Design.Width="300"
     mc:Ignorable="d">
     <DockPanel HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <DockPanel
+            Margin="5,5,5,0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             DockPanel.Dock="Top">
             <Button
                 Width="100"
-                Height="30"
-                Margin="3,-2,3,-2"
-                VerticalAlignment="Center"
+                Height="35"
+                Margin="-3,-2,-2,-2"
+                VerticalAlignment="Top"
                 Classes="top"
                 Command="{Binding DataEditDone}"
                 Content="{setting:Localize ConfigEditWindow.Text2}"
                 DockPanel.Dock="Right"
                 ToolTip.Tip="{setting:Localize ToolTip.Text40}"
                 ToolTip.VerticalOffset="-30" />
-            <ToggleSwitch
-                Margin="10,0,0,0"
-                DockPanel.Dock="Right"
-                IsChecked="{Binding HexEdit}"
-                OffContent="{setting:Localize ConfigEditWindow.Text12}"
-                OnContent="{setting:Localize ConfigEditWindow.Text12}" />
-            <StackPanel
-                Margin="5,0,0,0"
-                VerticalAlignment="Center"
-                Orientation="Horizontal">
-                <TextBlock Text="{setting:Localize ConfigEditWindow.Text4}" />
-                <TextBlock Text="{Binding DataType}" />
+            <StackPanel>
+                <StackPanel
+                    Margin="5,0,0,0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <TextBlock Text="{setting:Localize ConfigEditWindow.Text4}" />
+                    <TextBlock Text="{Binding DataType}" />
+                </StackPanel>
+                <ToggleSwitch
+                    Margin="0,0,0,-5"
+                    DockPanel.Dock="Right"
+                    IsChecked="{Binding HexEdit}"
+                    OffContent="{setting:Localize ConfigEditWindow.Text12}"
+                    OnContent="{setting:Localize ConfigEditWindow.Text12}" />
             </StackPanel>
         </DockPanel>
         <DataGrid
@@ -52,11 +55,11 @@
             <DataGrid.Columns>
                 <DataGridTextColumn
                     Binding="{Binding Key}"
-                    Header="{setting:Localize ConfigEditWindow.DataGrid.Text1}"
+                    Header="{setting:Localize ConfigEditWindow.Text14}"
                     IsReadOnly="True" />
                 <DataGridTextColumn
                     Binding="{Binding Value}"
-                    Header="{setting:Localize ConfigEditWindow.DataGrid.Text2}"
+                    Header="{setting:Localize ConfigEditWindow.Text15}"
                     IsReadOnly="False" />
             </DataGrid.Columns>
         </DataGrid>

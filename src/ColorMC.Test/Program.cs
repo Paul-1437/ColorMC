@@ -32,12 +32,15 @@ internal class Program
 
         Console.WriteLine("Hello, World!");
 
-        ColorMCCore.Init(AppContext.BaseDirectory);
+        ColorMCCore.Init(new CoreInitArg
+        {
+            Local = AppContext.BaseDirectory
+        });
         ColorMCCore.Init1();
 
-        ColorMCCore.GameLog += Log;
+        //ColorMCCore.GameLog += Log;
 
-        TestItem.Item35();
+        //TestItem.Item33();
 
         GetSha1();
 
@@ -123,10 +126,10 @@ internal class Program
         Logs.Info(log);
     }
 
-    public static void Update(DownloadItemObj obj)
-    {
-        Console.WriteLine($"下载项目:{DownloadManager.AllSize}/{DownloadManager.DoneSize} {obj.Name} {obj.NowSize}/{obj.AllSize}");
-    }
+    //public static void Update(DownloadItemObj obj)
+    //{
+    //    Console.WriteLine($"下载项目:{DownloadManager.AllSize}/{DownloadManager.DoneSize} {obj.Name} {obj.NowSize}/{obj.AllSize}");
+    //}
 
     public static void Update(int index, DownloadItemObj item)
     {

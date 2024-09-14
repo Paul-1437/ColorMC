@@ -5,49 +5,51 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     Height="35"
-    d:DesignHeight="35"
     d:DesignWidth="800"
     x:DataType="model:BaseModel"
     Background="Transparent"
     mc:Ignorable="d">
-    <Panel>
-        <Border Name="Border1" Background="{setting:Colors Main}" />
+    <Panel RenderOptions.TextRenderingMode="Antialias">
+        <Border Name="Border1" Background="Transparent" />
         <DockPanel>
             <StackPanel
                 Name="StackPanel1"
                 DockPanel.Dock="Right"
                 Orientation="Horizontal">
                 <Button
+                    Name="Choise"
                     Width="80"
                     Height="35"
+                    Background="Transparent"
                     BorderBrush="Transparent"
                     BorderThickness="0"
                     Command="{Binding ChoiseClick}"
                     Content="{Binding HeadChoiseContent}"
                     CornerRadius="0"
-                    Foreground="White"
+                    IsEnabled="{Binding ChoiseEnable}"
                     IsVisible="{Binding HeadChoiseDisplay}" />
                 <Button
                     Width="80"
                     Height="35"
+                    Background="Transparent"
                     BorderBrush="Transparent"
                     BorderThickness="0"
                     Command="{Binding Choise1Click}"
                     Content="{Binding HeadChoise1Content}"
                     CornerRadius="0"
-                    Foreground="White"
+                    IsEnabled="{Binding Choise1Enable}"
                     IsVisible="{Binding HeadChoise1Display}" />
                 <Button
                     Width="80"
                     Height="35"
+                    Background="Transparent"
                     BorderBrush="Transparent"
                     BorderThickness="0"
                     Command="{Binding BackClick}"
-                    Content="{setting:Localize Gui.Text1}"
+                    Content="{setting:Localize HeadControl.Text1}"
                     CornerRadius="0"
-                    Foreground="White"
                     IsEnabled="{Binding HeadBackEnable}"
                     IsVisible="{Binding HeadBack}" />
             </StackPanel>
@@ -57,8 +59,9 @@
                 Height="25"
                 Margin="5,0,0,0"
                 VerticalAlignment="Center"
-                CornerRadius="{setting:Style ButtonCornerRadius}"
-                DockPanel.Dock="Left">
+                CornerRadius="5"
+                DockPanel.Dock="Left"
+                IsHitTestVisible="False">
                 <Border.Background>
                     <ImageBrush Source="{Binding Icon}" Stretch="UniformToFill" />
                 </Border.Background>
@@ -66,13 +69,15 @@
             <TextBlock
                 Name="TitleShow"
                 Margin="5,0,0,0"
-                Foreground="#FFF"
+                VerticalAlignment="Center"
+                IsHitTestVisible="False"
                 Text="{Binding Title}"
                 TextTrimming="CharacterEllipsis" />
             <TextBlock
                 Name="TitleShow1"
                 Margin="5,0,0,0"
-                Foreground="#FFF"
+                VerticalAlignment="Center"
+                IsHitTestVisible="False"
                 Text="{Binding Title1}"
                 TextTrimming="CharacterEllipsis" />
         </DockPanel>

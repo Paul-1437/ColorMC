@@ -8,6 +8,7 @@ using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Net.Apis;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -25,8 +26,6 @@ public partial class GameEditModel
 
     private readonly List<Loaders> _loaderTypeList = [];
     private readonly List<string> _langList = [];
-
-    private bool _gameLoad = false;
 
     [ObservableProperty]
     private string _gameVersion;
@@ -60,6 +59,10 @@ public partial class GameEditModel
     private bool _offLib;
     [ObservableProperty]
     private bool _isLoad;
+    [ObservableProperty]
+    private bool _gameVersionEmpty;
+
+    private bool _gameLoad;
 
     partial void OnIsLoadChanged(bool value)
     {
@@ -142,6 +145,12 @@ public partial class GameEditModel
             return;
         }
 
+        GameVersionEmpty = string.IsNullOrWhiteSpace(GameVersion);
+        if (GameVersionEmpty)
+        {
+            return;
+        }
+
         LoaderVersion = null;
         LoaderVersionList.Clear();
         LoaderType = 0;
@@ -213,13 +222,48 @@ public partial class GameEditModel
     {
         LangList.Clear();
         _langList.Clear();
-        await LangLoad();
-    }
+        if (_obj.Version == null)
+        {
+            return;
+        }
 
-    [RelayCommand]
-    public void ExportGame()
-    {
-        App.ShowGameExport(_obj);
+        IsLoad = true;
+        Model.Title1 = App.Lang("GameEditWindow.Tab1.Info9");
+        var list = await Task.Run(() =>
+        {
+            var version = VersionPath.GetVersion(_obj.Version);
+            if (version != null)
+            {
+                var ass = AssetsPath.GetIndex(version);
+                if (ass != null)
+                {
+                    return ass.GetLangs();
+                }
+            }
+
+            return GameLang.GetLangs(null);
+        });
+
+        var opt = _obj.GetOptions();
+        int a = 0;
+
+        opt.TryGetValue("lang", out string? lang);
+
+        foreach (var item in list)
+        {
+            LangList.Add(item.Value);
+            _langList.Add(item.Key);
+
+            if (lang != null && lang == item.Key)
+            {
+                Lang = a;
+            }
+            a++;
+        }
+        IsLoad = false;
+        Model.Title1 = "";
+
+        Model.Notify(App.Lang("GameEditWindow.Tab1.Info16"));
     }
 
     [RelayCommand]
@@ -232,7 +276,7 @@ public partial class GameEditModel
         }
 
         Model.Progress(App.Lang("GameEditWindow.Tab1.Info2"));
-        if (FuntionUtils.CheckNotNumber(PID) || FuntionUtils.CheckNotNumber(FID))
+        if (DownloadItemHelper.TestSourceType(PID, FID) == SourceType.Modrinth)
         {
             var list = await ModrinthAPI.GetFileVersions(PID, _obj.Version, _obj.Loader);
             Model.ProgressClose();
@@ -319,15 +363,9 @@ public partial class GameEditModel
     }
 
     [RelayCommand]
-    public void OpenGameLog()
-    {
-        App.ShowGameLog(_obj);
-    }
-
-    [RelayCommand]
     public async Task AddGroup()
     {
-        var (Cancel, Text1) = await Model.ShowInputOne(App.Lang("AddGameWindow.Tab1.Info5"), false);
+        var (Cancel, Text1) = await Model.ShowInputOne(App.Lang("Text.Group"), false);
         if (Cancel)
         {
             return;
@@ -355,12 +393,17 @@ public partial class GameEditModel
     public async Task LoaderVersionLoad()
     {
         EnableLoader = false;
+        LoaderVersionList.Clear();
+
+        if (_loaderTypeList.Count <= LoaderType || LoaderType == -1)
+        {
+            return;
+        }
 
         var loader = _loaderTypeList[LoaderType];
         switch (loader)
         {
             case Loaders.Normal:
-                LoaderVersionList.Clear();
                 break;
             case Loaders.Forge:
                 IsLoad = true;
@@ -375,7 +418,6 @@ public partial class GameEditModel
                 }
 
                 EnableLoader = true;
-                LoaderVersionList.Clear();
                 LoaderVersionList.AddRange(list);
                 break;
             case Loaders.NeoForge:
@@ -391,7 +433,6 @@ public partial class GameEditModel
                 }
 
                 EnableLoader = true;
-                LoaderVersionList.Clear();
                 LoaderVersionList.AddRange(list);
                 break;
             case Loaders.Fabric:
@@ -407,7 +448,6 @@ public partial class GameEditModel
                 }
 
                 EnableLoader = true;
-                LoaderVersionList.Clear();
                 LoaderVersionList.AddRange(list);
                 break;
             case Loaders.Quilt:
@@ -423,7 +463,6 @@ public partial class GameEditModel
                 }
 
                 EnableLoader = true;
-                LoaderVersionList.Clear();
                 LoaderVersionList.AddRange(list);
                 break;
             case Loaders.OptiFine:
@@ -439,16 +478,24 @@ public partial class GameEditModel
                 }
 
                 EnableLoader = true;
-                LoaderVersionList.Clear();
                 LoaderVersionList.AddRange(list);
                 break;
         }
+        Model.Notify(App.Lang("GameEditWindow.Tab1.Info15"));
     }
 
     [RelayCommand]
     public async Task LoaderReload()
     {
+        if (GameVersionEmpty)
+        {
+            return;
+        }
+
         _gameLoad = true;
+
+        var loaderType = _loaderTypeList[LoaderType];
+        var loaderVersion = LoaderVersion;
 
         LoaderVersion = null;
         LoaderVersionList.Clear();
@@ -470,10 +517,22 @@ public partial class GameEditModel
             LoaderTypeList.Add(item.GetName());
         }
 
+        if (_loaderTypeList.Contains(loaderType))
+        {
+            LoaderType = _loaderTypeList.IndexOf(loaderType);
+            if (loaderVersion != null)
+            {
+                LoaderVersionList.Add(loaderVersion);
+                LoaderVersion = loaderVersion;
+            }
+        }
+
         IsLoad = false;
         Model.Title1 = "";
 
         _gameLoad = false;
+
+        Model.Notify(App.Lang("GameEditWindow.Tab1.Info14"));
     }
 
     [RelayCommand]
@@ -481,32 +540,78 @@ public partial class GameEditModel
     {
         _gameLoad = true;
 
-        _loaderTypeList.Clear();
-        LoaderTypeList.Clear();
         EnableLoader = false;
         IsLoad = true;
-        Model.Title1 = App.Lang("GameEditWindow.Info1");
+        Model.Title1 = App.Lang("GameEditWindow.Tab1.Info12");
         var res = await GameBinding.ReloadVersion();
         IsLoad = false;
         Model.Title1 = "";
         if (!res)
         {
-            Model.Show(App.Lang("GameEditWindow.Error1"));
+            Model.Show(App.Lang("GameEditWindow.Tab1.Error4"));
             return;
         }
-
-        LoaderVersion = null;
-        LoaderType = 0;
 
         GameVersionLoad();
 
         _gameLoad = false;
+
+        Model.Notify(App.Lang("GameEditWindow.Tab1.Info13"));
     }
 
     [RelayCommand]
-    public async Task Delete()
+    public async Task SelectLoader()
     {
-        if (BaseBinding.IsGameRun(_obj))
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Loader);
+        if (file.Item1 == null)
+        {
+            return;
+        }
+
+        var res = await GameBinding.SetGameLoader(_obj, file.Item1);
+        if (res.State)
+        {
+            ReadCustomLoader();
+        }
+        else
+        {
+            Model.Show(res.Message!);
+        }
+    }
+
+    private void ExportGame()
+    {
+        WindowManager.ShowGameExport(_obj);
+    }
+
+    private void OpenGameLog()
+    {
+        WindowManager.ShowGameLog(_obj);
+    }
+
+    private void OpenConfigEdit()
+    {
+        WindowManager.ShowConfigEdit(_obj);
+    }
+
+    private void OpPath()
+    {
+        PathBinding.OpenPath(_obj, PathType.BasePath);
+    }
+
+    private void OpenServerPack()
+    {
+        WindowManager.ShowServerPack(_obj);
+    }
+
+    private async void Delete()
+    {
+        if (GameManager.IsGameRun(_obj))
         {
             Model.Show(App.Lang("GameEditWindow.Tab1.Error1"));
             return;
@@ -526,50 +631,11 @@ public partial class GameEditModel
         }
     }
 
-    [RelayCommand]
-    public async Task GenGameInfo()
+    private async void GenGameInfo()
     {
         Model.Progress(App.Lang("GameEditWindow.Tab1.Info10"));
         await GameBinding.GenGameInfo(_obj);
         Model.ProgressClose();
-    }
-
-    [RelayCommand]
-    public void Open()
-    {
-        PathBinding.OpPath(_obj, PathType.BasePath);
-    }
-
-    [RelayCommand]
-    public void OpenServerPack()
-    {
-        App.ShowServerPack(_obj);
-    }
-
-    [RelayCommand]
-    public void OpenConfigEdit()
-    {
-        App.ShowConfigEdit(_obj);
-    }
-
-    [RelayCommand]
-    public async Task SelectLoader()
-    {
-        var file = await PathBinding.SelectFile(FileType.Loader);
-        if (file.Item1 == null)
-        {
-            return;
-        }
-
-        var res = await GameBinding.SetGameLoader(_obj, file.Item1);
-        if (res.Item1)
-        {
-            ReadCustomLoader();
-        }
-        else
-        {
-            Model.Show(res.Item2!);
-        }
     }
 
     private async void ReadCustomLoader()
@@ -579,21 +645,25 @@ public partial class GameEditModel
 
     private async void GameVersionLoad()
     {
+        var version = GameVersion;
         GameVersionList.Clear();
         switch (VersionType)
         {
             case 0:
                 _obj.GameType = GameType.Release;
-                GameVersionList.AddRange(await GameBinding.GetGameVersion(true, false, false));
                 break;
             case 1:
                 _obj.GameType = GameType.Snapshot;
-                GameVersionList.AddRange(await GameBinding.GetGameVersion(false, true, false));
                 break;
             case 2:
                 _obj.GameType = GameType.Other;
-                GameVersionList.AddRange(await GameBinding.GetGameVersion(false, false, true));
                 break;
+        }
+
+        GameVersionList.AddRange(await GameBinding.GetGameVersions(_obj.GameType));
+        if (GameVersionList.Contains(version))
+        {
+            GameVersion = version;
         }
     }
 
@@ -605,57 +675,7 @@ public partial class GameEditModel
 
     public void GameStateChange()
     {
-        GameRun = BaseBinding.IsGameRun(_obj);
-    }
-
-    public async Task LangLoad()
-    {
-        if (LangList.Count > 1)
-        {
-            return;
-        }
-        LangList.Clear();
-        _langList.Clear();
-        if (_obj.Version == null)
-        {
-            return;
-        }
-
-        IsLoad = true;
-        Model.Title1 = App.Lang("GameEditWindow.Tab1.Info9");
-        var list = await Task.Run(() =>
-        {
-            var version = VersionPath.GetVersion(_obj.Version);
-            if (version != null)
-            {
-                var ass = AssetsPath.GetIndex(version);
-                if (ass != null)
-                {
-                    return ass.GetLangs();
-                }
-            }
-
-            return GameLang.GetLangs(null);
-        });
-
-        var opt = _obj.GetOptions();
-        int a = 0;
-
-        opt.TryGetValue("lang", out string? lang);
-
-        foreach (var item in list)
-        {
-            LangList.Add(item.Value);
-            _langList.Add(item.Key);
-
-            if (lang != null && lang == item.Key)
-            {
-                Lang = a;
-            }
-            a++;
-        }
-        IsLoad = false;
-        Model.Title1 = "";
+        GameRun = GameManager.IsGameRun(_obj);
     }
 
     public async void GameLoad()
@@ -680,22 +700,19 @@ public partial class GameEditModel
 
         _loaderTypeList.Add(Loaders.Normal);
         LoaderTypeList.Add(Loaders.Normal.GetName());
+        _loaderTypeList.Add(Loaders.Custom);
+        LoaderTypeList.Add(Loaders.Custom.GetName());
 
         if (_obj.Loader == Loaders.Custom)
         {
-            _loaderTypeList.Add(Loaders.Custom);
-            LoaderTypeList.Add(Loaders.Custom.GetName());
-
             LoaderType = 1;
-
-            CustomLoader = true;
         }
         else if (_obj.Loader != Loaders.Normal)
         {
             _loaderTypeList.Add(_obj.Loader);
             LoaderTypeList.Add(_obj.Loader.GetName());
 
-            LoaderType = 1;
+            LoaderType = 2;
 
             EnableLoader = false;
             LoaderVersionList.Clear();
@@ -703,13 +720,6 @@ public partial class GameEditModel
             {
                 LoaderVersionList.Add(new(_obj.LoaderVersion));
             }
-        }
-        else
-        {
-            _loaderTypeList.Add(Loaders.Custom);
-            LoaderTypeList.Add(Loaders.Custom.GetName());
-
-            LoaderType = 0;
         }
 
         GameVersionLoad();
@@ -721,6 +731,9 @@ public partial class GameEditModel
         }
         ModPack = _obj.ModPack;
         GameVersion = _obj.Version;
+
+        GameVersionEmpty = string.IsNullOrWhiteSpace(GameVersion);
+
         Group = _obj.GroupName;
         FID = _obj.FID;
         PID = _obj.PID;
@@ -732,13 +745,13 @@ public partial class GameEditModel
 
         OffLib = _obj.CustomLoader?.OffLib ?? false;
 
-        GameRun = BaseBinding.IsGameRun(_obj);
+        GameRun = GameManager.IsGameRun(_obj);
 
         var opt = _obj.GetOptions();
 
         opt.TryGetValue("lang", out string? lang);
 
-        if (lang != null)
+        if (lang != null && !string.IsNullOrWhiteSpace(_obj.Version))
         {
             var list = await Task.Run(() =>
             {
@@ -752,14 +765,25 @@ public partial class GameEditModel
                     }
                 }
 
-                return (null, null);
+                return null;
             });
-            if (list.Item1 != null)
+            if (list != null)
             {
-                LangList.Add(list.Item2);
-                _langList.Add(list.Item1);
+                LangList.Add(list.Name);
+                _langList.Add(list.Key);
 
                 Lang = 0;
+            }
+            else
+            {
+                var list1 = GameLang.GetLangs(null);
+                if (list1.TryGetValue(lang, out var name))
+                {
+                    LangList.Add(name);
+                    _langList.Add(lang);
+
+                    Lang = 0;
+                }
             }
         }
 

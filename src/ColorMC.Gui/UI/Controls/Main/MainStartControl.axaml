@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -19,7 +19,10 @@
             Margin="0,0,10,0"
             HorizontalAlignment="Center"
             Source="resm:ColorMC.Gui.Resource.Pic.game.png" />
-        <StackPanel Name="Grid1" ClipToBounds="True">
+        <StackPanel
+            Name="Grid1"
+            ClipToBounds="True"
+            RenderOptions.TextRenderingMode="Antialias">
             <TextBlock
                 HorizontalAlignment="Center"
                 FontSize="40"

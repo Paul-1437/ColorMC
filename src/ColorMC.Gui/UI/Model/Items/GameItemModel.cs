@@ -1,18 +1,20 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
+using ColorMC.Gui.Joystick;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Flyouts;
 using ColorMC.Gui.UIBinding;
-using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DialogHostAvalonia;
@@ -50,9 +52,10 @@ public partial class GameItemModel : GameModel
     [ObservableProperty]
     private TextTrimming _trim = TextTrimming.CharacterEllipsis;
 
-    private readonly IMainTop _top;
+    private readonly IMainTop? _top;
 
     public string Name => Obj.Name;
+    public string UUID => Obj.UUID;
 
     [ObservableProperty]
     private bool _oneGame;
@@ -62,15 +65,36 @@ public partial class GameItemModel : GameModel
 
     private readonly string? _group;
 
+    public int Index
+    {
+        set
+        {
+            switch (value)
+            {
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                    {
+                        using var asset = AssetLoader.Open(new Uri($"resm:ColorMC.Gui.Resource.Pic.{value}.png"));
+                        Pic = new Bitmap(asset);
+                    }
+                    break;
+            }
+        }
+    }
+
     public GameItemModel(BaseModel model, string? group) : base(model, new() { })
     {
         _group = group;
         _isNew = true;
     }
 
-    public GameItemModel(BaseModel model, IMainTop top, GameSettingObj obj) : base(model, obj)
+    public GameItemModel(BaseModel model, IMainTop? top, GameSettingObj obj) : base(model, obj)
     {
         _top = top;
+        _group = obj.GroupName;
         LoadIcon();
     }
 
@@ -137,7 +161,7 @@ public partial class GameItemModel : GameModel
     [RelayCommand]
     public void AddGame()
     {
-        App.ShowAddGame(_group);
+        WindowManager.ShowAddGame(_group);
     }
 
     [RelayCommand]
@@ -148,28 +172,23 @@ public partial class GameItemModel : GameModel
             return;
         }
 
-        _top.Launch(this);
+        _top?.Launch(this);
     }
 
     [RelayCommand]
     public void EditGame()
     {
-        App.ShowGameEdit(Obj);
+        WindowManager.ShowGameEdit(Obj);
     }
 
     public void LoadIcon()
     {
-        if (Pic != null && Pic != App.GameIcon)
-        {
-            Pic.Dispose();
-        }
-
         Pic = GetImage();
     }
 
     public void Reload()
     {
-        IsLaunch = BaseBinding.IsGameRun(Obj);
+        IsLaunch = GameManager.IsGameRun(Obj);
 
         SetTips();
     }
@@ -193,16 +212,20 @@ public partial class GameItemModel : GameModel
             $"{time4.TotalHours:#}:{time4.Minutes:00}:{time4.Seconds:00}");
     }
 
-    public async void Move(PointerEventArgs e)
+    public async void Move(TopLevel? top, PointerEventArgs e)
     {
         var dragData = new DataObject();
-        dragData.Set(BaseBinding.DrapType, this);
+        dragData.Set(BaseBinding.DrapType, Obj.UUID);
         IsDrop = true;
 
         if (SystemInfo.Os != OsType.Android)
         {
             var files = new List<IStorageFolder>();
-            var item = await App.TopLevel!.StorageProvider
+            if (top == null)
+            {
+                return;
+            }
+            var item = await top.StorageProvider
                    .TryGetFolderFromPathAsync(Obj.GetBasePath());
             files.Add(item!);
             dragData.Set(DataFormats.Files, files);
@@ -215,7 +238,7 @@ public partial class GameItemModel : GameModel
 
     public void SetSelect()
     {
-        _top.Select(this);
+        _top?.Select(this);
     }
 
     public void Flyout(Control con)
@@ -225,15 +248,8 @@ public partial class GameItemModel : GameModel
 
     private Bitmap GetImage()
     {
-        var file = Obj.GetIconFile();
-        if (File.Exists(file))
-        {
-            return new Bitmap(file);
-        }
-        else
-        {
-            return App.GameIcon;
-        }
+        var icon = ImageManager.GetGameIcon(Obj);
+        return icon ?? ImageManager.GameIcon;
     }
 
     public async void Rename()
@@ -314,7 +330,7 @@ public partial class GameItemModel : GameModel
 
     public void EditGroup()
     {
-        _top.EditGroup(this);
+        _top?.EditGroup(this);
     }
 
     /// <summary>
@@ -328,11 +344,8 @@ public partial class GameItemModel : GameModel
             string.Format(App.Lang("AddGameWindow.Info2"), obj.Name));
     }
 
-    protected override void Close()
+    public override void Close()
     {
-        if (Pic != App.GameIcon)
-        {
-            Pic?.Dispose();
-        }
+
     }
 }

@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using ColorMC.Core.Objs;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model.Main;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -33,9 +34,17 @@ public partial class AddGameModel
     /// <param name="value"></param>
     partial void OnZipLocalChanged(string? value)
     {
-        if (value != null)
+        if (value != null && Type == null)
         {
-            Type = GameBinding.CheckType(value);
+            var res = GameBinding.CheckType(value);
+            if (res == null)
+            {
+                Model.Show(App.Lang("AddGameWindow.Tab2.Error4"));
+            }
+            else
+            {
+                Type = res;
+            }
         }
     }
 
@@ -45,11 +54,6 @@ public partial class AddGameModel
     [RelayCommand]
     public void AddPackGame()
     {
-        if (BaseBinding.IsDownload)
-        {
-            Model.Show(App.Lang("AddGameWindow.Tab1.Error4"));
-            return;
-        }
         if (Type == null)
         {
             Model.Show(App.Lang("AddGameWindow.Tab2.Error3"));
@@ -66,40 +70,15 @@ public partial class AddGameModel
     [RelayCommand]
     public async Task SelectPack()
     {
-        var file = await PathBinding.SelectFile(FileType.ModPack);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.ModPack);
         if (file.Item1 != null)
         {
             ZipLocal = file.Item1;
-        }
-    }
-
-    /// <summary>
-    /// 添加进度
-    /// </summary>
-    /// <param name="state"></param>
-    private void PackState(CoreRunState state)
-    {
-        if (state == CoreRunState.Read)
-        {
-            Model.Progress(App.Lang("AddGameWindow.Tab2.Info1"));
-        }
-        else if (state == CoreRunState.Init)
-        {
-            Model.ProgressUpdate(App.Lang("AddGameWindow.Tab2.Info2"));
-        }
-        else if (state == CoreRunState.GetInfo)
-        {
-            Model.ProgressUpdate(App.Lang("AddGameWindow.Tab2.Info3"));
-        }
-        else if (state == CoreRunState.Download)
-        {
-            Model.ProgressUpdate(App.Lang("AddGameWindow.Tab2.Info4"));
-            Model.ProgressUpdate(-1);
-        }
-        else if (state == CoreRunState.End)
-        {
-            Name = "";
-            Group = "";
         }
     }
 
@@ -109,7 +88,7 @@ public partial class AddGameModel
     /// <param name="type">压缩包类型</param>
     private async void AddPack(PackType type)
     {
-        string temp = App.Lang("Gui.Info27");
+        string temp = App.Lang("AddGameWindow.Tab1.Info21");
 
         if (string.IsNullOrWhiteSpace(ZipLocal))
         {
@@ -121,27 +100,26 @@ public partial class AddGameModel
         (a, b, c) =>
         {
             Dispatcher.UIThread.Post(() => Model.ProgressUpdate($"{temp} {a} {b}/{c}"));
-        }, Tab2GameRequest, Tab2GameOverwirte, (size, now) =>
+        }, GameRequest, GameOverwirte, (size, now) =>
         {
             Model.ProgressUpdate((double)now / size);
         }, PackState);
         Model.ProgressClose();
-        if (!res.Item1)
+        if (!res.State)
         {
             Model.Show(App.Lang("AddGameWindow.Tab2.Error1"));
             return;
         }
 
-        var model = (App.MainWindow?.DataContext as MainModel)!;
+        var model = (WindowManager.MainWindow?.DataContext as MainModel)!;
         model.Model.Notify(App.Lang("AddGameWindow.Tab2.Info5"));
-        App.MainWindow?.LoadMain();
 
         if (Type == PackType.ZipPack)
         {
-            App.ShowGameEdit(res.Item2!);
+            WindowManager.ShowGameEdit(res.Game!);
         }
 
-        WindowClose();
+        Done(res.Game!.UUID);
     }
 
     /// <summary>
@@ -151,32 +129,5 @@ public partial class AddGameModel
     public void SetFile(string file)
     {
         ZipLocal = file;
-    }
-
-    /// <summary>
-    /// 请求
-    /// </summary>
-    /// <param name="obj"></param>
-    /// <returns></returns>
-    private async Task<bool> Tab2GameOverwirte(GameSettingObj obj)
-    {
-        Model.ProgressClose();
-        var test = await Model.ShowWait(
-            string.Format(App.Lang("AddGameWindow.Info2"), obj.Name));
-        Model.Progress();
-        return test;
-    }
-
-    /// <summary>
-    /// 请求
-    /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
-    private async Task<bool> Tab2GameRequest(string text)
-    {
-        Model.ProgressClose();
-        var test = await Model.ShowWait(text);
-        Model.Progress();
-        return test;
     }
 }

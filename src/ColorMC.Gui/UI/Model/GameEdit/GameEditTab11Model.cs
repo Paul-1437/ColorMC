@@ -1,12 +1,11 @@
 ﻿using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using Avalonia.Input;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 
 namespace ColorMC.Gui.UI.Model.GameEdit;
 
@@ -17,23 +16,33 @@ public partial class GameEditModel
     [ObservableProperty]
     private ShaderpackObj? _shaderpackItem;
 
-    [RelayCommand]
-    public void OpenShaderpack()
+    [ObservableProperty]
+    private bool _shaderpackEmptyDisplay;
+
+
+    private void OpenShaderpack()
     {
-        PathBinding.OpPath(_obj, PathType.ShaderpacksPath);
+        PathBinding.OpenPath(_obj, PathType.ShaderpacksPath);
     }
-    [RelayCommand]
-    public async Task LoadShaderpack()
+
+    public async void LoadShaderpack()
     {
         Model.Progress(App.Lang("GameEditWindow.Tab10.Info4"));
         ShaderpackList.Clear();
         ShaderpackList.AddRange(await GameBinding.GetShaderpacks(_obj));
         Model.ProgressClose();
+
+        ShaderpackEmptyDisplay = ShaderpackList.Count == 0;
     }
-    [RelayCommand]
-    public async Task ImportShaderpack()
+
+    private async void ImportShaderpack()
     {
-        var res = await PathBinding.AddFile(_obj, FileType.Shaderpack);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var res = await PathBinding.AddFile(top, _obj, FileType.Shaderpack);
         if (res == null)
             return;
 
@@ -43,14 +52,13 @@ public partial class GameEditModel
             return;
         }
 
-        Model.Notify(App.Lang("GameEditWindow.Tab11.Info3"));
-        await LoadShaderpack();
+        Model.Notify(App.Lang("GameEditWindow.Tab11.Info1"));
+        LoadShaderpack();
     }
 
-    [RelayCommand]
-    public void AddShaderpack()
+    private void AddShaderpack()
     {
-        App.ShowAdd(_obj, FileType.Shaderpack);
+        WindowManager.ShowAdd(_obj, FileType.Shaderpack);
     }
 
     public async void DropShaderpack(IDataObject data)
@@ -58,14 +66,14 @@ public partial class GameEditModel
         var res = await GameBinding.AddFile(_obj, data, FileType.Shaderpack);
         if (res)
         {
-            await LoadShaderpack();
+            LoadShaderpack();
         }
     }
 
-    public async void DeleteShaderpack(ShaderpackObj obj)
+    public void DeleteShaderpack(ShaderpackObj obj)
     {
         GameBinding.DeleteShaderpack(obj);
         Model.Notify(App.Lang("GameEditWindow.Tab10.Info5"));
-        await LoadShaderpack();
+        LoadShaderpack();
     }
 }

@@ -5,7 +5,8 @@ using AvaloniaEdit.Utils;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
-using ColorMC.Gui.Objs;
+using ColorMC.Gui.Manager;
+using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -20,54 +21,15 @@ public partial class SettingModel
     private string? _javaLocal;
 
     [ObservableProperty]
-    private JavaDisplayObj _javaItem;
+    private JavaDisplayModel _javaItem;
 
     [ObservableProperty]
     private bool _javaFinding;
 
-    public ObservableCollection<JavaDisplayObj> JavaList { get; init; } = [];
+    public ObservableCollection<JavaDisplayModel> JavaList { get; init; } = [];
 
     private bool _javaLoaded;
     private int _needJava;
-
-    [RelayCommand]
-    public async Task AddJavaZip()
-    {
-        var file = await PathBinding.SelectFile(FileType.JavaZip);
-        if (file.Item1 == null || file.Item2 == null)
-        {
-            return;
-        }
-
-        Model.Progress(App.Lang("SettingWindow.Tab5.Info7"));
-        string temp = App.Lang("Gui.Info27");
-        var res = await JavaBinding.AddJavaZip(file.Item1, file.Item2, (a, b, c) =>
-        {
-            Dispatcher.UIThread.Post(() => Model.ProgressUpdate($"{temp} {a} {b}/{c}"));
-        });
-        Model.ProgressClose();
-        if (!res.Item1)
-        {
-            Model.Show(res.Item2!);
-        }
-        else
-        {
-            Model.Notify(App.Lang("SettingWindow.Tab5.Info6"));
-        }
-        LoadJava();
-    }
-
-    [RelayCommand]
-    public void ShowAddJava()
-    {
-        App.ShowAddJava(_needJava);
-    }
-
-    [RelayCommand]
-    public void OpenJavaPath()
-    {
-        PathBinding.OpPath(PathType.JavaPath);
-    }
 
     [RelayCommand]
     public void AddJava()
@@ -82,9 +44,9 @@ public partial class SettingModel
 
         var res = JavaBinding.AddJava(JavaName, JavaLocal);
         Model.ProgressClose();
-        if (res.Item1 == null)
+        if (!res.State)
         {
-            Model.Show(res.Item2!);
+            Model.Show(res.Message!);
             return;
         }
 
@@ -97,7 +59,12 @@ public partial class SettingModel
     [RelayCommand]
     public async Task SelectJava()
     {
-        var file = await PathBinding.SelectFile(FileType.Java);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Java);
         if (file.Item1 != null)
         {
             JavaLocal = file.Item1;
@@ -109,8 +76,43 @@ public partial class SettingModel
         }
     }
 
-    [RelayCommand]
-    public async Task FindJava()
+    private void ShowAddJava()
+    {
+        WindowManager.ShowAddJava(_needJava);
+    }
+
+    private async void AddJavaZip()
+    {
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.JavaZip);
+        if (file.Item1 == null || file.Item2 == null)
+        {
+            return;
+        }
+
+        Model.Progress(App.Lang("SettingWindow.Tab5.Info7"));
+        string temp = App.Lang("AddGameWindow.Tab1.Info21");
+        var res = await JavaBinding.AddJavaZip(file.Item1, file.Item2, (a, b, c) =>
+        {
+            Dispatcher.UIThread.Post(() => Model.ProgressUpdate($"{temp} {a} {b}/{c}"));
+        });
+        Model.ProgressClose();
+        if (!res.State)
+        {
+            Model.Show(res.Message!);
+        }
+        else
+        {
+            Model.Notify(App.Lang("SettingWindow.Tab5.Info6"));
+        }
+        LoadJava();
+    }
+
+    public async void FindJava()
     {
         if (SystemInfo.Os == OsType.Android)
         {
@@ -132,15 +134,13 @@ public partial class SettingModel
         Model.Notify(App.Lang("SettingWindow.Tab5.Info4"));
     }
 
-    [RelayCommand]
     public void LoadJava()
     {
         JavaList.Clear();
         JavaList.AddRange(JavaBinding.GetJavas());
     }
 
-    [RelayCommand]
-    public async Task DeleteJava()
+    private async void DeleteJava()
     {
         var res = await Model.ShowWait(App.Lang("SettingWindow.Tab5.Info3"));
         if (!res)
@@ -150,14 +150,19 @@ public partial class SettingModel
         LoadJava();
     }
 
-    public async void Load(int mainversion)
+    private void OpenJavaPath()
+    {
+        PathBinding.OpenPath(PathType.JavaPath);
+    }
+
+    public void Load(int mainversion)
     {
         _needJava = mainversion;
         LoadJava();
         if (!_javaLoaded && JavaList.Count == 0)
         {
             _javaLoaded = true;
-            await FindJava();
+            FindJava();
         }
     }
 }

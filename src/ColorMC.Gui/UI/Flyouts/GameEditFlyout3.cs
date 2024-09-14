@@ -13,16 +13,16 @@ public class GameEditFlyout3
 
     public GameEditFlyout3(Control con, ResourcePackModel model)
     {
-        _top = model.Top;
+        _top = model.TopModel;
         _obj = model.Pack;
 
         _ = new FlyoutsControl(
         [
             (App.Lang("Button.OpFile"), true, ()=>
             {
-                PathBinding.OpFile(_obj.Local);
+                PathBinding.OpenFileWithExplorer(_obj.Local);
             }),
-            (App.Lang("GameEditWindow.Flyouts3.Text1"), true, ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text12"), true, ()=>
             {
                 _top.DeleteResource(_obj);
             })

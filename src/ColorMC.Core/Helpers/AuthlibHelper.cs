@@ -22,12 +22,12 @@ public static class AuthlibHelper
     /// </summary>
     public static string NowNide8Injector { get; private set; }
 
-    private static AuthlibInjectorObj LocalAuthLib = new()
+    private static readonly AuthlibInjectorObj LocalAuthLib = new()
     {
-        build_number = 51,
-        checksums = new() { sha256 = "d3ec36486b0a5ab5a16069733cd8d749950c2d62e1bdacaf27864b30b92c1c7f" },
-        download_url = "https://authlib-injector.yushi.moe/artifact/51/authlib-injector-1.2.3.jar",
-        version = "1.2.3"
+        build_number = 53,
+        checksums = new() { sha256 = "3bc9ebdc583b36abd2a65b626c4b9f35f21177fbf42a851606eaaea3fd42ee0f" },
+        download_url = "https://authlib-injector.yushi.moe/artifact/53/authlib-injector-1.2.5.jar",
+        version = "1.2.5"
     };
 
     /// <summary>
@@ -53,7 +53,7 @@ public static class AuthlibHelper
         return new()
         {
             SHA256 = obj.checksums.sha256,
-            Url = UrlHelper.DownloadAuthlibInjector(obj, BaseClient.Source),
+            Url = UrlHelper.DownloadAuthlibInjector(obj, WebClient.Source),
             Name = $"moe.yushi:authlibinjector:{obj.version}",
             Local = $"{LibrariesPath.BaseDir}/moe/yushi/authlibinjector/" +
             $"{obj.version}/authlib-injector-{obj.version}.jar",
@@ -64,16 +64,19 @@ public static class AuthlibHelper
     /// 初始化Nide8Injector，存在不下载
     /// </summary>
     /// <returns>Nide8Injector下载实例</returns>
-    public static async Task<(bool, DownloadItemObj?)> ReadyNide8()
+    public static async Task<MakeDownloadItemRes> ReadyNide8()
     {
-        var data = await BaseClient.GetStringAsync($"{UrlHelper.Nide8}00000000000000000000000000000000/");
-        if (data.Item1 == false)
+        var data = await WebClient.GetStringAsync($"{UrlHelper.Nide8}00000000000000000000000000000000/");
+        if (data.State == false)
         {
-            return (false, null);
+            return new MakeDownloadItemRes
+            {
+                State = false
+            };
         }
         try
         {
-            var obj = JObject.Parse(data.Item2!);
+            var obj = JObject.Parse(data.Message!);
             var sha1 = obj?["jarHash"]!.ToString().ToLower();
             var item = BuildNide8Item(obj!["jarVersion"]!.ToString());
             NowNide8Injector = item.Local;
@@ -81,7 +84,11 @@ public static class AuthlibHelper
             item.SHA1 = sha1;
             if (!File.Exists(NowNide8Injector))
             {
-                return (true, item);
+                return new MakeDownloadItemRes
+                {
+                    State = true,
+                    Item = item
+                };
             }
 
             if (!string.IsNullOrWhiteSpace(sha1))
@@ -90,16 +97,26 @@ public static class AuthlibHelper
                 var sha11 = HashHelper.GenSha1(stream);
                 if (sha11 != sha1)
                 {
-                    return (true, item);
+                    return new MakeDownloadItemRes
+                    {
+                        State = true,
+                        Item = item
+                    };
                 }
             }
 
-            return (true, null);
+            return new MakeDownloadItemRes
+            {
+                State = true
+            };
         }
         catch (Exception e)
         {
             Logs.Error(LanguageHelper.Get("Core.Http.Error8"), e);
-            return (false, null);
+            return new MakeDownloadItemRes
+            {
+                State = false
+            };
         }
     }
 
@@ -112,25 +129,25 @@ public static class AuthlibHelper
     {
         try
         {
-            string url = UrlHelper.AuthlibInjectorMeta(BaseClient.Source);
-            var meta = await BaseClient.GetStringAsync(url);
-            if (meta.Item1 == false)
+            string url = UrlHelper.AuthlibInjectorMeta(WebClient.Source);
+            var meta = await WebClient.GetStringAsync(url);
+            if (meta.State == false)
             {
                 return LocalAuthLib;
             }
-            var obj = JsonConvert.DeserializeObject<AuthlibInjectorMetaObj>(meta.Item2!);
+            var obj = JsonConvert.DeserializeObject<AuthlibInjectorMetaObj>(meta.Message!);
             if (obj == null)
             {
                 return LocalAuthLib;
             }
             var item = obj.artifacts.Where(a => a.build_number == obj.latest_build_number).ToList()[0];
 
-            var info = await BaseClient.GetStringAsync(UrlHelper.AuthlibInjector(item, BaseClient.Source));
-            if (info.Item1 == false)
+            var info = await WebClient.GetStringAsync(UrlHelper.AuthlibInjector(item, WebClient.Source));
+            if (info.State == false)
             {
                 return LocalAuthLib;
             }
-            return JsonConvert.DeserializeObject<AuthlibInjectorObj>(info.Item2!) ?? LocalAuthLib;
+            return JsonConvert.DeserializeObject<AuthlibInjectorObj>(info.Message!) ?? LocalAuthLib;
         }
         catch
         {
@@ -142,7 +159,7 @@ public static class AuthlibHelper
     /// 初始化AuthlibInjector，存在不下载
     /// </summary>
     /// <returns>AuthlibInjector下载实例</returns>
-    public static async Task<(bool, DownloadItemObj?)> ReadyAuthlibInjectorAsync()
+    public static async Task<MakeDownloadItemRes> ReadyAuthlibInjectorAsync()
     {
         try
         {
@@ -171,16 +188,27 @@ public static class AuthlibHelper
                         var sha2561 = await HashHelper.GenSha256Async(stream);
                         if (sha256 != sha2561)
                         {
-                            return (true, item1);
+                            return new MakeDownloadItemRes
+                            {
+                                State = true,
+                                Item = item1
+                            };
                         }
                     }
                 }
                 else
                 {
-                    return (true, item1);
+                    return new MakeDownloadItemRes
+                    {
+                        State = true,
+                        Item = item1
+                    };
                 }
 
-                return (true, null);
+                return new MakeDownloadItemRes
+                {
+                    State = true
+                };
             }
             else if (File.Exists(NowAuthlibInjector))
             {
@@ -192,17 +220,27 @@ public static class AuthlibHelper
                     if (item.SHA256 != sha2561)
                     {
                         var obj1 = await GetAuthlibInjectorObjAsync();
-                        return (true, BuildAuthlibInjectorItem(obj1));
+                        return new MakeDownloadItemRes
+                        {
+                            State = true,
+                            Item = BuildAuthlibInjectorItem(obj1)
+                        };
                     }
                 }
             }
 
-            return (true, null);
+            return new MakeDownloadItemRes
+            {
+                State = true
+            };
         }
         catch (Exception e)
         {
             Logs.Error(LanguageHelper.Get("Core.Http.Error11"), e);
-            return (false, null);
+            return new MakeDownloadItemRes
+            {
+                State = false
+            };
         }
     }
 }

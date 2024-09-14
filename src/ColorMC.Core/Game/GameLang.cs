@@ -1,11 +1,12 @@
 ﻿using ColorMC.Core.LaunchPath;
+using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
 using Newtonsoft.Json;
 
 namespace ColorMC.Core.Game;
 
 /// <summary>
-/// 游戏语音
+/// 游戏语言
 /// </summary>
 public static class GameLang
 {
@@ -84,19 +85,23 @@ public static class GameLang
     /// </summary>
     /// <param name="obj">资源数据</param>
     /// <returns>语言列表</returns>
-    public static (string?, string?) GetLang(this AssetsObj? obj, string temp)
+    public static LangRes? GetLang(this AssetsObj? obj, string temp)
     {
         if (obj != null)
         {
             foreach (var item in obj.objects)
             {
-                if (item.Key.StartsWith(Name1) && item.Key.Contains(temp) && AssetsPath.ReadAsset(item.Value.hash) is { } str)
+                if (item.Key.StartsWith(Name1) && item.Key.Contains(temp)
+                    && AssetsPath.ReadAsset(item.Value.hash) is { } str)
                 {
                     try
                     {
                         var data = JsonConvert.DeserializeObject<LangObj>(str)!;
-                        return (item.Key.Replace(Name1, "").Replace(".json", ""),
-                                data.Name + "-" + data.Region);
+                        return new LangRes
+                        {
+                            Key = (item.Key.Replace(Name1, "").Replace(".json", "")),
+                            Name = data.Name + "-" + data.Region
+                        };
                     }
                     catch
                     {
@@ -111,13 +116,21 @@ public static class GameLang
 
         if (temp == "zh_cn")
         {
-            return ("zh_cn", "简体中文");
+            return new LangRes
+            {
+                Key = "zh_cn",
+                Name = "简体中文"
+            };
         }
         else if (temp == "en_us")
         {
-            return ("en_us", "English");
+            return new LangRes
+            {
+                Key = "en_us",
+                Name = "English"
+            };
         }
 
-        return (null, null);
+        return null;
     }
 }

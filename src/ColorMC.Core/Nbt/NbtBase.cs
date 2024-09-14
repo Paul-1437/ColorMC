@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using ColorMC.Core.Chunk;
 using ColorMC.Core.Helpers;
+using K4os.Compression.LZ4.Streams;
 
 namespace ColorMC.Core.Nbt;
 
@@ -62,7 +63,7 @@ public abstract class NbtBase
                     (this as NbtDouble)!.Value = double.Parse(value);
                     break;
                 case NbtType.NbtString:
-                    (this as NbtString)!.Value = value!;
+                    (this as NbtString)!.Value = value;
                     break;
             };
         }
@@ -159,19 +160,19 @@ public abstract class NbtBase
         return (Activator.CreateInstance(type) as NbtBase)!;
     }
 
-    public static async Task<T?> Read<T>(Stream stream, bool chunk = false) where T : NbtBase
+    public static async Task<T?> ReadAsync<T>(Stream stream, bool chunk = false) where T : NbtBase
     {
-        return await Read(stream, chunk) as T;
+        return await ReadAsync(stream, chunk) as T;
     }
 
-    public static async Task<NbtBase?> Read(Stream stream, bool chunk = false)
+    public static async Task<NbtBase?> ReadAsync(Stream stream, bool chunk = false)
     {
         if (stream.Length < 2)
         {
             return null;
         }
         DataInputStream stream2;
-        var data = new byte[2];
+        var data = new byte[3];
         await stream.ReadExactlyAsync(data);
         stream.Seek(0, SeekOrigin.Begin);
         ZipType zip = ZipType.None;
@@ -186,6 +187,12 @@ public abstract class NbtBase
             var steam1 = new ZLibStream(stream, CompressionMode.Decompress);
             stream2 = new DataInputStream(steam1);
             zip = ZipType.Zlib;
+        }
+        else if (data[0] == 0x4C && data[1] == 0x5A && data[2] == 0x34)
+        {
+            var steam1 = LZ4Stream.Decode(stream);
+            stream2 = new DataInputStream(steam1);
+            zip = ZipType.LZ4;
         }
         else
         {
@@ -225,7 +232,10 @@ public abstract class NbtBase
             nbt = ById(type1);
         }
         nbt.ZipType = zip;
-        nbt.Read(stream2);
+        await Task.Run(() =>
+        {
+            nbt.Read(stream2);
+        });
 
         stream2.Dispose();
 
@@ -235,7 +245,7 @@ public abstract class NbtBase
     public static async Task<T?> Read<T>(string file) where T : NbtBase
     {
         using var stream = PathHelper.OpenRead(file)!;
-        return await Read(stream) as T;
+        return await ReadAsync(stream) as T;
     }
 
     /// <summary>
@@ -246,17 +256,18 @@ public abstract class NbtBase
     public static async Task<NbtBase?> Read(string file)
     {
         using var stream = PathHelper.OpenRead(file)!;
-        return await Read(stream);
+        return await ReadAsync(stream);
     }
 
     public static void Save(NbtBase nbt, Stream stream)
     {
-        DataOutputStream steam2 = nbt.ZipType switch
+        var steam2 = new DataOutputStream(nbt.ZipType switch
         {
-            ZipType.GZip => new DataOutputStream(new GZipStream(stream, CompressionLevel.Optimal)),
-            ZipType.Zlib => new DataOutputStream(new ZLibStream(stream, CompressionLevel.Optimal)),
-            _ => new DataOutputStream(stream)
-        };
+            ZipType.GZip => new GZipStream(stream, CompressionLevel.Optimal),
+            ZipType.Zlib => new ZLibStream(stream, CompressionLevel.Optimal),
+            ZipType.LZ4 => LZ4Stream.Encode(stream),
+            _ => stream
+        });
 
         steam2.Write((byte)nbt.NbtType);
         if (nbt.NbtType != NbtType.NbtEnd)
@@ -276,7 +287,7 @@ public abstract class NbtBase
     {
         return Task.Run(() =>
         {
-            using var stream = PathHelper.OpenWrite(file);
+            using var stream = PathHelper.OpenWrite(file, true);
             Save(nbt, stream);
         });
     }

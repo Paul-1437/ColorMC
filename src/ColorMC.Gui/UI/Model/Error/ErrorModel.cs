@@ -40,7 +40,12 @@ public partial class ErrorModel : TopModel
 
     public async void Save()
     {
-        await PathBinding.SaveFile(FileType.Text, new[] { Text.Text });
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        await PathBinding.SaveFile(top, FileType.Text, [Text.Text]);
     }
 
     public async void Push()
@@ -57,7 +62,7 @@ public partial class ErrorModel : TopModel
         }
 
         Model.Progress(App.Lang("GameLogWindow.Info6"));
-        var url = await WebBinding.Push(Text.Text);
+        var url = await WebBinding.PushMclo(Text.Text);
         Model.ProgressClose();
         if (url == null)
         {
@@ -66,14 +71,18 @@ public partial class ErrorModel : TopModel
         }
         else
         {
+            var top = Model.GetTopLevel();
+            if (top == null)
+            {
+                return;
+            }
             Model.ShowReadInfoOne(string.Format(App.Lang("GameLogWindow.Info5"), url), null);
-
-            await BaseBinding.CopyTextClipboard(url);
+            await BaseBinding.CopyTextClipboard(top, url!);
             Model.Notify(App.Lang("GameLogWindow.Info7"));
         }
     }
 
-    protected override void Close()
+    public override void Close()
     {
         Model.RemoveChoiseData(_useName);
     }

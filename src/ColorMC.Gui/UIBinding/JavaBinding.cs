@@ -6,27 +6,33 @@ using ColorMC.Core.Helpers;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
-using ColorMC.Gui.Objs;
+using ColorMC.Gui.UI.Model.Items;
 
 namespace ColorMC.Gui.UIBinding;
 
 public static class JavaBinding
 {
-    private static JavaInfoObj MakeInfo(string name, JavaInfo item)
+    /// <summary>
+    /// 导入Java压缩包
+    /// </summary>
+    /// <param name="file"></param>
+    /// <param name="name"></param>
+    /// <param name="zip"></param>
+    /// <returns></returns>
+    public static async Task<MessageRes> AddJavaZip(string file, string name, ColorMCCore.ZipUpdate zip)
     {
-        return new JavaInfoObj()
+        return await JvmPath.UnzipJavaAsync(new UnzipArg
         {
+            File = file,
             Name = name,
-            Path = item.Path,
-            Info = $"{item.Type} {item.Version} {item.Arch}"
-        };
+            Zip = zip
+        });
     }
 
-    public static async Task<(bool, string?)> AddJavaZip(string file, string name, ColorMCCore.ZipUpdate zip)
-    {
-        return await JvmPath.UnzipJavaAsync(name, file, zip);
-    }
-
+    /// <summary>
+    /// 获取Java名字
+    /// </summary>
+    /// <returns></returns>
     public static List<string> GetJavaName()
     {
         var list = new List<string>();
@@ -38,51 +44,56 @@ public static class JavaBinding
         return list;
     }
 
-    public static (JavaInfoObj?, string?) AddJava(string name, string local)
+    /// <summary>
+    /// 测试并添加Java
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="local"></param>
+    /// <returns></returns>
+    public static MessageRes AddJava(string name, string local)
     {
-        var (Res, Msg) = JvmPath.AddItem(name, local);
-        if (Res == false)
+        var res = JvmPath.AddItem(name, local);
+        if (res.State == false)
         {
-            return (null, Msg);
+            return new() { Message = res.Message };
         }
         else
         {
-            var info = JvmPath.GetInfo(Msg);
+            var info = JvmPath.GetInfo(res.Message);
             if (info == null)
             {
-                return (null, App.Lang("Gui.Error5"));
+                return new() { Message = App.Lang("JavaBinding.Error1") };
             }
-            return (MakeInfo(Msg, info), null);
+            return new() { State = true };
         }
     }
 
+    /// <summary>
+    /// 获取Java信息
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
     public static JavaInfo? GetJavaInfo(string path)
     {
         return JavaHelper.GetJavaInfo(path);
     }
 
+    /// <summary>
+    /// 删除Java
+    /// </summary>
+    /// <param name="name"></param>
     public static void RemoveJava(string name)
     {
         JvmPath.Remove(name);
     }
 
-    public static List<string> GetGCTypes()
+    /// <summary>
+    /// 获取Java列表
+    /// </summary>
+    /// <returns></returns>
+    public static List<JavaDisplayModel> GetJavas()
     {
-        var list = new List<string>()
-        {
-            "",
-            GCType.G1GC.GetName(),
-            GCType.SerialGC.GetName(),
-            GCType.ParallelGC.GetName(),
-            GCType.CMSGC.GetName(),
-            GCType.User.GetName()
-        };
-        return list;
-    }
-
-    public static List<JavaDisplayObj> GetJavas()
-    {
-        var res = new List<JavaDisplayObj>();
+        var res = new List<JavaDisplayModel>();
         foreach (var item in JvmPath.Jvms)
         {
             res.Add(new()
@@ -99,19 +110,37 @@ public static class JavaBinding
         return res;
     }
 
-    public static async Task<(bool, string?)> DownloadJava(JavaDownloadObj obj,
+    /// <summary>
+    /// 下载Java
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="zip"></param>
+    /// <param name="unzip"></param>
+    /// <returns></returns>
+    public static async Task<MessageRes> DownloadJava(JavaDownloadModel obj,
         ColorMCCore.ZipUpdate zip, ColorMCCore.JavaUnzip unzip)
     {
-        var (res, message) =
-            await JvmPath.InstallAsync(obj.File, obj.Name, obj.Sha256, obj.Url, zip, unzip);
-        if (res != CoreRunState.Init)
+        var res = await JvmPath.InstallAsync(new InstallJvmArg
         {
-            return (false, message);
+            File = obj.File,
+            Name = obj.Name,
+            Sha256 = obj.Sha256,
+            Url = obj.Url,
+            Zip = zip,
+            Unzip = unzip
+        });
+        if (!res.State)
+        {
+            return new() { Message = res.Message };
         }
 
-        return (true, null);
+        return new() { State = true };
     }
 
+    /// <summary>
+    /// 获取推荐路径
+    /// </summary>
+    /// <returns></returns>
     public static DirectoryInfo? GetSuggestedStartLocation()
     {
         switch (SystemInfo.Os)
@@ -136,11 +165,18 @@ public static class JavaBinding
         return null;
     }
 
+    /// <summary>
+    /// 删除所有Java
+    /// </summary>
     public static void RemoveAllJava()
     {
         JvmPath.RemoveAll();
     }
 
+    /// <summary>
+    /// 搜索Java
+    /// </summary>
+    /// <returns></returns>
     public static Task<List<JavaInfo>?> FindJava()
     {
         return Task.Run(JavaHelper.FindJava);

@@ -5,74 +5,66 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.ServerPack"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:panel="clr-namespace:ColorMC.Gui.UI.Views"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="model:ServerPackModel"
     mc:Ignorable="d">
-    <DockPanel Name="ScrollViewer1" Margin="5,0,5,0">
-        <Border
-            Margin="0,0,0,5"
-            Classes="t2"
-            DockPanel.Dock="Top">
-            <StackPanel>
-                <DockPanel>
+    <Decorator Margin="0,0,10,15">
+        <Border Margin="10,5,10,3" Classes="t2">
+            <DockPanel>
+                <StackPanel Margin="15,15,5,0" DockPanel.Dock="Top">
+                    <panel:WrapPanelWithStretch LeftMax="True">
+                        <DockPanel MinWidth="230" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize ServerPackWindow.Tab4.Text1}" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding NameList}"
+                                SelectedItem="{Binding Group}" />
+                        </DockPanel>
+                        <DockPanel MinWidth="230" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize ServerPackWindow.Tab4.Text2}" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding FuntionList}"
+                                SelectedIndex="{Binding Funtion}" />
+                        </DockPanel>
+                        <Button
+                            Width="100"
+                            Height="35"
+                            Margin="-2,-2,7,7"
+                            Classes="top"
+                            Command="{Binding AddFile}"
+                            Content="{setting:Localize Button.Add}"
+                            ToolTip.Tip="{setting:Localize ToolTip.Text119}"
+                            ToolTip.VerticalOffset="-30" />
+                    </panel:WrapPanelWithStretch>
                     <TextBlock
-                        Margin="0,0,5,0"
-                        DockPanel.Dock="Left"
-                        Text="{setting:Localize ServerPackWindow.Tab4.Text1}" />
-                    <Button
-                        Width="80"
-                        Height="30"
-                        Margin="-2,-2,0,-2"
-                        Classes="top"
-                        Command="{Binding AddFile}"
-                        Content="{setting:Localize Button.Add}"
-                        DockPanel.Dock="Right"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text119}"
-                        ToolTip.VerticalOffset="-30" />
-                    <ComboBox
-                        Width="140"
-                        Margin="0,0,5,0"
-                        HorizontalAlignment="Stretch"
-                        DockPanel.Dock="Right"
-                        ItemsSource="{Binding FuntionList}"
-                        SelectedIndex="{Binding Funtion}" />
-                    <TextBlock
-                        Margin="0,0,5,0"
-                        DockPanel.Dock="Right"
-                        Text="{setting:Localize ServerPackWindow.Tab4.Text2}" />
-                    <ComboBox
-                        Margin="0,0,5,0"
-                        HorizontalAlignment="Stretch"
-                        ItemsSource="{Binding NameList}"
-                        SelectedItem="{Binding Group}" />
-                </DockPanel>
-                <TextBlock
-                    Margin="0,5,0,0"
-                    DockPanel.Dock="Bottom"
-                    Text="{setting:Localize ServerPackWindow.Tab4.Text3}" />
-            </StackPanel>
+                        Margin="0,0,10,0"
+                        DockPanel.Dock="Bottom"
+                        Text="{setting:Localize ServerPackWindow.Tab4.Text3}" />
+                </StackPanel>
+                <DataGrid
+                    Name="DataGrid1"
+                    Margin="5"
+                    AutoGenerateColumns="False"
+                    CanUserResizeColumns="True"
+                    CanUserSortColumns="False"
+                    ItemsSource="{Binding FileList}"
+                    SelectedItem="{Binding FileItem}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn
+                            Binding="{Binding Group}"
+                            Header="{setting:Localize Text.Name}"
+                            IsReadOnly="True" />
+                        <DataGridTextColumn
+                            Binding="{Binding Type}"
+                            Header="{setting:Localize ServerPackWindow.Tab4.Text4}"
+                            IsReadOnly="True" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
         </Border>
-        <Border Margin="0,0,0,5" Classes="t1">
-            <DataGrid
-                Name="DataGrid1"
-                AutoGenerateColumns="False"
-                CanUserResizeColumns="True"
-                CanUserSortColumns="False"
-                ItemsSource="{Binding FileList}"
-                SelectedItem="{Binding FileItem}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn
-                        Binding="{Binding Group}"
-                        Header="{setting:Localize Text.Name}"
-                        IsReadOnly="True" />
-                    <DataGridTextColumn
-                        Binding="{Binding Type}"
-                        Header="{setting:Localize ServerPackWindow.Tab4.DataGrid.Text2}"
-                        IsReadOnly="True" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
-    </DockPanel>
+    </Decorator>
 </UserControl>

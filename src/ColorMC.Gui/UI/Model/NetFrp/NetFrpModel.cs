@@ -1,51 +1,89 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using ColorMC.Core.Objs;
-using ColorMC.Gui.Objs;
+using ColorMC.Gui.Frp;
+using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 
 namespace ColorMC.Gui.UI.Model.NetFrp;
 
 public partial class NetFrpModel : MenuModel
 {
-    public override List<MenuObj> TabItems { get; init; } =
-    [
-        new() { Icon = "/Resource/Icon/NetFrp/item4.svg",
-            Text = App.Lang("NetFrpWindow.Tabs.Text4") },
-        new() { Icon = "/Resource/Icon/NetFrp/item1.svg",
-            Text = App.Lang("NetFrpWindow.Tabs.Text1") },
-        new() { Icon = "/Resource/Icon/NetFrp/item5.svg",
-            Text = App.Lang("NetFrpWindow.Tabs.Text5") },
-        new() { Icon = "/Resource/Icon/NetFrp/item2.svg",
-            Text = App.Lang("NetFrpWindow.Tabs.Text2") },
-        new() { Icon = "/Resource/Icon/NetFrp/item3.svg",
-            Text = App.Lang("NetFrpWindow.Tabs.Text3") }
-    ];
-
     private readonly string _name;
 
     public NetFrpModel(BaseModel model) : base(model)
     {
         _name = ToString() ?? "NetFrpModel";
+
+        SetMenu(
+        [
+            new()
+            {
+                Icon = "/Resource/Icon/NetFrp/item4.svg",
+                Text = App.Lang("NetFrpWindow.Tabs.Text4")
+            },
+            new()
+            {
+                Icon = "/Resource/Icon/NetFrp/item1.svg",
+                Text = App.Lang("NetFrpWindow.Tabs.Text1")
+            },
+            new()
+            {
+                Icon = "/Resource/Icon/NetFrp/item5.svg",
+                Text = App.Lang("NetFrpWindow.Tabs.Text5")
+            },
+            new()
+            {
+                Icon = "/Resource/Icon/NetFrp/item2.svg",
+                Text = App.Lang("NetFrpWindow.Tabs.Text2"),
+                SubMenu =
+                [
+                    new SubMenuItemModel()
+                    {
+                        Func = CleanLocal,
+                        Name = App.Lang("NetFrpWindow.Tab2.Text2")
+                    }
+                ]
+            },
+            new()
+            {
+                Icon = "/Resource/Icon/NetFrp/item3.svg",
+                Text = App.Lang("NetFrpWindow.Tabs.Text3")
+            }
+        ]);
     }
 
     public async Task<bool> Open()
     {
-        var user = UserBinding.GetLastUser();
+        _isLoadSakura = true;
 
-        if (user?.AuthType != AuthType.OAuth)
+        if (FrpConfig.Config.SakuraFrp is { } con)
         {
-            Model.ShowOk(App.Lang("NetFrpWindow.Tab4.Error1"), WindowClose);
-            return false;
+            KeySakura = con.Key;
         }
-        Model.Progress(App.Lang("NetFrpWindow.Tab4.Info2"));
-        var res = await UserBinding.TestLogin(user);
-        Model.ProgressClose();
-        if (!res)
+
+        _isLoadSakura = false;
+
+        _isLoadOpenFrp = true;
+
+        if (FrpConfig.Config.OpenFrp is { } con1)
         {
-            Model.ShowOk(App.Lang("NetFrpWindow.Tab4.Error2"), WindowClose);
-            return false;
+            KeyOpenFrp = con1.Key;
         }
+
+        _isLoadOpenFrp = false;
+
+        if (!string.IsNullOrWhiteSpace(KeySakura))
+        {
+            await GetChannelSakura();
+        }
+        if (!string.IsNullOrWhiteSpace(KeyOpenFrp))
+        {
+            await GetChannelOpenFrp();
+        }
+
+        var list = await GameBinding.GetGameVersions(GameType.All);
+        Versions.Add("");
+        Versions.AddRange(list);
 
         return true;
     }
@@ -55,7 +93,7 @@ public partial class NetFrpModel : MenuModel
         Model.RemoveChoiseData(_name);
     }
 
-    protected override void Close()
+    public override void Close()
     {
         _client?.Stop();
 

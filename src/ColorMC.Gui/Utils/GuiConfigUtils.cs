@@ -3,8 +3,9 @@ using System.IO;
 using ColorMC.Core.Config;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Utils;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.Objs;
-using ColorMC.Gui.Utils.LaunchSetting;
+
 using Newtonsoft.Json;
 
 namespace ColorMC.Gui.Utils;
@@ -45,7 +46,7 @@ public static class GuiConfigUtils
             }
             catch (Exception e)
             {
-                Logs.Error(App.Lang("Gui.Error17"), e);
+                Logs.Error(App.Lang("Config.Error2"), e);
             }
 
             if (Config == null)
@@ -68,6 +69,11 @@ public static class GuiConfigUtils
                 Config.ServerCustom = MakeServerCustomConfig();
                 save = true;
             }
+            if (Config.ServerCustom.LockLogins == null)
+            {
+                Config.ServerCustom.LockLogins = [];
+                save = true;
+            }
             if (Config.Render == null
                 || Config.Render.Windows == null
                 || Config.Render.X11 == null)
@@ -75,24 +81,9 @@ public static class GuiConfigUtils
                 Config.Render = MakeRenderConfig();
                 save = true;
             }
-            if (Config.ColorLight == null)
-            {
-                Config.ColorLight = MakeColorLightConfig();
-                save = true;
-            }
-            if (Config.ColorDark == null)
-            {
-                Config.ColorDark = MakeColorDarkConfig();
-                save = true;
-            }
             if (Config.Live2D == null)
             {
                 Config.Live2D = MakeLive2DConfig();
-                save = true;
-            }
-            if (Config.Gui == null)
-            {
-                Config.Gui = MakeGuiSettingConfig();
                 save = true;
             }
             if (Config.Style == null)
@@ -100,15 +91,21 @@ public static class GuiConfigUtils
                 Config.Style = MakeStyleSettingConfig();
                 save = true;
             }
+            if (Config.Head == null)
+            {
+                Config.Head = MakeHeadSettingConfig();
+                save = true;
+            }
             if (Config.Input == null)
             {
                 Config.Input = new();
+                save = true;
             }
 
             if (save)
             {
                 Logs.Info(LanguageHelper.Get("Core.Config.Info2"));
-                Save();
+                SaveNow();
             }
         }
         else
@@ -143,11 +140,20 @@ public static class GuiConfigUtils
         });
     }
 
+    public static HeadSetting MakeHeadSettingConfig()
+    {
+        return new()
+        {
+            Type = HeadType.Head3D_B,
+            X = 15,
+            Y = 65
+        };
+    }
+
     public static StyleSetting MakeStyleSettingConfig()
     {
         return new()
         {
-            ButtonCornerRadius = 3,
             AmTime = 500
         };
     }
@@ -161,7 +167,7 @@ public static class GuiConfigUtils
         };
     }
 
-    public static Render MakeRenderConfig()
+    public static RenderSetting MakeRenderConfig()
     {
         return new()
         {
@@ -182,9 +188,7 @@ public static class GuiConfigUtils
     {
         return new()
         {
-            ColorMain = ColorSel.MainColorStr,
-            ColorLight = MakeColorLightConfig(),
-            ColorDark = MakeColorDarkConfig(),
+            ColorMain = ThemeManager.MainColorStr,
             RGBS = 100,
             RGBV = 100,
             ServerCustom = MakeServerCustomConfig(),
@@ -194,49 +198,20 @@ public static class GuiConfigUtils
             EnableBG = false,
             BackImage = "",
             Live2D = MakeLive2DConfig(),
-            Gui = MakeGuiSettingConfig(),
             Style = MakeStyleSettingConfig(),
+            Head = MakeHeadSettingConfig(),
             Input = new()
         };
     }
 
-    public static ColorSetting MakeColorLightConfig()
-    {
-        return new()
-        {
-            ColorBack = ColorSel.BackLigthColorStr,
-            ColorTranBack = ColorSel.Back1LigthColorStr,
-            ColorFont1 = ColorSel.ButtonLightFontStr,
-            ColorFont2 = ColorSel.FontLigthColorStr,
-        };
-    }
-
-    public static ColorSetting MakeColorDarkConfig()
-    {
-        return new()
-        {
-            ColorBack = ColorSel.BackDarkColorStr,
-            ColorTranBack = ColorSel.Back1DarkColorStr,
-            ColorFont1 = ColorSel.ButtonDarkFontStr,
-            ColorFont2 = ColorSel.FontDarkColorStr,
-        };
-    }
-
-    public static ServerCustom MakeServerCustomConfig()
+    public static ServerCustomSetting MakeServerCustomConfig()
     {
         return new()
         {
             MotdColor = "White",
             MotdBackColor = "Black",
-            Volume = 30
-        };
-    }
-
-    public static MainWindowSetting MakeGuiSettingConfig()
-    {
-        return new()
-        {
-
+            Volume = 30,
+            LockLogins = []
         };
     }
 }

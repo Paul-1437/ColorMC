@@ -38,57 +38,11 @@ public static class Worlds
 
         await Parallel.ForEachAsync(info.GetDirectories(), async (item, cacenl) =>
         {
-            var find = false;
-            var file = Path.GetFullPath(item.FullName + "/level.dat");
-            if (File.Exists(file))
+            var world = await ReadWorld(item);
+            if (world != null)
             {
-                try
-                {
-                    //读NBT
-                    if (await NbtBase.Read(file) is not NbtCompound tag)
-                    {
-                        return;
-                    }
-
-                    var obj = new WorldObj()
-                    {
-                        Nbt = tag
-                    };
-
-                    //读数据
-                    var tag1 = tag.TryGet<NbtCompound>("Data")!;
-                    obj.LastPlayed = tag1.TryGet<NbtLong>("LastPlayed")!.Value;
-                    obj.GameType = tag1.TryGet<NbtInt>("GameType")!.Value;
-                    obj.Hardcore = tag1.TryGet<NbtByte>("hardcore")!.Value;
-                    obj.Difficulty = tag1.TryGet<NbtByte>("Difficulty")!.Value;
-                    obj.LevelName = tag1.TryGet<NbtString>("LevelName")!.Value;
-
-                    obj.Local = Path.GetFullPath(item.FullName);
-                    obj.Game = game;
-
-                    var icon = item.GetFiles().Where(a => a.Name == "icon.png").FirstOrDefault();
-                    if (icon != null)
-                    {
-                        obj.Icon = icon.FullName;
-                    }
-
-                    list.Add(obj);
-                    find = true;
-                }
-                catch (Exception e)
-                {
-                    Logs.Error(LanguageHelper.Get("Core.Game.Error4"), e);
-                }
-            }
-
-            if (!find)
-            {
-                list.Add(new()
-                {
-                    Broken = true,
-                    Local = Path.GetFullPath(item.FullName),
-                    Game = game
-                });
+                world.Game = game;
+                list.Add(world);
             }
         });
 
@@ -106,22 +60,15 @@ public static class Worlds
         Directory.Move(world.Local, Path.GetFullPath(dir + "/" + world.LevelName));
     }
 
-    /// <summary>
-    /// 导入世界压缩包
-    /// </summary>
-    /// <param name="obj">游戏实例</param>
-    /// <param name="file">文件位置</param>
-    /// <returns>结果</returns>
-    public static async Task<bool> AddWorldZipAsync(this GameSettingObj obj, string file)
+    public static async Task<bool> AddWorldZipAsync(this GameSettingObj obj, string name, Stream file)
     {
         var dir = obj.GetSavesPath();
-        var info = new FileInfo(file);
+        var info = new FileInfo(name);
         dir = Path.GetFullPath(dir + "/" + info.Name[..^info.Extension.Length] + "/");
         Directory.CreateDirectory(dir);
         try
         {
-            using ZipFile zFile = new(file);
-            using var stream1 = new MemoryStream();
+            using var zFile = new ZipFile(file);
             var dir1 = "";
             var find = false;
             foreach (ZipEntry e in zFile)
@@ -145,11 +92,7 @@ public static class Worlds
                 {
                     using var stream = zFile.GetInputStream(e);
                     var file1 = Path.GetFullPath(dir + e.Name[dir1.Length..]);
-                    var info2 = new FileInfo(file1);
-                    info2.Directory?.Create();
-                    using FileStream stream3 = new(file1, FileMode.Create,
-                        FileAccess.ReadWrite, FileShare.ReadWrite);
-                    await stream.CopyToAsync(stream3);
+                    await PathHelper.WriteBytesAsync(file1, stream);
                 }
             }
 
@@ -161,6 +104,22 @@ public static class Worlds
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// 导入世界压缩包
+    /// </summary>
+    /// <param name="obj">游戏实例</param>
+    /// <param name="file">文件位置</param>
+    /// <returns>结果</returns>
+    public static async Task<bool> AddWorldZipAsync(this GameSettingObj obj, string file)
+    {
+        using var stream = PathHelper.OpenRead(file);
+        if (stream == null)
+        {
+            return false;
+        }
+        return await obj.AddWorldZipAsync(file, stream);
     }
 
     /// <summary>
@@ -198,7 +157,7 @@ public static class Worlds
             .ToString("yyyy_MM_dd_HH_mm_ss") + ".zip");
 
         await new ZipUtils().ZipFileAsync(world.Local, file);
-        using var s = new ZipFile(PathHelper.OpenRead(file));
+        using var s = new ZipFile(PathHelper.OpenWrite(file, false));
         var info = new { name = world.LevelName };
         var data = JsonConvert.SerializeObject(info);
         var data1 = Encoding.UTF8.GetBytes(data);
@@ -214,57 +173,57 @@ public static class Worlds
     /// <param name="obj">游戏实例</param>
     /// <param name="item1">文件</param>
     /// <returns>还原结果</returns>
-    public static async Task<bool> UnzipBackupWorldAsync(this GameSettingObj obj, FileInfo item1,
-        ColorMCCore.Request request)
+    public static async Task<bool> UnzipBackupWorldAsync(this GameSettingObj obj, UnzipBackupWorldArg arg)
     {
         var local = "";
+        var res = false;
 
+        using var s = new ZipInputStream(PathHelper.OpenRead(arg.File));
+        using var stream1 = new MemoryStream();
+        ZipEntry theEntry;
+        while ((theEntry = s.GetNextEntry()) != null)
         {
-            var res = false;
+            if (theEntry.Name == Name2)
+            {
+                await s.CopyToAsync(stream1);
+                res = true;
+                break;
+            }
+        }
+        if (!res)
+        {
+            return false;
+        }
+        var data = stream1.ToArray();
+        var data1 = Encoding.UTF8.GetString(data);
+        var info = JObject.Parse(data1);
+        var name = info?["name"]?.ToString();
+        if (name == null)
+        {
+            return false;
+        }
 
-            using var s = new ZipInputStream(PathHelper.OpenRead(item1.FullName));
-            using var stream1 = new MemoryStream();
-            ZipEntry theEntry;
-            while ((theEntry = s.GetNextEntry()) != null)
-            {
-                if (theEntry.Name == Name2)
-                {
-                    await s.CopyToAsync(stream1);
-                    res = true;
-                    break;
-                }
-            }
-            if (!res)
-            {
-                return false;
-            }
-            var data = stream1.ToArray();
-            var data1 = Encoding.UTF8.GetString(data);
-            var info = JObject.Parse(data1);
-            var name = info?["name"]?.ToString();
-            if (name == null)
-            {
-                return false;
-            }
+        var list1 = await obj.GetWorldsAsync();
+        var item = list1.FirstOrDefault(a => a.LevelName == name);
 
-            var list1 = await obj.GetWorldsAsync();
-            var item = list1.FirstOrDefault(a => a.LevelName == name);
-
-            if (item != null)
+        if (item != null)
+        {
+            local = item.Local;
+            await PathHelper.DeleteFilesAsync(new DeleteFilesArg
             {
-                local = item.Local;
-                await PathHelper.DeleteFilesAsync(item.Local, request);
-            }
-            else
-            {
-                local = Path.GetFullPath(obj.GetSavesPath() + "/" + name);
-            }
+                Local = item.Local,
+                Request = arg.Request
+            });
+        }
+        else
+        {
+            local = Path.GetFullPath(obj.GetSavesPath() + "/" + name);
         }
 
         try
         {
-            await new ZipUtils().UnzipAsync(local, item1.FullName,
-                PathHelper.OpenRead(item1.FullName)!);
+            await new ZipUtils().UnzipAsync(local, arg.File,
+                PathHelper.OpenRead(arg.File)!);
             return true;
         }
         catch (Exception e)
@@ -272,5 +231,61 @@ public static class Worlds
             ColorMCCore.OnError(LanguageHelper.Get("Core.Game.Error11"), e, false);
             return false;
         }
+    }
+
+    /// <summary>
+    /// 读取世界信息
+    /// </summary>
+    /// <param name="dir"></param>
+    /// <returns></returns>
+    private static async Task<WorldObj?> ReadWorld(DirectoryInfo dir)
+    {
+        var file = Path.GetFullPath(dir.FullName + "/level.dat");
+        if (!File.Exists(file))
+        {
+            return null;
+        }
+
+        try
+        {
+            //读NBT
+            if (await NbtBase.Read(file) is not NbtCompound tag)
+            {
+                throw new Exception("NBT tag error");
+            }
+
+            var obj = new WorldObj()
+            {
+                Nbt = tag
+            };
+
+            //读数据
+            var tag1 = tag.TryGet<NbtCompound>("Data")!;
+            obj.LastPlayed = tag1.TryGet<NbtLong>("LastPlayed")!.Value;
+            obj.GameType = tag1.TryGet<NbtInt>("GameType")!.Value;
+            obj.Hardcore = tag1.TryGet<NbtByte>("hardcore")!.Value;
+            obj.Difficulty = tag1.TryGet<NbtByte>("Difficulty")!.Value;
+            obj.LevelName = tag1.TryGet<NbtString>("LevelName")!.Value;
+
+            obj.Local = Path.GetFullPath(dir.FullName);
+
+            var icon = dir.GetFiles().Where(a => a.Name == "icon.png").FirstOrDefault();
+            if (icon != null)
+            {
+                obj.Icon = icon.FullName;
+            }
+
+            return obj;
+        }
+        catch (Exception e)
+        {
+            Logs.Error(LanguageHelper.Get("Core.Game.Error4"), e);
+        }
+
+        return new()
+        {
+            Broken = true,
+            Local = Path.GetFullPath(dir.FullName)
+        };
     }
 }

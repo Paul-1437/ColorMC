@@ -1,90 +1,58 @@
 <UserControl
-    x:Class="ColorMC.Gui.UI.Controls.MenuControl"
+    x:Class="ColorMC.Gui.UI.Controls.BaseMenuControl"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:model1="clr-namespace:ColorMC.Gui.UI.Model.Items"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     xmlns:svg="clr-namespace:ColorMC.Gui.UI.Views.Svg"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="model:MenuModel"
     mc:Ignorable="d">
     <Panel>
-        <DockPanel>
-            <Border
-                Margin="5,5,5,0"
-                Classes="t2"
-                DockPanel.Dock="Top">
-                <StackPanel
-                    Name="StackPanel2"
-                    Background="Transparent"
-                    Orientation="Horizontal">
-                    <Button
-                        Width="36"
-                        Height="36"
-                        Margin="-3"
-                        Classes="top"
-                        Command="{Binding OpenSide}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text5}"
-                        ToolTip.VerticalOffset="-30">
-                        <Svg Path="/Resource/Icon/menu.svg" />
-                    </Button>
-                    <TextBlock
-                        Margin="10,0,0,0"
-                        FontSize="20"
-                        Text="{Binding Title}" />
-                </StackPanel>
-            </Border>
-
-            <Panel Margin="0,5,0,0" ClipToBounds="True">
+        <DockPanel Name="TopPanel">
+            <Decorator Name="SidePanel1" DockPanel.Dock="Left" />
+            <StackPanel
+                Name="StackPanel2"
+                Height="42"
+                Margin="10,0,0,5"
+                Background="Transparent"
+                DockPanel.Dock="Top"
+                Orientation="Horizontal">
+                <Button
+                    Width="42"
+                    Height="42"
+                    Margin="-3,0,10,0"
+                    Classes="top"
+                    Command="{Binding OpenSide}"
+                    CornerRadius="5"
+                    IsVisible="{Binding TopSide, FallbackValue=false}">
+                    <svg:SvgControl Path="/Resource/Icon/menu.svg" />
+                </Button>
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="20"
+                    RenderOptions.TextRenderingMode="Antialias"
+                    Text="{Binding Title, FallbackValue=Title}" />
+            </StackPanel>
+            <Panel Name="TabPanel" ClipToBounds="True">
                 <Decorator Name="Content1" />
                 <Decorator Name="Content2" />
             </Panel>
         </DockPanel>
-
-        <Panel
-            Name="StackPanel1"
-            Background="{setting:Colors TopBottom}"
+        <Border
+            Name="SidePanel3"
+            Background="#00FFFFFF"
             IsVisible="False">
             <Border
-                Name="DockPanel1"
                 HorizontalAlignment="Left"
-                Background="{setting:Colors Bottom}"
-                BorderThickness="2,2,0,0">
-                <DockPanel>
-                    <ListBoxItem Margin="0,4,0,0" DockPanel.Dock="Top">
-                        <StackPanel Orientation="Horizontal">
-                            <svg:SvgControl
-                                Width="24"
-                                Height="24"
-                                Fill="{setting:Colors Font}"
-                                Path="/Resource/Icon/left1.svg"
-                                Stroke="{setting:Colors Font}" />
-                            <TextBlock Margin="5,0,0,0" Text="{setting:Localize MenuControl.Text1}" />
-                        </StackPanel>
-                    </ListBoxItem>
-                    <ListBox
-                        Margin="0,2,0,0"
-                        ItemsSource="{Binding TabItems}"
-                        SelectedIndex="{Binding NowView}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <svg:SvgControl
-                                        Width="24"
-                                        Height="24"
-                                        Fill="{setting:Colors Font}"
-                                        Path="{Binding Icon}"
-                                        Stroke="{setting:Colors Font}" />
-                                    <TextBlock Margin="5,0,0,0" Text="{Binding Text}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
+                VerticalAlignment="Stretch"
+                Background="{setting:Theme MenuBG}">
+                <Decorator Name="SidePanel2" />
             </Border>
-        </Panel>
+        </Border>
     </Panel>
 </UserControl>

@@ -5,40 +5,43 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.GameExport"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:panel="clr-namespace:ColorMC.Gui.UI.Views"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     xmlns:svg="clr-namespace:ColorMC.Gui.UI.Views.Svg"
     xmlns:vm="clr-namespace:ColorMC.Gui.UI.Model"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="model:GameExportModel"
     mc:Ignorable="d">
-    <Panel Name="ScrollViewer1" Margin="5,0,5,0">
-        <Border Margin="0,0,0,5" Classes="t2">
-            <DockPanel>
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-                    <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+    <Panel Margin="0,0,10,15">
+        <Border Margin="10,5,10,3" Classes="t2">
+            <DockPanel Margin="15">
+                <panel:WrapPanelWithStretch
+                    Margin="0,0,0,10"
+                    AutoMax="{Binding MinMode}"
+                    DockPanel.Dock="Top">
+                    <StackPanel Margin="0,0,5,0" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
-                            Path="/Resource/Icon/AddMenu/svg1.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Path="/Resource/Icon/AddMenu/item2.svg" />
                         <TextBlock
                             Margin="0,0,5,0"
                             FontSize="{setting:Style FontTitle}"
                             Text="{setting:Localize GameExportWindow.Tab1.Text1}" />
                     </StackPanel>
                     <ComboBox
-                        Width="200"
+                        MinWidth="230"
+                        HorizontalAlignment="Stretch"
                         ItemsSource="{Binding ExportTypes}"
                         SelectedIndex="{Binding Type}" />
-                </StackPanel>
+                </panel:WrapPanelWithStretch>
                 <DockPanel DockPanel.Dock="Bottom">
                     <Button
                         Width="100"
-                        Height="30"
-                        Margin="-2,-3,0,-2"
+                        Height="35"
+                        Margin="-2,-3,-3,-2"
                         Classes="top"
                         Command="{Binding Export}"
                         Content="{setting:Localize GameExportWindow.Tab1.Text2}"
@@ -49,26 +52,22 @@
                 </DockPanel>
                 <StackPanel>
                     <TextBox
-                        Margin="0,5,0,0"
-                        Classes="input1"
+                        Margin="0,0,0,10"
                         IsEnabled="{Binding EnableInput1}"
                         Text="{Binding Name}"
                         Watermark="{setting:Localize GameExportWindow.Tab1.Text3}" />
                     <TextBox
-                        Margin="0,5,0,0"
-                        Classes="input1"
+                        Margin="0,0,0,10"
                         IsEnabled="{Binding EnableInput1}"
                         Text="{Binding Version}"
                         Watermark="{setting:Localize GameExportWindow.Tab1.Text4}" />
                     <TextBox
-                        Margin="0,5,0,0"
-                        Classes="input1"
+                        Margin="0,0,0,10"
                         IsEnabled="{Binding CfEx}"
                         Text="{Binding Author}"
                         Watermark="{setting:Localize Text.Author}" />
                     <TextBox
-                        Margin="0,5,0,5"
-                        Classes="input1"
+                        Margin="0,0,0,10"
                         IsEnabled="{Binding MoEx}"
                         Text="{Binding Summary}"
                         Watermark="{setting:Localize GameExportWindow.Tab1.Text6}" />

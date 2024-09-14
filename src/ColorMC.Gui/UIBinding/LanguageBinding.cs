@@ -7,6 +7,58 @@ namespace ColorMC.Gui.UIBinding;
 
 public static class LanguageBinding
 {
+    public static string[] GetLockLoginType()
+    {
+        return
+        [
+            AuthType.OAuth.GetName(),
+            AuthType.Nide8.GetName(),
+            AuthType.AuthlibInjector.GetName(),
+            AuthType.LittleSkin.GetName(),
+            AuthType.SelfLittleSkin.GetName()
+        ];
+    }
+
+    public static string[] GetLoginUserType()
+    {
+        return
+        [
+            AuthType.Offline.GetName(),
+            AuthType.OAuth.GetName(),
+            AuthType.Nide8.GetName(),
+            AuthType.AuthlibInjector.GetName(),
+            AuthType.LittleSkin.GetName(),
+            AuthType.SelfLittleSkin.GetName()
+        ];
+    }
+
+    public static string[] GetDisplayUserTypes()
+    {
+        return
+        [
+            "",
+            AuthType.Offline.GetName(),
+            AuthType.OAuth.GetName(),
+            AuthType.Nide8.GetName(),
+            AuthType.AuthlibInjector.GetName(),
+            AuthType.LittleSkin.GetName(),
+            AuthType.SelfLittleSkin.GetName()
+        ];
+    }
+
+    public static string[] GetGCTypes()
+    {
+        return
+        [
+            "",
+            GCType.G1GC.GetName(),
+            GCType.SerialGC.GetName(),
+            GCType.ParallelGC.GetName(),
+            GCType.CMSGC.GetName(),
+            GCType.User.GetName()
+        ];
+    }
+
     public static string[] GetAxisTypeName()
     {
         return
@@ -199,8 +251,8 @@ public static class LanguageBinding
     {
         return
         [
-            App.Lang("ServerPackWindow.Tab4.Item1"),
-            App.Lang("ServerPackWindow.Tab4.Item2")
+            App.Lang("ServerPackWindow.Tab4.Text5"),
+            App.Lang("ServerPackWindow.Tab4.Text6")
         ];
     }
 
@@ -227,6 +279,26 @@ public static class LanguageBinding
             App.Lang("Type.Postion.Item7"),
             App.Lang("Type.Postion.Item8"),
             App.Lang("Type.Postion.Item9"),
+        ];
+    }
+
+    public static string[] GetGuide()
+    {
+        return
+        [
+            App.Lang("Type.Guide.Item1"),
+            App.Lang("Type.Guide.Item2"),
+        ];
+    }
+
+    public static string[] GetLoader()
+    {
+        return
+        [
+            Loaders.Forge.GetName(),
+            Loaders.Fabric.GetName(),
+            Loaders.Quilt.GetName(),
+            Loaders.NeoForge.GetName(),
         ];
     }
 }

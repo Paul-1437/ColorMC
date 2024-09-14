@@ -1,48 +1,42 @@
-using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
-using Avalonia.Threading;
-using ColorMC.Gui.UI.Flyouts;
+using Avalonia.Media.Imaging;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.User;
-using ColorMC.Gui.UI.Windows;
 
 namespace ColorMC.Gui.UI.Controls.User;
 
-public partial class UsersControl : UserControl, IUserControl
+public partial class UsersControl : BaseUserControl
 {
-    public IBaseWindow Window => App.FindRoot(VisualRoot);
-
-    public string Title => App.Lang("UserWindow.Title");
-
-    public string UseName { get; }
-
     public UsersControl()
     {
         InitializeComponent();
 
+        Title = App.Lang("UserWindow.Title");
         UseName = ToString() ?? "UsersControl";
-
-        DataGrid_User.DoubleTapped += DataGrid_User_DoubleTapped;
-        DataGrid_User.CellPointerPressed += DataGrid_User_PointerPressed;
 
         AddHandler(DragDrop.DragEnterEvent, DragEnter);
         AddHandler(DragDrop.DragLeaveEvent, DragLeave);
         AddHandler(DragDrop.DropEvent, Drop);
     }
 
-    public void Opened()
+    public override void Opened()
     {
         Window.SetTitle(Title);
     }
 
-    public void Closed()
+    public override void Closed()
     {
-        App.UserWindow = null;
+        WindowManager.UserWindow = null;
     }
 
     private void DragEnter(object? sender, DragEventArgs e)
     {
+        var model = (DataContext as UsersControlModel)!;
+        if (model.LockLogin)
+        {
+            return;
+        }
         if (e.Data.Contains(DataFormats.Text))
         {
             Grid2.IsVisible = true;
@@ -56,50 +50,15 @@ public partial class UsersControl : UserControl, IUserControl
 
     private void Drop(object? sender, DragEventArgs e)
     {
+        var model = (DataContext as UsersControlModel)!;
+        if (model.LockLogin)
+        {
+            return;
+        }
         Grid2.IsVisible = false;
         (DataContext as UsersControlModel)!.Drop(e.Data);
     }
 
-    private void DataGrid_User_PointerPressed(object? sender, DataGridCellPointerPressedEventArgs e)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            var model = (DataContext as UsersControlModel)!;
-            if (model.Item == null)
-            {
-                return;
-            }
-
-            var pro = e.PointerPressedEventArgs.GetCurrentPoint(this);
-
-            if (pro.Properties.IsRightButtonPressed)
-            {
-                Flyout((sender as Control)!);
-            }
-            else if (e.Column.DisplayIndex == 0 && pro.Properties.IsLeftButtonPressed)
-            {
-                model.Select(model.Item);
-            }
-            else
-            {
-                LongPressed.Pressed(() => Flyout((sender as Control)!));
-            }
-        });
-    }
-
-    private void Flyout(Control control)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            var model = (DataContext as UsersControlModel)!;
-            _ = new UserFlyout(control, model);
-        });
-    }
-
-    private void DataGrid_User_DoubleTapped(object? sender, RoutedEventArgs e)
-    {
-        (DataContext as UsersControlModel)!.Select();
-    }
     public void AddUrl(string url)
     {
         (DataContext as UsersControlModel)!.AddUrl(url);
@@ -110,13 +69,18 @@ public partial class UsersControl : UserControl, IUserControl
         (DataContext as UsersControlModel)!.SetAdd();
     }
 
-    public void SetBaseModel(BaseModel model)
+    public override UsersControlModel GenModel(BaseModel model)
     {
-        var amodel = new UsersControlModel(model);
-        DataContext = amodel;
+        return new UsersControlModel(model);
     }
 
-    private void TextBox_KeyDown(object? sender, KeyEventArgs e)
+    public override Bitmap GetIcon()
     {
+        return ImageManager.GameIcon;
+    }
+
+    public void Relogin()
+    {
+        (DataContext as UsersControlModel)!.ReLogin();
     }
 }

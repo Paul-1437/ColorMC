@@ -7,9 +7,9 @@ using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.CurseForge;
 using ColorMC.Core.Objs.Modrinth;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model.Main;
 using ColorMC.Gui.UIBinding;
-using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -64,12 +64,12 @@ public partial class AddGameModel
     /// 版本类型
     /// </summary>
     [ObservableProperty]
-    private int versionType;
+    private int _versionType;
     /// <summary>
     /// 加载器类型
     /// </summary>
     [ObservableProperty]
-    private int loaderType = -1;
+    private int _loaderType = -1;
 
     /// <summary>
     /// 加载器类型列表
@@ -124,114 +124,18 @@ public partial class AddGameModel
     [RelayCommand]
     public async Task SelectLoader()
     {
-        var file = await PathBinding.SelectFile(FileType.Loader);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Loader);
         if (file.Item1 == null)
         {
             return;
         }
 
         LoaderLocal = file.Item1;
-    }
-
-    [RelayCommand]
-    public async Task ServerPackDownload()
-    {
-        var (Cancel, Text) = await Model.ShowInputOne(App.Lang("AddGameWindow.Tab1.Info13"), false);
-        if (Cancel)
-        {
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(Text))
-        {
-            Model.Show(App.Lang("AddGameWindow.Tab1.Error14"));
-            return;
-        }
-
-        if (!Text.EndsWith('/'))
-        {
-            Text += '/';
-        }
-
-        Model.Progress(App.Lang("AddGameWindow.Tab1.Info14"));
-        var res1 = await GameBinding.DownloadServerPack(Model, Name, Group, Text,
-            Tab1GameOverwirte);
-        Model.ProgressClose();
-        if (!res1.Item1 && res1.Item2 != null)
-        {
-            Model.Show(res1.Item2!);
-        }
-        else
-        {
-            Done();
-        }
-    }
-
-    /// <summary>
-    /// 下载云同步游戏实例
-    /// </summary>
-    /// <returns></returns>
-    [RelayCommand]
-    public async Task GameCloudDownload()
-    {
-        Model.Progress(App.Lang("AddGameWindow.Tab1.Info9"));
-        var list = await GameCloudUtils.GetList();
-        Model.ProgressClose();
-        if (list == null)
-        {
-            Model.Show(App.Lang("AddGameWindow.Tab1.Error9"));
-            return;
-        }
-        var list1 = new List<string>();
-        list.ForEach(item =>
-        {
-            if (!string.IsNullOrEmpty(item.Name) && GameBinding.GetGame(item.UUID) == null)
-            {
-                list1.Add(item.Name);
-            }
-        });
-        var res = await Model.ShowCombo(App.Lang("AddGameWindow.Tab1.Info10"), list1);
-        if (res.Cancel)
-        {
-            return;
-        }
-
-        Model.Progress(App.Lang("AddGameWindow.Tab1.Info11"));
-        var obj = list[res.Index];
-        while (true)
-        {
-            if (GameBinding.GetGameByName(obj.Name) != null)
-            {
-                var res1 = await Model.ShowWait(App.Lang("AddGameWindow.Tab1.Info12"));
-                if (!res1)
-                {
-                    Model.ProgressClose();
-                    return;
-                }
-                var (Cancel, Text1) = await Model.ShowEdit(App.Lang("AddGameWindow.Tab1.Text2"), obj.Name);
-                if (Cancel)
-                {
-                    return;
-                }
-
-                obj.Name = Text1!;
-            }
-            else
-            {
-                break;
-            }
-        }
-        var res3 = await GameBinding.DownloadCloud(obj, Group, Model.ShowWait,
-            Tab1GameOverwirte);
-        Model.ProgressClose();
-        if (!res3.Item1)
-        {
-            Model.Show(res3.Item2!);
-            return;
-        }
-
-        App.ShowGameCloud(GameBinding.GetGame(obj.UUID!)!);
-        Done();
     }
 
     /// <summary>
@@ -347,12 +251,6 @@ public partial class AddGameModel
     [RelayCommand]
     public async Task AddGame()
     {
-        if (BaseBinding.IsDownload)
-        {
-            Model.Show(App.Lang("AddGameWindow.Tab1.Error4"));
-            return;
-        }
-
         var name = Name;
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -398,24 +296,18 @@ public partial class AddGameModel
             if (game.Loader == Loaders.Custom && !string.IsNullOrWhiteSpace(LoaderLocal))
             {
                 var res1 = await GameBinding.SetGameLoader(game, LoaderLocal);
-                if (!res1.Item1)
+                if (!res1.State)
                 {
-                    Model.ShowOk(App.Lang("AddGameWindow.Tab1.Error18"), Done);
+                    Model.ShowOk(App.Lang("AddGameWindow.Tab1.Error18"), () =>
+                    {
+                        Done(game.UUID);
+                    });
                     return;
                 }
             }
 
-            Done();
+            Done(game.UUID);
         }
-    }
-
-    /// <summary>
-    /// 添加整合包
-    /// </summary>
-    [RelayCommand]
-    public void AddOnlinePack()
-    {
-        App.ShowAddModPack();
     }
 
     /// <summary>
@@ -477,13 +369,13 @@ public partial class AddGameModel
         EnableLoader = false;
         LoaderVersion = null;
         IsLoad = true;
-        Model.Title1 = App.Lang("GameEditWindow.Info1");
+        Model.Title1 = App.Lang("GameEditWindow.Tab1.Info12");
         var res = await GameBinding.ReloadVersion();
         IsLoad = false;
         Model.Title1 = "";
         if (!res)
         {
-            Model.Show(App.Lang("GameEditWindow.Error1"));
+            Model.Show(App.Lang("GameEditWindow.Tab1.Error4"));
             return;
         }
 
@@ -497,27 +389,21 @@ public partial class AddGameModel
     /// <param name="data1">数据</param>
     public async void Install(CurseForgeModObj.Data data, CurseForgeObjList.Data data1)
     {
-        if (BaseBinding.IsDownload)
-        {
-            Model.Show(App.Lang("AddGameWindow.Tab1.Error4"));
-            return;
-        }
-
         Model.Progress(App.Lang("AddGameWindow.Tab1.Info8"));
         var res = await GameBinding.InstallCurseForge(data, data1, Name, Group,
-            ZipUpdate, Tab2GameRequest, Tab2GameOverwirte, (size, now) =>
+            ZipUpdate, GameRequest, GameOverwirte, (size, now) =>
             {
                 Model.ProgressUpdate((double)now / size);
             }, PackState);
         Model.ProgressClose();
 
-        if (!res)
+        if (!res.State)
         {
             Model.Show(App.Lang("AddGameWindow.Tab1.Error8"));
         }
         else
         {
-            Done();
+            Done(res.Game!.UUID);
         }
     }
 
@@ -528,27 +414,21 @@ public partial class AddGameModel
     /// <param name="data1">数据</param>
     public async void Install(ModrinthVersionObj data, ModrinthSearchObj.Hit data1)
     {
-        if (BaseBinding.IsDownload)
-        {
-            Model.Show(App.Lang("AddGameWindow.Tab1.Error4"));
-            return;
-        }
-
         Model.Progress(App.Lang("AddGameWindow.Tab1.Info8"));
         var res = await GameBinding.InstallModrinth(data, data1, Name, Group,
-            ZipUpdate, Tab2GameRequest, Tab2GameOverwirte, (size, now) =>
+            ZipUpdate, GameRequest, GameOverwirte, (size, now) =>
             {
                 Model.ProgressUpdate((double)now / size);
             }, PackState);
         Model.ProgressClose();
 
-        if (!res)
+        if (!res.State)
         {
             Model.Show(App.Lang("AddGameWindow.Tab1.Error8"));
         }
         else
         {
-            Done();
+            Done(res.Game!.UUID);
         }
     }
 
@@ -561,16 +441,13 @@ public partial class AddGameModel
         switch (VersionType)
         {
             case 0:
-                GameVersionList.AddRange(await GameBinding.GetGameVersion(true, false, false));
+                GameVersionList.AddRange(await GameBinding.GetGameVersions(GameType.Release));
                 break;
             case 1:
-                GameVersionList.AddRange(await GameBinding.GetGameVersion(false, true, false));
+                GameVersionList.AddRange(await GameBinding.GetGameVersions(GameType.Snapshot));
                 break;
             case 2:
-                GameVersionList.AddRange(await GameBinding.GetGameVersion(false, false, true));
-                break;
-            case 3:
-                GameVersionList.AddRange(await GameBinding.GetGameVersion(true, true, true));
+                GameVersionList.AddRange(await GameBinding.GetGameVersions(GameType.Other));
                 break;
         }
     }
@@ -601,18 +478,18 @@ public partial class AddGameModel
 
     private void ZipUpdate(string text, int size, int all)
     {
-        string temp = App.Lang("Gui.Info27");
+        string temp = App.Lang("AddGameWindow.Tab1.Info21");
         Dispatcher.UIThread.Post(() => Model.ProgressUpdate($"{temp} {text} {size}/{all}"));
     }
 
     /// <summary>
     /// 添加完成
     /// </summary>
-    private void Done()
+    private void Done(string? uuid)
     {
-        var model = (App.MainWindow?.DataContext as MainModel);
+        var model = WindowManager.MainWindow?.DataContext as MainModel;
         model?.Model.Notify(App.Lang("AddGameWindow.Tab1.Info7"));
-        App.MainWindow?.LoadMain();
+        model?.Select(uuid);
         Dispatcher.UIThread.Post(WindowClose);
     }
 }

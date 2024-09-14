@@ -1,10 +1,15 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Input;
+using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ColorMC.Gui.UI.Model.GameEdit;
@@ -13,18 +18,64 @@ public partial class GameEditModel
 {
     public ObservableCollection<ResourcePackModel> ResourcePackList { get; init; } = [];
 
+    private readonly List<ResourcePackModel> _resourceItems = [];
+
     private ResourcePackModel? _lastResource;
 
-    [RelayCommand]
-    public void AddResource()
+    [ObservableProperty]
+    private string _resourceText;
+    [ObservableProperty]
+    private bool _resourceEmptyDisplay;
+
+    partial void OnResourceTextChanged(string value)
     {
-        App.ShowAdd(_obj, FileType.Resourcepack);
+
     }
 
     [RelayCommand]
-    public async Task ImportResource()
+    public async Task LoadResource()
     {
-        var file = await PathBinding.AddFile(_obj, FileType.Resourcepack);
+        Model.Progress(App.Lang("GameEditWindow.Tab8.Info3"));
+        _resourceItems.Clear();
+
+        var res = await GameBinding.GetResourcepacks(_obj);
+        Model.ProgressClose();
+        foreach (var item in res)
+        {
+            _resourceItems.Add(new(this, item));
+        }
+
+        LoadResource1();
+    }
+
+    private void LoadResource1()
+    {
+        ResourcePackList.Clear();
+        if (string.IsNullOrWhiteSpace(ResourceText))
+        {
+            ResourcePackList.AddRange(_resourceItems);
+        }
+        else
+        {
+            ResourcePackList.AddRange(_resourceItems.Where(item => item.Local.Contains(ResourceText)));
+        }
+
+        ResourceEmptyDisplay = ResourcePackList.Count == 0;
+    }
+
+    private void AddResource()
+    {
+        WindowManager.ShowAdd(_obj, FileType.Resourcepack);
+    }
+
+    private async void ImportResource()
+    {
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.AddFile(top, _obj, FileType.Resourcepack);
         if (file == null)
             return;
 
@@ -38,24 +89,9 @@ public partial class GameEditModel
         await LoadResource();
     }
 
-    [RelayCommand]
-    public void OpenResource()
+    private void OpenResource()
     {
-        PathBinding.OpPath(_obj, PathType.ResourcepackPath);
-    }
-
-    [RelayCommand]
-    public async Task LoadResource()
-    {
-        Model.Progress(App.Lang("GameEditWindow.Tab8.Info3"));
-        ResourcePackList.Clear();
-
-        var res = await GameBinding.GetResourcepacks(_obj);
-        Model.ProgressClose();
-        foreach (var item in res)
-        {
-            ResourcePackList.Add(new(this, item));
-        }
+        PathBinding.OpenPath(_obj, PathType.ResourcepackPath);
     }
 
     public async void DeleteResource(ResourcepackObj obj)

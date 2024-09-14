@@ -1,4 +1,6 @@
-﻿using ColorMC.Core.Objs;
+﻿using ColorMC.Core.Config;
+using ColorMC.Core.Objs;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,38 +8,31 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace ColorMC.Gui.UI.Model.Main;
 
-public partial class MainEmptyModel : TopModel
+public partial class MainModel
 {
     public string[] LanguageList { get; init; } = LanguageBinding.GetLanguages();
 
     [ObservableProperty]
     private LanguageType _language;
 
-    private bool _load = true;
-
-    public MainEmptyModel(BaseModel model) : base(model)
-    {
-        Load();
-
-        _load = false;
-    }
+    private bool _emptyLoad = true;
 
     [RelayCommand]
     public void AddUser()
     {
-        App.ShowUser(true);
+        WindowManager.ShowUser(true);
     }
 
     [RelayCommand]
     public void SetJava()
     {
-        App.ShowSetting(SettingType.SetJava);
+        WindowManager.ShowSetting(SettingType.SetJava);
     }
 
     [RelayCommand]
     public void AddGame()
     {
-        App.ShowAddGame(null);
+        WindowManager.ShowAddGame(null);
     }
 
     [RelayCommand]
@@ -52,33 +47,26 @@ public partial class MainEmptyModel : TopModel
         WebBinding.OpenWeb(WebType.Minecraft);
     }
 
-    [RelayCommand]
-    public void ShowSetting()
-    {
-        App.ShowSetting(SettingType.Normal);
-    }
-
     partial void OnLanguageChanged(LanguageType value)
     {
-        if (_load)
+        if (_emptyLoad)
+        {
             return;
+        }
 
         Model.Progress(App.Lang("SettingWindow.Tab2.Info1"));
         ConfigBinding.SetLanguage(value);
         Model.ProgressClose();
     }
 
-    public void Load()
+    public void LoadEmptyGame()
     {
-        var config = ConfigBinding.GetAllConfig();
-        if (config.Item1 is { } con1)
+        _emptyLoad = true;
+        var config = ConfigUtils.Config;
+        if (config != null)
         {
-            Language = con1.Language;
+            Language = config.Language;
         }
-    }
-
-    protected override void Close()
-    {
-
+        _emptyLoad = false;
     }
 }

@@ -1,12 +1,16 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media;
+using ColorMC.Core.Config;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.Objs;
+using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
-using ColorMC.Gui.Utils.LaunchSetting;
+using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Live2DCSharpSDK.Framework.Core;
@@ -15,41 +19,21 @@ namespace ColorMC.Gui.UI.Model.Setting;
 
 public partial class SettingModel
 {
-    public ObservableCollection<FontDisplayObj> FontList { get; init; } = [];
+    public ObservableCollection<FontDisplayModel> FontList { get; init; } = [];
     public string[] TranTypeList { get; init; } = LanguageBinding.GetWindowTranTypes();
     public string[] LanguageList { get; init; } = LanguageBinding.GetLanguages();
     public string[] PosList { get; init; } = LanguageBinding.GetPos();
 
     [ObservableProperty]
-    private FontDisplayObj? _fontItem;
+    private FontDisplayModel? _fontItem;
 
     [ObservableProperty]
     private Color _mainColor;
 
     [ObservableProperty]
-    private Color _lightBackColor;
-    [ObservableProperty]
-    private Color _lightTranColor;
-    [ObservableProperty]
-    private Color _lightFont1Color;
-    [ObservableProperty]
-    private Color _lightFont2Color;
-
-    [ObservableProperty]
-    private Color _darkBackColor;
-    [ObservableProperty]
-    private Color _darkTranColor;
-    [ObservableProperty]
-    private Color _darkFont1Color;
-    [ObservableProperty]
-    private Color _darkFont2Color;
-
-    [ObservableProperty]
     private bool _windowMode;
     [ObservableProperty]
-    private bool _isDefaultFont;
-    [ObservableProperty]
-    private bool _enableFontList;
+    private bool _isCutsomFont;
     [ObservableProperty]
     private bool _enablePicResize;
     [ObservableProperty]
@@ -73,11 +57,18 @@ public partial class SettingModel
     [ObservableProperty]
     private bool _enableLive2D;
     [ObservableProperty]
-    private bool _enablePicRadius;
-    [ObservableProperty]
-    private bool _enableBorderRadius;
-    [ObservableProperty]
     private bool _lowFps;
+
+    [ObservableProperty]
+    private bool _isHead1;
+    [ObservableProperty]
+    private bool _isHead2;
+    [ObservableProperty]
+    private bool _isHead3;
+    [ObservableProperty]
+    private int _headX;
+    [ObservableProperty]
+    private int _headY;
 
     [ObservableProperty]
     private LanguageType _language;
@@ -98,8 +89,6 @@ public partial class SettingModel
     [ObservableProperty]
     private int _l2dHeight;
     [ObservableProperty]
-    private int _buttonCornerRadius;
-    [ObservableProperty]
     private int _amTime;
     [ObservableProperty]
     private int _l2dPos;
@@ -112,8 +101,62 @@ public partial class SettingModel
     [ObservableProperty]
     private string _live2DCoreState;
 
+    public string IconHead
+    {
+        get
+        {
+            var random = new Random();
+            var index = random.Next(200000);
+            if (index == 114514)
+            {
+                return $"/Resource/Icon/Setting/svg{28 + random.Next(6)}.svg";
+            }
+
+            return "/Resource/Icon/Setting/svg27.svg";
+        }
+    }
+
     private bool _load = true;
 
+    partial void OnIsHead1Changed(bool value)
+    {
+        if (_load || !value)
+            return;
+
+        ConfigBinding.SetHeadType(HeadType.Head2D);
+    }
+
+    partial void OnIsHead2Changed(bool value)
+    {
+        if (_load || !value)
+            return;
+
+        ConfigBinding.SetHeadType(HeadType.Head3D_A);
+    }
+
+    partial void OnIsHead3Changed(bool value)
+    {
+        if (_load || !value)
+            return;
+
+        ConfigBinding.SetHeadType(HeadType.Head3D_B);
+    }
+
+    partial void OnHeadXChanged(int value)
+    {
+        if (_load)
+            return;
+
+        ConfigBinding.SetHeadXY(value, HeadY);
+    }
+
+    partial void OnHeadYChanged(int value)
+    {
+        if (_load)
+            return;
+
+        ConfigBinding.SetHeadXY(HeadX, value);
+    }
 
     partial void OnLowFpsChanged(bool value)
     {
@@ -129,22 +172,6 @@ public partial class SettingModel
             return;
 
         ConfigBinding.SetLive2DSize(L2dWidth, L2dHeight, L2dPos);
-    }
-
-    partial void OnEnableBorderRadiusChanged(bool value)
-    {
-        if (_load)
-            return;
-
-        ConfigBinding.SetRadiusEnable(EnablePicRadius, EnableBorderRadius);
-    }
-
-    partial void OnEnablePicRadiusChanged(bool value)
-    {
-        if (_load)
-            return;
-
-        ConfigBinding.SetRadiusEnable(EnablePicRadius, EnableBorderRadius);
     }
 
     partial void OnEnableLive2DChanged(bool value)
@@ -179,14 +206,6 @@ public partial class SettingModel
         ConfigBinding.SetStyle(AmTime, AmFade);
     }
 
-    partial void OnButtonCornerRadiusChanged(int value)
-    {
-        if (_load)
-            return;
-
-        ConfigBinding.SetStyle(ButtonCornerRadius);
-    }
-
     partial void OnL2dWidthChanged(int value)
     {
         if (_load)
@@ -203,59 +222,27 @@ public partial class SettingModel
         ConfigBinding.SetLive2DSize(L2dWidth, L2dHeight, L2dPos);
     }
 
-    partial void OnLightFont2ColorChanged(Color value)
-    {
-        ColorChange();
-    }
-
-    partial void OnLightFont1ColorChanged(Color value)
-    {
-        ColorChange();
-    }
-
-    partial void OnLightTranColorChanged(Color value)
-    {
-        ColorChange();
-    }
-
-    partial void OnLightBackColorChanged(Color value)
-    {
-        ColorChange();
-    }
-
-    partial void OnDarkFont2ColorChanged(Color value)
-    {
-        ColorChange();
-    }
-
-    partial void OnDarkFont1ColorChanged(Color value)
-    {
-        ColorChange();
-    }
-
-    partial void OnDarkTranColorChanged(Color value)
-    {
-        ColorChange();
-    }
-
-    partial void OnDarkBackColorChanged(Color value)
-    {
-        ColorChange();
-    }
-
     partial void OnMainColorChanged(Color value)
     {
         ColorChange();
     }
 
-    partial void OnFontItemChanged(FontDisplayObj? value)
+    partial void OnFontItemChanged(FontDisplayModel? value)
     {
         if (_load || value == null)
             return;
 
         OnPropertyChanged("Hide");
 
-        ConfigBinding.SetFont(value.FontName, IsDefaultFont);
+        ConfigBinding.SetFont(value.FontName, !IsCutsomFont);
+    }
+
+    partial void OnIsCutsomFontChanged(bool value)
+    {
+        if (_load || FontItem == null)
+            return;
+
+        ConfigBinding.SetFont(FontItem.FontName, !IsCutsomFont);
     }
 
     partial void OnEnableWindowTranChanged(bool value)
@@ -297,35 +284,26 @@ public partial class SettingModel
 
     partial void OnIsAutoColorChanged(bool value)
     {
-        if (_load)
+        if (_load || !value)
             return;
 
-        if (value)
-        {
-            ConfigBinding.SetColorType(ColorType.Auto);
-        }
+        ConfigBinding.SetColorType(ColorType.Auto);
     }
 
     partial void OnIsLightColorChanged(bool value)
     {
-        if (_load)
+        if (_load || !value)
             return;
 
-        if (value)
-        {
-            ConfigBinding.SetColorType(ColorType.Light);
-        }
+        ConfigBinding.SetColorType(ColorType.Light);
     }
 
     partial void OnIsDarkColorChanged(bool value)
     {
-        if (_load)
+        if (_load || !value)
             return;
 
-        if (value)
-        {
-            ConfigBinding.SetColorType(ColorType.Dark);
-        }
+        ConfigBinding.SetColorType(ColorType.Dark);
     }
 
     async partial void OnEnablePicResizeChanged(bool value)
@@ -339,23 +317,6 @@ public partial class SettingModel
             await ConfigBinding.SetBackLimit(value, PicResize);
             Model.ProgressClose();
         }
-    }
-
-    partial void OnIsDefaultFontChanged(bool value)
-    {
-        if (value == true)
-        {
-            EnableFontList = false;
-        }
-        else
-        {
-            EnableFontList = true;
-        }
-
-        if (_load)
-            return;
-
-        ConfigBinding.SetFont(FontItem?.FontName, value);
     }
 
     partial void OnLanguageChanged(LanguageType value)
@@ -376,7 +337,12 @@ public partial class SettingModel
     [RelayCommand]
     public async Task InstallCore()
     {
-        var file = await PathBinding.SelectFile(FileType.Live2DCore);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Live2DCore);
         if (file.Item1 != null)
         {
             Model.Progress(App.Lang("SettingWindow.Tab2.Info11"));
@@ -388,7 +354,7 @@ public partial class SettingModel
             }
             else
             {
-                App.Reboot();
+                ColorMCGui.Reboot();
             }
         }
     }
@@ -396,7 +362,7 @@ public partial class SettingModel
     [RelayCommand]
     public void OpenRunDir()
     {
-        PathBinding.OpPath(PathType.RunPath);
+        PathBinding.OpenPath(PathType.RunPath);
     }
 
     [RelayCommand]
@@ -410,15 +376,7 @@ public partial class SettingModel
     {
         _load = true;
         ConfigBinding.ResetColor();
-        MainColor = Color.Parse(ColorSel.MainColorStr);
-        LightBackColor = Color.Parse(ColorSel.BackLigthColorStr);
-        LightTranColor = Color.Parse(ColorSel.Back1LigthColorStr);
-        LightFont1Color = Color.Parse(ColorSel.ButtonLightFontStr);
-        LightFont2Color = Color.Parse(ColorSel.FontLigthColorStr);
-        DarkBackColor = Color.Parse(ColorSel.BackDarkColorStr);
-        DarkTranColor = Color.Parse(ColorSel.Back1DarkColorStr);
-        DarkFont1Color = Color.Parse(ColorSel.ButtonDarkFontStr);
-        DarkFont2Color = Color.Parse(ColorSel.FontDarkColorStr);
+        MainColor = Color.Parse(ThemeManager.MainColorStr);
         _load = false;
         Model.Notify(App.Lang("SettingWindow.Tab2.Info4"));
     }
@@ -451,7 +409,12 @@ public partial class SettingModel
     [RelayCommand]
     public async Task OpenPic()
     {
-        var file = await PathBinding.SelectFile(FileType.Pic);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Pic);
         if (file.Item1 != null)
         {
             Pic = file.Item1;
@@ -491,7 +454,12 @@ public partial class SettingModel
     [RelayCommand]
     public async Task OpenLive2D()
     {
-        var file = await PathBinding.SelectFile(FileType.Live2D);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Live2D);
         if (file.Item1 != null)
         {
             Live2DModel = file.Item1;
@@ -526,17 +494,18 @@ public partial class SettingModel
         _load = true;
 
         FontList.Clear();
-        BaseBinding.GetFontList().ForEach(item =>
+
+        foreach (var item in BaseBinding.GetFontList())
         {
             FontList.Add(new()
             {
                 FontName = item.Name,
                 FontFamily = item
             });
-        });
+        }
 
-        var config = ConfigBinding.GetAllConfig();
-        if (config.Item2 is { } con)
+        var config = GuiConfigUtils.Config;
+        if (config is { } con)
         {
             Pic = con.BackImage;
             EnableBG = con.EnableBG;
@@ -562,22 +531,12 @@ public partial class SettingModel
                     break;
             }
             MainColor = Color.Parse(con.ColorMain);
-            LightBackColor = Color.Parse(con.ColorLight.ColorBack);
-            LightTranColor = Color.Parse(con.ColorLight.ColorTranBack);
-            LightFont1Color = Color.Parse(con.ColorLight.ColorFont1);
-            LightFont2Color = Color.Parse(con.ColorLight.ColorFont2);
-            DarkBackColor = Color.Parse(con.ColorDark.ColorBack);
-            DarkTranColor = Color.Parse(con.ColorDark.ColorTranBack);
-            DarkFont1Color = Color.Parse(con.ColorDark.ColorFont1);
-            DarkFont2Color = Color.Parse(con.ColorDark.ColorFont2);
             EnableRGB = con.RGB;
-            IsDefaultFont = con.FontDefault;
-            EnableFontList = !IsDefaultFont;
+            IsCutsomFont = !con.FontDefault;
             WindowMode = con.WindowMode;
             EnablePicResize = con.BackLimit;
             EnableWindowTran = con.WindowTran;
 
-            ButtonCornerRadius = con.Style.ButtonCornerRadius;
             AmTime = con.Style.AmTime;
             AmFade = con.Style.AmFade;
 
@@ -587,8 +546,31 @@ public partial class SettingModel
             EnableLive2D = con.Live2D.Enable;
             L2dPos = con.Live2D.Pos;
             LowFps = con.Live2D.LowFps;
+
+            switch (con.Head.Type)
+            {
+                case HeadType.Head2D:
+                    IsHead1 = true;
+                    IsHead2 = false;
+                    IsHead3 = false;
+                    break;
+                case HeadType.Head3D_A:
+                    IsHead1 = false;
+                    IsHead2 = true;
+                    IsHead3 = false;
+                    break;
+                case HeadType.Head3D_B:
+                    IsHead1 = false;
+                    IsHead2 = false;
+                    IsHead3 = true;
+                    break;
+            };
+
+            HeadX = con.Head.X;
+            HeadY = con.Head.Y;
         }
-        if (config.Item1 is { } con1)
+        var config1 = ConfigUtils.Config;
+        if (config1 is { } con1)
         {
             Language = con1.Language;
         }
@@ -619,11 +601,7 @@ public partial class SettingModel
         if (_load)
             return;
 
-        ConfigBinding.SetColor(MainColor.ToString(),
-            LightBackColor.ToString(), LightTranColor.ToString(),
-            LightFont1Color.ToString(), LightFont2Color.ToString(),
-            DarkBackColor.ToString(), DarkTranColor.ToString(),
-            DarkFont1Color.ToString(), DarkFont2Color.ToString());
+        ConfigBinding.SetColor(MainColor.ToString());
     }
 
     private void SaveWindowSetting()

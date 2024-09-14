@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using ColorMC.Core.Helpers;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 
@@ -17,27 +18,27 @@ public class GameEditFlyout2
         [
             (App.Lang("Button.OpFile"), true, ()=>
             {
-                PathBinding.OpPath(_model.World);
+                PathBinding.OpenPath(_model.World);
             }),
-            (App.Lang("GameEditWindow.Flyouts2.Text5"), CheckHelpers.IsGameVersion120(_model.World.Game.Version), ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text11"), CheckHelpers.IsGameVersion120(_model.World.Game.Version), ()=>
             {
-                _model.Top.LaunchWorld(_model);
+                _model.TopModel.LaunchWorld(_model);
             }),
-            (App.Lang("GameEditWindow.Flyouts2.Text1"), true, ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text7"), true, ()=>
             {
-                _model.Top.Export(_model);
+                _model.TopModel.Export(_model);
             }),
-            (App.Lang("GameEditWindow.Flyouts2.Text4"), true, ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text10"), true, ()=>
             {
-                App.ShowConfigEdit(_model.World);
+                WindowManager.ShowConfigEdit(_model.World);
             }),
-            (App.Lang("GameEditWindow.Flyouts2.Text3"), !_model.World.Broken, ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text9"), !_model.World.Broken, ()=>
             {
-                _model.Top.BackupWorld(_model);
+                _model.TopModel.BackupWorld(_model);
             }),
-            (App.Lang("GameEditWindow.Flyouts2.Text2"), !_model.World.Broken, ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text8"), !_model.World.Broken, ()=>
             {
-                _model.Top.DeleteWorld(_model);
+                _model.TopModel.DeleteWorld(_model);
             })
         ], con);
     }

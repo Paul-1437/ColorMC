@@ -51,7 +51,11 @@ public enum GameType
     /// <summary>
     /// 其他版本
     /// </summary>
-    Other
+    Other,
+    /// <summary>
+    /// 所有版本
+    /// </summary>
+    All
 }
 
 /// <summary>
@@ -88,8 +92,9 @@ public enum PathType
 public enum FileType
 {
     ModPack = 0, Mod, World, Shaderpack, Resourcepack, DataPacks, Schematic,
-    Java, Game, Config, AuthConfig, Pic, UI, Optifne, Skin, Music,
-    Text, Live2D, Icon, Head, JavaZip, Live2DCore, Loader, InputConfig
+    Java, Game, Config, AuthConfig, Pic, Optifne, Skin, Music,
+    Text, Live2D, Icon, Head, JavaZip, Live2DCore, Loader, InputConfig,
+    User
 }
 
 /// <summary>
@@ -188,7 +193,7 @@ public enum LoginState
     /// <summary>
     /// 数据错误
     /// </summary>
-    JsonError,
+    DataError,
     /// <summary>
     /// 错误
     /// </summary>
@@ -316,6 +321,10 @@ public enum LaunchState
     /// 外置登录器错误
     /// </summary>
     LoginCoreError,
+    /// <summary>
+    /// 启动错误
+    /// </summary>
+    Error,
 }
 
 /// <summary>
@@ -386,7 +395,7 @@ public enum OsType
 public enum CoreRunState
 {
     Read, Init, GetInfo, Start, End,
-    Download,
+    Download, DownloadDone,
     Error,
 }
 
@@ -395,5 +404,5 @@ public enum CoreRunState
 /// </summary>
 public enum DownloadState
 {
-    Init, Start, End
+    Start, End
 }

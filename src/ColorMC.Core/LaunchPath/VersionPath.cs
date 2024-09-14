@@ -22,14 +22,14 @@ public static class VersionPath
     public const string Name4 = "neoforged";
 
     //版本缓存
-    private readonly static Dictionary<string, GameArgObj> s_gameArgs = [];
-    private readonly static Dictionary<string, ForgeInstallObj> s_forgeInstalls = [];
-    private readonly static Dictionary<string, ForgeInstallObj> s_neoForgeInstalls = [];
-    private readonly static Dictionary<string, ForgeLaunchObj> s_forgeLaunchs = [];
-    private readonly static Dictionary<string, ForgeLaunchObj> s_neoForgeLaunchs = [];
-    private readonly static Dictionary<string, FabricLoaderObj> s_fabricLoaders = [];
-    private readonly static Dictionary<string, QuiltLoaderObj> s_quiltLoaders = [];
-    private readonly static Dictionary<string, CustomLoaderObj> s_customLoader = [];
+    private static readonly Dictionary<string, GameArgObj> s_gameArgs = [];
+    private static readonly Dictionary<string, ForgeInstallObj> s_forgeInstalls = [];
+    private static readonly Dictionary<string, ForgeInstallObj> s_neoForgeInstalls = [];
+    private static readonly Dictionary<string, ForgeLaunchObj> s_forgeLaunchs = [];
+    private static readonly Dictionary<string, ForgeLaunchObj> s_neoForgeLaunchs = [];
+    private static readonly Dictionary<string, FabricLoaderObj> s_fabricLoaders = [];
+    private static readonly Dictionary<string, QuiltLoaderObj> s_quiltLoaders = [];
+    private static readonly Dictionary<string, CustomLoaderObj> s_customLoader = [];
 
     private static VersionObj? _version;
 
@@ -61,6 +61,11 @@ public static class VersionPath
         }
     }
 
+    public static VersionObj? GetVersions()
+    {
+        return _version;
+    }
+
     /// <summary>
     /// 初始化
     /// </summary>
@@ -83,20 +88,22 @@ public static class VersionPath
     /// <returns></returns>
     public static async Task GetFromWebAsync()
     {
-        (_version, var data) = await GameAPI.GetVersions();
-        if (_version != null)
+        var res = await GameAPI.GetVersions();
+        if (res != null)
         {
-            SaveVersions(data!);
+            _version = res.Version;
+            SaveVersions(res.Text);
             return;
         }
-        (_version, data) = await GameAPI.GetVersions(SourceLocal.Offical);
-        if (_version == null)
+        res = await GameAPI.GetVersions(SourceLocal.Offical);
+        if (res == null)
         {
             Logs.Error(LanguageHelper.Get("Core.Path.Error3"));
         }
         else
         {
-            SaveVersions(data!);
+            _version = res.Version;
+            SaveVersions(res.Text);
         }
     }
 
@@ -141,7 +148,7 @@ public static class VersionPath
     /// <param name="obj">游戏数据</param>
     public static async Task<GameArgObj?> AddGameAsync(VersionObj.Versions obj)
     {
-        var url = UrlHelper.Download(obj.url, BaseClient.Source);
+        var url = UrlHelper.Download(obj.url, WebClient.Source);
         (var obj1, var data) = await GameAPI.GetGame(url);
         if (obj1 == null)
         {

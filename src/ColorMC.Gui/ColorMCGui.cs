@@ -1,12 +1,13 @@
 using System;
+using System.Diagnostics;
 using System.IO;
-using System.IO.MemoryMappedFiles;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Logging;
 using Avalonia.Media;
 using ColorMC.Core;
 using ColorMC.Core.Objs;
@@ -20,18 +21,32 @@ namespace ColorMC.Gui;
 
 public static class ColorMCGui
 {
+    private static readonly CoreInitArg s_arg = new()
+    {
+        CurseForgeKey = "$2a$10$6L8AkVsaGMcZR36i8XvCr.O4INa2zvDwMhooYdLZU0bb/E78AsT0m",
+        OAuthKey = "aa0dd576-d717-4950-b257-a478d2c20968"
+    };
+
+    private static FileStream s_lock;
+
     public static string RunDir { get; private set; }
     public static string[] BaseSha1 { get; private set; }
-    public static string InputDir { get; private set; }
 
     public static RunType RunType { get; private set; } = RunType.AppBuilder;
 
     public static Func<Control> PhoneGetSetting { get; set; }
     public static Func<FrpType, string> PhoneGetFrp { get; set; }
-    public static bool IsAot { get; set; }
-    public static bool IsCrash { get; set; }
+    /// <summary>
+    /// 获取一个空闲端口
+    /// </summary>
+    public static Func<int> PhoneGetFreePort { get; set; }
 
-    public const string Font = "resm:ColorMC.Launcher.Resources.MiSans-Normal.ttf?assembly=ColorMC.Launcher#MiSans";
+    public static bool IsAot { get; private set; }
+    public static bool IsMin { get; private set; }
+    public static bool IsCrash { get; private set; }
+    public static bool IsClose { get; private set; }
+
+    public const string Font = "resm:ColorMC.Launcher.Resources.MiSans-Regular.ttf?assembly=ColorMC.Launcher#MiSans";
 
     // Initialization code. Don't use any Avalonia, third-party APIs or any
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
@@ -42,82 +57,77 @@ public static class ColorMCGui
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls13 |
             SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-        try
+
+        TaskScheduler.UnobservedTaskException += (object? sender, UnobservedTaskExceptionEventArgs e) =>
         {
-            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-
-            SystemInfo.Init();
-
-            RunType = RunType.Program;
-
-            if (string.IsNullOrWhiteSpace(InputDir))
+            if (e.Exception.InnerException is DBusException)
             {
-                RunDir = SystemInfo.Os switch
-                {
-                    OsType.Linux => $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/ColorMC/",
-                    OsType.MacOS => "/Users/shared/ColorMC/",
-                    _ => AppContext.BaseDirectory
-                };
+                Logs.Error(App.Lang("App.Error1"), e.Exception);
+                return;
+            }
+            Logs.Crash(App.Lang("App.Error1"), e.Exception);
+        };
+
+        RunType = RunType.Program;
+
+        Console.WriteLine($"RunDir: {RunDir}");
+
+        if (args.Length > 0)
+        {
+            if (args[0] == "-game" && args.Length < 2)
+            {
+                return;
             }
             else
             {
-                RunDir = InputDir;
+                BaseBinding.SetLaunch(args[1..]);
             }
+        }
 
-            Console.WriteLine($"RunDir:{RunDir}");
+        SystemInfo.Init();
 
-            if (args.Length > 0)
+        try
+        {
+            if (IsLock(out var port))
             {
-                if (args[0] == "-game" && args.Length != 2)
-                {
-                    return;
-                }
-                else
-                {
-                    BaseBinding.SetLaunch(args[1]);
-                }
+                LaunchSocketUtils.SendMessage(port).Wait();
+                return;
             }
 
-            var name = RunDir + "lock";
-            if (File.Exists(name))
-            {
-                try
-                {
-                    using var temp = File.Open(name, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-                }
-                catch
-                {
-                    using var temp = File.Open(name, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-                    using var writer = new StreamWriter(temp);
-                    writer.Write(true);
-                    writer.Flush();
-                    Environment.Exit(0);
-                    return;
-                }
-            }
-
-            ColorMCCore.Init(RunDir);
+            s_arg.Local = RunDir;
+            ColorMCCore.Init(s_arg);
 
             BuildAvaloniaApp()
                  .StartWithClassicDesktopLifetime(args);
-
-            Console.WriteLine();
         }
         catch (Exception e)
         {
-            PathBinding.OpFile(Logs.Crash("Gui Crash", e));
+            PathBinding.OpenFileWithExplorer(Logs.Crash("Gui Crash", e));
             App.Close();
         }
+
+        s_lock.Close();
+        s_lock.Dispose();
     }
 
-    private static void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    public static void Close()
     {
-        if (e.Exception.InnerException is DBusException)
+        IsClose = true;
+        App.Close();
+    }
+
+    public static void Reboot()
+    {
+        if (SystemInfo.Os != OsType.Android)
         {
-            Logs.Error(App.Lang("Gui.Error25"), e.Exception);
-            return;
+            IsClose = true;
+            s_lock.Close();
+            s_lock.Dispose();
+            Thread.Sleep(500);
+            Process.Start($"{(SystemInfo.Os == OsType.Windows ?
+                    "ColorMC.Launcher.exe" : "ColorMC.Launcher")}");
+            App.Close();
         }
-        Logs.Crash(App.Lang("Gui.Error25"), e.Exception);
     }
 
     public static void StartPhone(string local)
@@ -130,31 +140,15 @@ public static class ColorMCGui
 
         Console.WriteLine($"RunDir:{RunDir}");
 
-        ColorMCCore.Init(RunDir);
+        s_arg.Local = RunDir;
+        ColorMCCore.Init(s_arg);
         GuiConfigUtils.Init(RunDir);
-        FrpConfigUtils.Init(RunDir);
     }
 
-    public static void TestLock()
-    {
-        string name = RunDir + "lock";
-        using var temp = File.Open(name, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-        using var file = MemoryMappedFile.CreateFromFile(temp, null, 100,
-            MemoryMappedFileAccess.ReadWrite, HandleInheritability.None, false);
-        using var reader = file.CreateViewAccessor();
-        reader.Write(0, false);
-        while (!App.IsClose)
-        {
-            Thread.Sleep(100);
-            var data = reader.ReadBoolean(0);
-            if (data)
-                break;
-        }
-    }
-
-    public static void SetAot(bool aot)
+    public static void SetRuntimeState(bool aot, bool min)
     {
         IsAot = aot;
+        IsMin = min;
     }
 
     public static void SetBaseSha1(string[] data)
@@ -164,7 +158,12 @@ public static class ColorMCGui
 
     public static void SetInputDir(string dir)
     {
-        InputDir = dir;
+        RunDir = dir;
+    }
+
+    public static void SetCrash(bool crash)
+    {
+        IsCrash = crash;
     }
 
     public static AppBuilder BuildAvaloniaApp()
@@ -172,67 +171,152 @@ public static class ColorMCGui
         if (RunType == RunType.AppBuilder)
         {
             RunDir = AppContext.BaseDirectory;
+
+            SystemInfo.Init();
         }
 
         GuiConfigUtils.Init(RunDir);
 
-        var config = GuiConfigUtils.Config.Render.Windows;
-        var opt = new Win32PlatformOptions();
-        if (SystemInfo.IsArm)
-        {
-            opt.RenderingMode = [Win32RenderingMode.Wgl];
-        }
-        if (config.ShouldRenderOnUIThread is { } value)
-        {
-            opt.ShouldRenderOnUIThread = value;
-        }
-        if (config.OverlayPopups is { } value1)
-        {
-            opt.OverlayPopups = value1;
-        }
-
-        var config1 = GuiConfigUtils.Config.Render.X11;
-        var opt1 = new X11PlatformOptions();
-        if (config1.UseDBusMenu is { } value2)
-        {
-            opt1.UseDBusMenu = value2;
-        }
-        if (config1.UseDBusFilePicker is { } value3)
-        {
-            opt1.UseDBusFilePicker = value3;
-        }
-        if (config1.OverlayPopups is { } value4)
-        {
-            opt1.OverlayPopups = value4;
-        }
-        if (SystemInfo.IsArm)
-        {
-            opt1.RenderingMode = [X11RenderingMode.Egl];
-        }
-        else if (config1.SoftwareRender == true)
-        {
-            opt1.RenderingMode = [X11RenderingMode.Software];   
-        }
-
-        var opt2 = new MacOSPlatformOptions()
-        {
-            DisableDefaultApplicationMenuItems = true,
-        };
-
-        return AppBuilder.Configure<App>()
+        var builder = AppBuilder.Configure<App>()
             .With(new FontManagerOptions
             {
                 DefaultFamilyName = Font,
             })
-            .With(opt)
-            .With(opt1)
-            .With(opt2)
+#if DEBUG
+            .LogToTrace(LogEventLevel.Information)
+#else
             .LogToTrace()
+#endif
             .UsePlatformDetect();
+
+        if (SystemInfo.Os == OsType.Windows)
+        {
+            var config = GuiConfigUtils.Config.Render.Windows;
+            var opt = new Win32PlatformOptions();
+
+            if (config.ShouldRenderOnUIThread is { } value)
+            {
+                opt.ShouldRenderOnUIThread = value;
+            }
+            if (config.OverlayPopups is { } value1)
+            {
+                opt.OverlayPopups = value1;
+            }
+            if (config.Wgl is true)
+            {
+                opt.RenderingMode = [Win32RenderingMode.Wgl, Win32RenderingMode.Software];
+            }
+            else if (config.UseVulkan is true)
+            {
+                opt.RenderingMode =
+                [
+                    Win32RenderingMode.Vulkan,
+                    Win32RenderingMode.Software
+                ];
+            }
+            else if (config.UseSoftware is true)
+            {
+                opt.RenderingMode = [Win32RenderingMode.Software];
+            }
+            else if (SystemInfo.IsArm)
+            {
+                opt.RenderingMode =
+                [
+                    Win32RenderingMode.Wgl,
+                    Win32RenderingMode.Software
+                ];
+            }
+            builder.With(opt);
+        }
+        else if (SystemInfo.Os == OsType.Linux)
+        {
+            var config = GuiConfigUtils.Config.Render.X11;
+            var opt = new X11PlatformOptions();
+            if (config.UseDBusMenu is { } value2)
+            {
+                opt.UseDBusMenu = value2;
+            }
+            if (config.UseDBusFilePicker is { } value3)
+            {
+                opt.UseDBusFilePicker = value3;
+            }
+            if (config.OverlayPopups is { } value4)
+            {
+                opt.OverlayPopups = value4;
+            }
+
+            if (config.UseEgl is true)
+            {
+                opt.RenderingMode =
+                [
+                    X11RenderingMode.Egl,
+                    X11RenderingMode.Software
+                ];
+            }
+            else if (config.UseVulkan is true)
+            {
+                opt.RenderingMode =
+                [
+                    X11RenderingMode.Vulkan,
+                    X11RenderingMode.Software
+                ];
+            }
+            else if (config.UseSoftware == true)
+            {
+                opt.RenderingMode = [X11RenderingMode.Software];
+            }
+            else if (SystemInfo.IsArm)
+            {
+                opt.RenderingMode =
+                [
+                    X11RenderingMode.Egl,
+                    X11RenderingMode.Software
+                ];
+            }
+            builder.With(opt);
+        }
+        else if (SystemInfo.Os == OsType.MacOS)
+        {
+            var opt = new MacOSPlatformOptions()
+            {
+                DisableDefaultApplicationMenuItems = true,
+            };
+            builder.With(opt);
+        }
+
+        return builder;
     }
 
-    public static void SetCrash(bool crash)
+    private static bool IsLock(out int port)
     {
-        IsCrash = crash;
+        var name = RunDir + "lock";
+        port = -1;
+        if (File.Exists(name))
+        {
+            try
+            {
+                using var temp = File.Open(name, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch
+            {
+                using var temp = File.Open(name, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+                byte[] temp1 = new byte[4];
+                temp.ReadExactly(temp1);
+                port = BitConverter.ToInt32(temp1);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static void StartLock()
+    {
+        LaunchSocketUtils.Init().Wait();
+        string name = RunDir + "lock";
+        s_lock = File.Open(name, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+        var data = BitConverter.GetBytes(LaunchSocketUtils.Port);
+        s_lock.Write(data);
+        s_lock.Flush();
     }
 }

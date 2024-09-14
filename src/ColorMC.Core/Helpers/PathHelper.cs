@@ -82,6 +82,42 @@ public static class PathHelper
     }
 
     /// <summary>
+    /// 获取当前目录所有文件
+    /// </summary>
+    /// <param name="local">路径</param>
+    /// <returns>文件列表</returns>
+    public static List<FileInfo> GetFiles(string local)
+    {
+        var list = new List<FileInfo>();
+        var info = new DirectoryInfo(local);
+        if (!info.Exists)
+        {
+            return list;
+        }
+
+        list.AddRange(info.GetFiles());
+        return list;
+    }
+
+    /// <summary>
+    /// 获取当前目录所有目录
+    /// </summary>
+    /// <param name="local">路径</param>
+    /// <returns>目录列表</returns>
+    public static List<DirectoryInfo> GetDirs(string local)
+    {
+        var list = new List<DirectoryInfo>();
+        var info = new DirectoryInfo(local);
+        if (!info.Exists)
+        {
+            return list;
+        }
+
+        list.AddRange(info.GetDirectories());
+        return list;
+    }
+
+    /// <summary>
     /// 复制文件夹
     /// </summary>
     private static void Copys(string dir, string dir1)
@@ -111,7 +147,7 @@ public static class PathHelper
     public static void CopyFile(string file1, string file2)
     {
         using var stream = OpenRead(file1);
-        using var stream1 = OpenWrite(file2);
+        using var stream1 = OpenWrite(file2, true);
         if (stream == null)
         {
             return;
@@ -144,24 +180,27 @@ public static class PathHelper
     /// <summary>
     /// 删除文件夹
     /// </summary>
-    public static async Task<bool> DeleteFilesAsync(string local, ColorMCCore.Request request)
+    public static async Task<bool> DeleteFilesAsync(DeleteFilesArg arg)
     {
-        if (!Directory.Exists(local))
+        if (!Directory.Exists(arg.Local))
         {
             return true;
         }
 
-        var res = await request(string.Format(LanguageHelper.Get("Core.Info2"), local));
-        if (!res)
+        if (arg.Request != null)
         {
-            return false;
+            var res = await arg.Request(string.Format(LanguageHelper.Get("Core.Info2"), arg.Local));
+            if (!res)
+            {
+                return false;
+            }
         }
 
         return await Task.Run(() =>
         {
             try
             {
-                Directory.Delete(local, true);
+                Directory.Delete(arg.Local, true);
 
                 return true;
             }
@@ -204,7 +243,7 @@ public static class PathHelper
         }
         if (File.Exists(local))
         {
-            return File.Open(local, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+            return File.Open(local, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
 
         return null;
@@ -215,11 +254,12 @@ public static class PathHelper
     /// </summary>
     /// <param name="local">路径</param>
     /// <returns>流</returns>
-    public static Stream OpenWrite(string local)
+    public static Stream OpenWrite(string local, bool create)
     {
         var info = new FileInfo(local);
         info.Directory?.Create();
-        return File.Open(local, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+        return File.Open(local, create ? FileMode.Create : FileMode.OpenOrCreate,
+            FileAccess.ReadWrite, FileShare.ReadWrite);
     }
 
     /// <summary>
@@ -288,8 +328,35 @@ public static class PathHelper
     {
         var info = new FileInfo(local);
         info.Directory?.Create();
-        using var stream = OpenWrite(local);
+        using var stream = OpenWrite(local, true);
         stream.Write(data, 0, data.Length);
+    }
+
+    /// <summary>
+    /// 写文件
+    /// </summary>
+    /// <param name="local">路径</param>
+    /// <param name="data">数据</param>
+    public static void WriteBytes(string local, Stream data)
+    {
+        var info = new FileInfo(local);
+        info.Directory?.Create();
+        using var stream = OpenWrite(local, true);
+        data.CopyTo(stream);
+    }
+
+    /// <summary>
+    /// 写文件
+    /// </summary>
+    /// <param name="local"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
+    public static async Task WriteBytesAsync(string local, Stream data)
+    {
+        var info = new FileInfo(local);
+        info.Directory?.Create();
+        using var stream = OpenWrite(local, true);
+        await data.CopyToAsync(stream);
     }
 
     /// <summary>

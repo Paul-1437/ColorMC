@@ -2,14 +2,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Gui.UI.Model.Items;
-using ColorMC.Gui.UI.Model.Main;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Newtonsoft.Json.Linq;
 
 namespace ColorMC.Gui.UI.Model.Add;
 
@@ -53,15 +52,8 @@ public partial class AddGameModel
                 return;
             }
             Model.Progress(App.Lang("AddGameWindow.Tab3.Info2"));
-            _fileModel = await Task.Run(() =>
-            {
-                return new FilesPageModel(SelectPath, true,
-                    ["assets", "libraries", "versions", "launcher_profiles.json"]);
-            });
-            Model.ProgressClose();
-            Files = _fileModel.Source;
 
-            var list = DoScan();
+            var list = GameHelper.ScanVersions(SelectPath);
             if (list.Count > 0)
             {
                 res = await Model.ShowWait(string.Format(App.Lang("AddGameWindow.Tab3.Info4"), list.Count));
@@ -71,6 +63,14 @@ public partial class AddGameModel
                     return;
                 }
             }
+
+            _fileModel = await Task.Run(() =>
+            {
+                return new FilesPageModel(SelectPath, true,
+                    ["assets", "libraries", "versions", "launcher_profiles.json"]);
+            });
+            Model.ProgressClose();
+            Files = _fileModel.Source;
 
             CanInput = true;
         }
@@ -116,19 +116,16 @@ public partial class AddGameModel
 
         Model.Progress(App.Lang("AddGameWindow.Tab3.Info1"));
         var res = await GameBinding.AddGame(Name, SelectPath, _fileModel.GetUnSelectItems(),
-            Group, Tab2GameRequest, Tab2GameOverwirte);
+            Group, GameRequest, GameOverwirte, Update, true);
         Model.ProgressClose();
 
-        if (!res)
+        if (!res.State)
         {
             Model.Show(App.Lang("AddGameWindow.Tab3.Error1"));
             return;
         }
 
-        var model = (App.MainWindow?.DataContext as MainModel);
-        model?.Model.Notify(App.Lang("AddGameWindow.Tab2.Info5"));
-        App.MainWindow?.LoadMain();
-        WindowClose();
+        Done(res.Game!.UUID);
     }
 
     /// <summary>
@@ -138,7 +135,12 @@ public partial class AddGameModel
     [RelayCommand]
     public async Task SelectLocal()
     {
-        var res = await PathBinding.SelectPath(PathType.GamePath);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var res = await PathBinding.SelectPath(top, PathType.GamePath);
         if (string.IsNullOrWhiteSpace(res))
         {
             return;
@@ -163,77 +165,46 @@ public partial class AddGameModel
         await RefashFiles();
     }
 
-    private List<string> DoScan()
-    {
-        var list = new List<string>();
-        foreach (var item in Files!.Items)
-        {
-            foreach (var item1 in item.Children)
-            {
-                if (item1.Name == "versions")
-                {
-                    foreach (var item2 in item1.Children)
-                    {
-                        bool find = false;
-                        foreach (var item3 in item2.Children)
-                        {
-                            if (find)
-                            {
-                                break;
-                            }
-                            if (item3.Name.EndsWith(".json"))
-                            {
-                                try
-                                {
-                                    var obj = JObject.Parse(PathHelper.ReadText(item3.Path)!);
-                                    if (obj.ContainsKey("id")
-                                        && obj.ContainsKey("arguments")
-                                        && obj.ContainsKey("mainClass"))
-                                    {
-                                        list.Add(item2.Path);
-                                        find = true;
-                                        break;
-                                    }
-                                }
-                                catch
-                                {
-                                    
-                                }
-                            }
-                        }
-                    }
-
-                    return list;
-                }
-            }
-        }
-
-        return list;
-    }
-
     private async Task Import(List<string> list)
     {
-        bool ok = true;
+        BaseBinding.IsAddGames = true;
+        bool ok = false;
         foreach (var item in list)
         {
             Model.Progress(App.Lang("AddGameWindow.Tab3.Info1"));
-            var res = await GameBinding.AddGame(item, Group, Tab2GameRequest, Tab2GameOverwirte);
+            var res = await GameBinding.AddGame(null, item, null, Group, GameRequest, GameOverwirte, Update, false);
             Model.ProgressClose();
 
-            if (!res)
+            if (!res.State)
             {
-                Model.Show(App.Lang("AddGameWindow.Tab3.Error1"));
-                ok = false;
-                return;
+                var res1 = await Model.ShowWait(App.Lang("AddGameWindow.Tab3.Error5"));
+                if (!res1)
+                {
+                    return;
+                }
+                continue;
             }
+
+            ok = true;
         }
+        BaseBinding.IsAddGames = false;
 
         if (ok)
         {
-            var model = (App.MainWindow?.DataContext as MainModel);
-            model?.Model.Notify(App.Lang("AddGameWindow.Tab2.Info5"));
-            App.MainWindow?.LoadMain();
-            WindowClose();
+            Done(null);
         }
+    }
+
+    private void Update(string text, int size, int all)
+    {
+        if (text.Length > 40)
+        {
+            text = "..." + text[^40..];
+        }
+        Dispatcher.UIThread.Post(() =>
+        {
+            Model.ProgressUpdate(text);
+            Model.ProgressUpdate((double)size / all * 100);
+        });
     }
 }

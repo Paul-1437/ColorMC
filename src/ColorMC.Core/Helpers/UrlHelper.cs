@@ -3,7 +3,6 @@ using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Login;
 using ColorMC.Core.Objs.OptiFine;
 using ColorMC.Core.Objs.ServerPack;
-using ColorMC.Core.Utils;
 
 namespace ColorMC.Core.Helpers;
 
@@ -27,15 +26,18 @@ public static class UrlHelper
     public const string ModrinthDownload = "https://cdn.modrinth.com/";
 
     public const string Modrinth = "https://api.modrinth.com/v2/";
+
     public const string Forge = "https://maven.minecraftforge.net/";
+
     public const string Fabric = "https://maven.fabricmc.net/";
     public const string FabricMeta = "https://meta.fabricmc.net/";
+
     public const string Quilt = "https://maven.quiltmc.org/";
     public const string QuiltMeta = "https://meta.quiltmc.org/";
-    public const string OptiFine = "https://optifine.net/";
-    public const string NeoForge = "https://maven.neoforged.net/";
 
-    public const string NeoForgeDownload = "https://maven.neoforged.net/releases/";
+    public const string OptiFine = "https://optifine.net/";
+
+    public const string NeoForge = "https://maven.neoforged.net/releases/";
 
     public const string Minecraft = "https://www.minecraft.net/";
     public const string MinecraftLib = "https://libraries.minecraft.net/";
@@ -196,7 +198,7 @@ public static class UrlHelper
         string? url = local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}maven/net/neoforged/{baseurl}",
-            _ => $"{NeoForge}releases/net/neoforged/{baseurl}"
+            _ => $"{NeoForge}net/neoforged/{baseurl}"
         };
 
         return url;
@@ -235,7 +237,7 @@ public static class UrlHelper
             return url;
         }
 
-        url = url.Replace(NeoForgeDownload, to);
+        url = url.Replace(NeoForge, to);
 
         return url;
     }
@@ -370,7 +372,7 @@ public static class UrlHelper
         return local switch
         {
             SourceLocal.BMCLAPI => $"{BMCLAPI}neoforge/list/{version}",
-            _ => $"{NeoForge}releases/net/neoforged/forge/maven-metadata.xml"
+            _ => $"{NeoForge}net/neoforged/forge/maven-metadata.xml"
         };
     }
 
@@ -385,7 +387,7 @@ public static class UrlHelper
             return local switch
             {
                 SourceLocal.BMCLAPI => $"{BMCLAPI}neoforge/list/{mc}",
-                _ => $"{NeoForge}releases/net/neoforged/neoforge/maven-metadata.xml"
+                _ => $"{NeoForge}net/neoforged/neoforge/maven-metadata.xml"
             };
         }
         else
@@ -393,7 +395,7 @@ public static class UrlHelper
             return local switch
             {
                 SourceLocal.BMCLAPI => $"{BMCLAPI}neoforge/list/{mc}",
-                _ => $"{NeoForge}releases/net/neoforged/forge/maven-metadata.xml"
+                _ => $"{NeoForge}net/neoforged/forge/maven-metadata.xml"
             };
         }
     }
@@ -405,8 +407,7 @@ public static class UrlHelper
     /// <returns></returns>
     public static (bool, string?) UrlChange(string old)
     {
-        //var random = new Random();
-        if (BaseClient.Source == SourceLocal.Offical)
+        if (WebClient.Source == SourceLocal.Offical)
         {
             if (old.StartsWith(Forge))
             {
@@ -491,14 +492,10 @@ public static class UrlHelper
                 return "";
             }
         }
-        else if (FuntionUtils.CheckNotNumber(item.Projcet) || FuntionUtils.CheckNotNumber(item.FileId))
-        {
-            return MakeDownloadUrl(SourceType.Modrinth, item.Projcet,
-                item.FileId, item.File);
-        }
+
         else
         {
-            return MakeDownloadUrl(SourceType.CurseForge, item.Projcet,
+            return MakeDownloadUrl(DownloadItemHelper.TestSourceType(item.Projcet, item.FileId), item.Projcet,
                 item.FileId, item.File);
         }
     }

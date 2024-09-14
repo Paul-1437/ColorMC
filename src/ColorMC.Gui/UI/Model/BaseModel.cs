@@ -3,12 +3,12 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model.Dialog;
 using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,7 +19,9 @@ namespace ColorMC.Gui.UI.Model;
 
 public partial class BaseModel : ObservableObject
 {
-    public const string InfoName = "InfoShow";
+    public const string InfoShow = "InfoShow";
+    public const string IconName = "Icon";
+    public const string GetTopLevelName = "GetTopLevel";
 
     /// <summary>
     /// 进度条
@@ -50,11 +52,12 @@ public partial class BaseModel : ObservableObject
 
     private Action? _choiseClick;
     private Action? _choise1Click;
+    private TopLevel? _top;
 
     public string NotifyText;
 
     [ObservableProperty]
-    private Bitmap _icon = App.GameIcon;
+    private Bitmap _icon = ImageManager.GameIcon;
     [ObservableProperty]
     private Bitmap? _back;
 
@@ -70,8 +73,6 @@ public partial class BaseModel : ObservableObject
 
     [ObservableProperty]
     private ThemeVariant _theme;
-    [ObservableProperty]
-    private IBrush _background;
 
     [ObservableProperty]
     private bool _enableHead = true;
@@ -92,6 +93,11 @@ public partial class BaseModel : ObservableObject
     private bool _headBack;
     [ObservableProperty]
     private bool _headBackEnable = true;
+
+    [ObservableProperty]
+    private bool _choiseEnable = true;
+    [ObservableProperty]
+    private bool _choise1Enable = true;
 
     public SelfPublisher<bool> HeadDisplayObservale = new();
     public SelfPublisher<bool> HeadCloseObservale = new();
@@ -146,6 +152,16 @@ public partial class BaseModel : ObservableObject
         _info4 = new(Name);
         _info5 = new(Name);
         _info6 = new(Name);
+    }
+
+    partial void OnTitleChanged(string? value)
+    {
+
+    }
+
+    partial void OnHeadChoiseDisplayChanged(bool value)
+    {
+
     }
 
     [RelayCommand]
@@ -231,7 +247,7 @@ public partial class BaseModel : ObservableObject
         }
     }
 
-    public void AddBackCall(Action back)
+    public void PushBack(Action back)
     {
         _listBack.Push(back);
         if (SystemInfo.Os != OsType.Android && !_listBack.IsEmpty)
@@ -240,7 +256,7 @@ public partial class BaseModel : ObservableObject
         }
     }
 
-    public void RemoveBack()
+    public void PopBack()
     {
         _listBack.TryPop(out _);
         if (_listBack.IsEmpty)
@@ -321,7 +337,7 @@ public partial class BaseModel : ObservableObject
     public void Notify(string data)
     {
         NotifyText = data;
-        OnPropertyChanged(InfoName);
+        OnPropertyChanged(InfoShow);
     }
 
     public void SetIcon(Bitmap image)
@@ -635,9 +651,9 @@ public partial class BaseModel : ObservableObject
     }
 
     public async Task<(bool Cancel, int Index, string? Item)>
-        ShowCombo(string data, IEnumerable<string> data1)
+        ShowCombo(string title, IEnumerable<string> data1)
     {
-        _info5.Text = data;
+        _info5.Text = title;
         _info5.Items.Clear();
         _info5.Items.AddRange(data1);
         _info5.Select = null!;
@@ -682,6 +698,19 @@ public partial class BaseModel : ObservableObject
         NoWork();
 
         return !_info6.IsCancel;
+    }
+
+    public void SetTopLevel(TopLevel? top)
+    {
+        _top = top;
+    }
+
+    public TopLevel? GetTopLevel()
+    {
+        OnPropertyChanged(GetTopLevelName);
+        var top = _top;
+        _top = null;
+        return top;
     }
 
     private void DClose()

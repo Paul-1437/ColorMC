@@ -6,9 +6,11 @@ using Avalonia.Threading;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
-using ColorMC.Gui.Objs;
+using ColorMC.Gui.Manager;
+using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UI.Model.Setting;
 using ColorMC.Gui.UIBinding;
+using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ColorMC.Gui.UI.Model.Add;
@@ -18,12 +20,12 @@ public partial class AddJavaControlModel : TopModel
     /// <summary>
     /// JAVA列表
     /// </summary>
-    private readonly List<JavaDownloadObj> _list1 = [];
+    private readonly List<JavaDownloadModel> _list1 = [];
 
     /// <summary>
     /// 显示的JAVA列表
     /// </summary>
-    public ObservableCollection<JavaDownloadObj> JavaList { get; init; } = [];
+    public ObservableCollection<JavaDownloadModel> JavaList { get; init; } = [];
     public ObservableCollection<string> SystemList { get; init; } = [];
     public ObservableCollection<string> VersionList { get; init; } = [];
     public ObservableCollection<string> ArchList { get; init; } = [];
@@ -105,16 +107,17 @@ public partial class AddJavaControlModel : TopModel
 
     public async void Load()
     {
-        Model.Progress(App.Lang("AddJavaWindow.Info4"));
-
         _load = true;
+
+        Model.Progress(App.Lang("AddJavaWindow.Info4"));
+        Model.ChoiseEnable = false;
 
         _list1.Clear();
         JavaList.Clear();
 
         var res = await WebBinding.GetJavaList(TypeIndex, SystemList.IndexOf(System), VersionList.IndexOf(Version));
 
-        if (res.Item1)
+        if (res.Res)
         {
             if (res.Os != null && SystemList.Count == 0)
             {
@@ -207,7 +210,7 @@ public partial class AddJavaControlModel : TopModel
 
             if (Arch != null || Version != null || System != null)
             {
-                res = await WebBinding.GetJavaList(TypeIndex, SystemList.IndexOf(System), 
+                res = await WebBinding.GetJavaList(TypeIndex, SystemList.IndexOf(System),
                     VersionList.IndexOf(Version!));
             }
 
@@ -215,10 +218,12 @@ public partial class AddJavaControlModel : TopModel
 
             Select();
 
+            Model.ChoiseEnable = true;
             Model.ProgressClose();
         }
         else
         {
+            Model.ChoiseEnable = true;
             Model.ProgressClose();
             Model.Show(App.Lang("AddJavaWindow.Error1"));
         }
@@ -226,7 +231,7 @@ public partial class AddJavaControlModel : TopModel
         _load = false;
     }
 
-    public async void Install(JavaDownloadObj obj)
+    public async void Install(JavaDownloadModel obj)
     {
         var res = await Model.ShowWait(string.Format(
             App.Lang("AddJavaWindow.Info1"), obj.Name));
@@ -235,11 +240,11 @@ public partial class AddJavaControlModel : TopModel
             return;
         }
 
-        if (ConfigBinding.GetAllConfig().Item2?.WindowMode != true)
+        if (GuiConfigUtils.Config.WindowMode != true)
         {
             Model.Progress(App.Lang("AddJavaWindow.Info2"));
         }
-        string temp = App.Lang("Gui.Info27");
+        string temp = App.Lang("AddGameWindow.Tab1.Info21");
         var res1 = await JavaBinding.DownloadJava(obj, (a, b, c) =>
         {
             Dispatcher.UIThread.Post(() => Model.ProgressUpdate($"{temp} {a} {b}/{c}"));
@@ -251,14 +256,14 @@ public partial class AddJavaControlModel : TopModel
             });
         });
         Model.ProgressClose();
-        if (!res1.Item1)
+        if (!res1.State)
         {
-            Model.Show(res1.Item2!);
+            Model.Show(res1.Message!);
             return;
         }
 
         Model.Notify(App.Lang("AddJavaWindow.Info3"));
-        (App.SettingWindow?.DataContext as SettingModel)?.LoadJava();
+        (WindowManager.SettingWindow?.DataContext as SettingModel)?.LoadJava();
     }
 
     private void Switch()
@@ -296,7 +301,7 @@ public partial class AddJavaControlModel : TopModel
         }
     }
 
-    protected override void Close()
+    public override void Close()
     {
         _load = true;
         _list1.Clear();

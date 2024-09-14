@@ -1,9 +1,8 @@
-using System;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.VisualTree;
-using ColorMC.Gui.Utils.LaunchSetting;
+using ColorMC.Core.Net.Motd;
 
 namespace ColorMC.Gui.Utils;
 
@@ -38,14 +37,6 @@ public static class UIUtils
         }
 
         return default;
-    }
-
-    private class ColorObservable(string key) : IObservable<IBrush>
-    {
-        public IDisposable Subscribe(IObserver<IBrush> observer)
-        {
-            return ColorSel.Add(key, observer);
-        }
     }
 
     /// <summary>
@@ -123,5 +114,23 @@ public static class UIUtils
         }
 
         return temp;
+    }
+
+    public static IBrush GetColor(string? color)
+    {
+        if (string.IsNullOrWhiteSpace(color))
+        {
+            return Brushes.White;
+        }
+        if (color.StartsWith('#'))
+        {
+            return Brush.Parse(color);
+        }
+        if (ServerMotd.ColorMap.TryGetValue(color, out var color1))
+        {
+            return Brush.Parse(color1);
+        }
+
+        return Brush.Parse(color);
     }
 }

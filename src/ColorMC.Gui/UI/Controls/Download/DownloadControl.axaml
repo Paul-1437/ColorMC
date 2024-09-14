@@ -3,73 +3,66 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:items="clr-namespace:ColorMC.Gui.UI.Controls.Items"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.Download"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="model:DownloadModel"
-    Background="{setting:Colors TranBack}"
     mc:Ignorable="d">
-    <DockPanel Margin="5">
-        <Border Classes="t1" DockPanel.Dock="Top">
-            <WrapPanel>
-                <ProgressBar
-                    Height="20"
-                    Margin="0,0,5,0"
-                    VerticalAlignment="Center"
-                    BorderBrush="White"
-                    BorderThickness="1"
-                    Foreground="#FF5EBDD3"
-                    Maximum="120"
-                    ShowProgressText="True"
-                    Value="{Binding Value}" />
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock
-                        MinWidth="100"
-                        Margin="0,0,5,0"
-                        DockPanel.Dock="Right"
-                        Text="{Binding Speed}" />
-                    <TextBlock
-                        MinWidth="100"
-                        Margin="0,0,5,0"
-                        DockPanel.Dock="Right"
-                        Text="{Binding Now}" />
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="10,0,10,10">
+            <Border Margin="10,10,10,5" Classes="t2">
+                <StackPanel Margin="15" RenderOptions.TextRenderingMode="Antialias">
+                    <StackPanel
+                        Margin="0,0,0,5"
+                        HorizontalAlignment="Left"
+                        Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,5,0"
+                            DockPanel.Dock="Right"
+                            FontSize="20"
+                            Text="{setting:Localize DownloadWindow.Text6}" />
+                        <TextBlock
+                            DockPanel.Dock="Right"
+                            FontSize="20"
+                            Text="{Binding Size, FallbackValue=2}" />
+                    </StackPanel>
+                    <DockPanel Margin="0,0,0,5">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <TextBlock Text="{Binding Value, StringFormat=0.00, FallbackValue=50}" />
+                            <TextBlock Text="%" />
+                        </StackPanel>
+                        <WrapPanel HorizontalAlignment="Left">
+                            <TextBlock DockPanel.Dock="Left" Text="{setting:Localize DownloadWindow.Text7}" />
+                            <TextBlock
+                                MinWidth="80"
+                                Margin="0,0,5,0"
+                                DockPanel.Dock="Right"
+                                Text="{Binding Now, FallbackValue=9000/9000}" />
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Speed, FallbackValue=10 MB/s}" />
+                        </WrapPanel>
+                    </DockPanel>
+                    <ProgressBar
+                        Height="10"
+                        Margin="0,5,0,0"
+                        HorizontalAlignment="Stretch"
+                        CornerRadius="20"
+                        Maximum="100"
+                        Value="{Binding Value}" />
                 </StackPanel>
-            </WrapPanel>
-        </Border>
-        <Border
-            Margin="0,5,0,0"
-            Classes="t1"
-            DockPanel.Dock="Top">
-            <DataGrid
-                Name="DataGrid1"
-                AutoGenerateColumns="False"
-                CanUserResizeColumns="True"
-                ItemsSource="{Binding ItemList}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn
-                        Binding="{Binding NowSize}"
-                        Header="{setting:Localize Text.Downloaded}"
-                        IsReadOnly="True" />
-                    <DataGridTextColumn
-                        Binding="{Binding Name}"
-                        Header="{setting:Localize Text.Name}"
-                        IsReadOnly="True" />
-                    <DataGridTextColumn
-                        Binding="{Binding State}"
-                        Header="{setting:Localize DownloadWindow.DataGrid.Text2}"
-                        IsReadOnly="True" />
-                    <DataGridTextColumn
-                        Binding="{Binding AllSize}"
-                        Header="{setting:Localize DownloadWindow.DataGrid.Text4}"
-                        IsReadOnly="True" />
-                    <DataGridTextColumn
-                        Binding="{Binding ErrorTime}"
-                        Header="{setting:Localize DownloadWindow.DataGrid.Text5}"
-                        IsReadOnly="True" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
-    </DockPanel>
+            </Border>
+            <ItemsControl
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                ItemsSource="{Binding DisplayList}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <items:DownloadItemControl DataContext="{Binding}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

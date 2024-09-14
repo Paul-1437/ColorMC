@@ -20,9 +20,14 @@ public class GameEditFlyout5
             {
                 _model.DeleteServer(_model.ServerItem!);
             }),
-            (App.Lang("GameEditWindow.Flyouts5.Text1"), true, ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text13"), true, ()=>
             {
-                GameBinding.CopyServer(_model.ServerItem!);
+                var top =TopLevel.GetTopLevel(con);
+                if (top == null)
+                {
+                    return;
+                }
+                GameBinding.CopyServer(top, _model.ServerItem!);
             })
         }, con);
     }

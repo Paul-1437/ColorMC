@@ -3,9 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Avalonia.Threading;
 using ColorMC.Core.Downloader;
 using ColorMC.Core.Game;
 using ColorMC.Core.Helpers;
@@ -17,25 +15,40 @@ using ColorMC.Core.Objs.CurseForge;
 using ColorMC.Core.Objs.Java;
 using ColorMC.Core.Objs.McMod;
 using ColorMC.Core.Objs.Minecraft;
+using ColorMC.Core.Objs.MinecraftAPI;
 using ColorMC.Core.Objs.Modrinth;
 using ColorMC.Core.Objs.OptiFine;
 using ColorMC.Core.Utils;
+using ColorMC.Gui.Manager;
+using ColorMC.Gui.Net.Apis;
 using ColorMC.Gui.Objs;
+using ColorMC.Gui.Objs.Frp;
 using ColorMC.Gui.UI.Model.Items;
+using ColorMC.Gui.UI.Model.NetFrp;
 using ColorMC.Gui.Utils;
 
 namespace ColorMC.Gui.UIBinding;
 
 public static class WebBinding
 {
-    private readonly static List<string> PCJavaType = ["Adoptium", "Zulu", "Dragonwell", "OpenJ9", "Graalvm"];
+    private static readonly List<string> PCJavaType = ["Adoptium", "Zulu", "Dragonwell", "OpenJ9", "Graalvm"];
 
-    private readonly static List<string> PhoneJavaType = ["PojavLauncherTeam"];
+    private static readonly List<string> PhoneJavaType = ["PojavLauncherTeam"];
 
     private const string Android = "Android";
     private const string Arm64 = "Arm64";
 
-    public static async Task<List<FileItemObj>?> GetPackList(SourceType type, string? version,
+    /// <summary>
+    /// 获取整合包列表
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="version"></param>
+    /// <param name="filter"></param>
+    /// <param name="page"></param>
+    /// <param name="sort"></param>
+    /// <param name="categoryId"></param>
+    /// <returns></returns>
+    public static async Task<List<FileItemModel>?> GetModPackList(SourceType type, string? version,
         string? filter, int page, int sort, string categoryId)
     {
         version ??= "";
@@ -61,22 +74,13 @@ public static class WebBinding
                     _ => 1
                 }, categoryId: categoryId);
             if (list == null)
+            {
                 return null;
-            var list1 = new List<FileItemObj>();
+            }
+            var list1 = new List<FileItemModel>();
             list.data.ForEach(item =>
             {
-                list1.Add(new()
-                {
-                    Name = item.name,
-                    Summary = item.summary,
-                    Author = item.authors.GetString(),
-                    DownloadCount = item.downloadCount,
-                    ModifiedDate = item.dateModified,
-                    Logo = item.logo?.url,
-                    FileType = FileType.ModPack,
-                    SourceType = SourceType.CurseForge,
-                    Data = item
-                });
+                list1.Add(new(item, FileType.ModPack));
             });
 
             return list1;
@@ -85,22 +89,13 @@ public static class WebBinding
         {
             var list = await ModrinthAPI.GetModPackList(version, page, filter: filter, sortOrder: sort, categoryId: categoryId);
             if (list == null)
+            {
                 return null;
-            var list1 = new List<FileItemObj>();
+            }
+            var list1 = new List<FileItemModel>();
             list.hits.ForEach(item =>
             {
-                list1.Add(new()
-                {
-                    Name = item.title,
-                    Summary = item.description,
-                    Author = item.author,
-                    DownloadCount = item.downloads,
-                    ModifiedDate = item.date_modified,
-                    Logo = item.icon_url,
-                    FileType = FileType.ModPack,
-                    SourceType = SourceType.Modrinth,
-                    Data = item
-                });
+                list1.Add(new(item, FileType.ModPack));
             });
 
             return list1;
@@ -109,7 +104,17 @@ public static class WebBinding
         return null;
     }
 
-    public static async Task<List<FileDisplayObj>?> GetPackFile(SourceType type, string id,
+    /// <summary>
+    /// 获取文件列表
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="id"></param>
+    /// <param name="page"></param>
+    /// <param name="mc"></param>
+    /// <param name="loader"></param>
+    /// <param name="type1"></param>
+    /// <returns></returns>
+    public static async Task<List<FileVersionItemModel>?> GetFileList(SourceType type, string id,
         int page, string? mc, Loaders loader, FileType type1 = FileType.ModPack)
     {
         if (type == SourceType.CurseForge)
@@ -118,21 +123,10 @@ public static class WebBinding
             if (list == null)
                 return null;
 
-            var list1 = new List<FileDisplayObj>();
+            var list1 = new List<FileVersionItemModel>();
             list.data.ForEach(item =>
             {
-                list1.Add(new()
-                {
-                    ID = item.modId.ToString(),
-                    ID1 = item.id.ToString(),
-                    Name = item.displayName,
-                    Size = UIUtils.MakeFileSize1(item.fileLength),
-                    Download = item.downloadCount,
-                    Time = DateTime.Parse(item.fileDate).ToString(),
-                    FileType = type1,
-                    SourceType = SourceType.CurseForge,
-                    Data = item
-                });
+                list1.Add(new(item, type1));
             });
 
             return list1;
@@ -143,22 +137,10 @@ public static class WebBinding
             if (list == null)
                 return null;
 
-            var list1 = new List<FileDisplayObj>();
+            var list1 = new List<FileVersionItemModel>();
             list.ForEach(item =>
             {
-                var file = item.files.FirstOrDefault(a => a.primary) ?? item.files[0];
-                list1.Add(new()
-                {
-                    ID = item.project_id,
-                    ID1 = item.id,
-                    Name = item.name,
-                    Size = UIUtils.MakeFileSize1(file.size),
-                    Download = item.downloads,
-                    Time = DateTime.Parse(item.date_published).ToString(),
-                    FileType = type1,
-                    SourceType = SourceType.Modrinth,
-                    Data = item
-                });
+                list1.Add(new(item, type1));
             });
 
             return list1;
@@ -167,6 +149,11 @@ public static class WebBinding
         return null;
     }
 
+    /// <summary>
+    /// 获取下载源列表
+    /// </summary>
+    /// <param name="type"></param>
+    /// <returns></returns>
     public static List<SourceType> GetSourceList(FileType type)
     {
         return type switch
@@ -192,7 +179,19 @@ public static class WebBinding
         };
     }
 
-    public static async Task<List<FileItemObj>?> GetList(FileType now, SourceType type, string? version, string? filter, int page, int sort, string categoryId, Loaders loader)
+    /// <summary>
+    /// 获取文件列表
+    /// </summary>
+    /// <param name="now"></param>
+    /// <param name="type"></param>
+    /// <param name="version"></param>
+    /// <param name="filter"></param>
+    /// <param name="page"></param>
+    /// <param name="sort"></param>
+    /// <param name="categoryId"></param>
+    /// <param name="loader"></param>
+    /// <returns></returns>
+    public static async Task<List<FileItemModel>?> GetList(FileType now, SourceType type, string? version, string? filter, int page, int sort, string categoryId, Loaders loader)
     {
         version ??= "";
         filter ??= "";
@@ -294,7 +293,7 @@ public static class WebBinding
             };
             if (list == null)
                 return null;
-            var list1 = new List<FileItemObj>();
+            var list1 = new List<FileItemModel>();
             var modlist = new List<string>();
             list.data.ForEach(item =>
             {
@@ -304,19 +303,9 @@ public static class WebBinding
             list.data.ForEach(item =>
             {
                 var id = item.id.ToString();
-                list1.Add(new()
+                list1.Add(new(item, now)
                 {
-                    ID = id,
-                    Name = item.name,
-                    Summary = item.summary,
-                    Author = item.authors.GetString(),
-                    DownloadCount = item.downloadCount,
-                    ModifiedDate = item.dateModified,
-                    Logo = item.logo?.url,
-                    FileType = now,
-                    SourceType = SourceType.CurseForge,
-                    Data = item,
-                    Data1 = list2?.TryGetValue(id, out var data1) == true ? data1 : null
+                    McMod = list2?.TryGetValue(id, out var data1) == true ? data1 : null
                 });
             });
 
@@ -334,8 +323,7 @@ public static class WebBinding
             };
             if (list == null)
                 return null;
-            var list1 = new List<FileItemObj>();
-
+            var list1 = new List<FileItemModel>();
             var modlist = new List<string>();
             list.hits.ForEach(item =>
             {
@@ -344,19 +332,9 @@ public static class WebBinding
             var list2 = await ColorMCAPI.GetMcModFromMO(modlist);
             list.hits.ForEach(item =>
             {
-                list1.Add(new()
+                list1.Add(new(item, now)
                 {
-                    ID = item.project_id,
-                    Name = item.title,
-                    Summary = item.description,
-                    Author = item.author,
-                    DownloadCount = item.downloads,
-                    ModifiedDate = item.date_modified,
-                    Logo = item.icon_url,
-                    FileType = FileType.ModPack,
-                    SourceType = SourceType.Modrinth,
-                    Data = item,
-                    Data1 = list2?.TryGetValue(item.project_id, out var data1) == true
+                    McMod = list2?.TryGetValue(item.project_id, out var data1) == true
                         ? data1 : null
                 });
             });
@@ -367,120 +345,161 @@ public static class WebBinding
         return null;
     }
 
-    public static async Task<(DownloadItemObj? Item, ModInfoObj? Info,
-        List<DownloadModModel>? List)>
-        DownloadMod(GameSettingObj obj, CurseForgeModObj.Data? data)
+    /// <summary>
+    /// 获取模组下载列表
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
+    public static async Task<ModDownloadRes> GetDownloadModList(GameSettingObj obj, CurseForgeModObj.Data? data)
     {
         if (data == null)
-            return (null, null, null);
+        {
+            return new();
+        }
 
         string path = obj.GetModsPath();
 
-        var res = new Dictionary<string, DownloadModModel>();
+        var res = new Dictionary<string, FileModVersionModel>();
         if (data.dependencies != null && data.dependencies.Count > 0)
         {
-            var res1 = await CurseForgeAPI.GetModDependencies(data, obj.Version, obj.Loader, true);
+            var res1 = await CurseForgeHelper.GetModDependencies(data, obj.Version, obj.Loader, true);
 
             foreach (var item1 in res1)
             {
-                if (res.ContainsKey(item1.Info.ModId) || obj.Mods.ContainsKey(item1.Info.ModId))
+                var modid = item1.ModId.ToString();
+                if (res.ContainsKey(modid) || obj.Mods.ContainsKey(modid) || data.id == item1.ModId)
                 {
                     continue;
                 }
 
                 List<string> version = [];
-                List<(DownloadItemObj Item, ModInfoObj Info)> items = [];
+                List<DownloadModArg> items = [];
                 foreach (var item2 in item1.List)
                 {
                     version.Add(item2.displayName);
-                    items.Add((item2.MakeModDownloadObj(obj, path), item2.MakeModInfo(InstancesPath.Name11)));
+                    items.Add(new()
+                    {
+                        Item = item2.MakeModDownloadObj(path),
+                        Info = item2.MakeModInfo(InstancesPath.Name11)
+                    });
                 }
-                res.Add(item1.Info.ModId, new()
-                {
-                    Download = false,
-                    Name = item1.Info.Name,
-                    ModVersion = version,
-                    Items = items,
-                    SelectVersion = 0,
-                    Optional = item1.Info.Opt
-                });
+                res.Add(modid, new(item1.Name, version, items, item1.Opt));
             }
         }
 
-        return (data.MakeModDownloadObj(obj, path), data.MakeModInfo(InstancesPath.Name11), res.Values.ToList());
+        return new()
+        {
+            Item = data.MakeModDownloadObj(path),
+            Info = data.MakeModInfo(InstancesPath.Name11),
+            List = [.. res.Values]
+        };
     }
 
-    public static async Task<(DownloadItemObj? Item, ModInfoObj? Info,
-        List<DownloadModModel>? List)>
-        DownloadMod(GameSettingObj obj, ModrinthVersionObj? data)
+    /// <summary>
+    /// 获取模组下载列表
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
+    public static async Task<ModDownloadRes> GetDownloadModList(GameSettingObj obj, ModrinthVersionObj? data)
     {
         if (data == null)
-            return (null, null, null);
+        {
+            return new();
+        }
 
-        var res = new Dictionary<string, DownloadModModel>();
+        var res = new Dictionary<string, FileModVersionModel>();
         if (data.dependencies != null && data.dependencies.Count > 0)
         {
-            var list2 = await ModrinthAPI.GetModDependencies(data, obj.Version, obj.Loader);
+            var list2 = await ModrinthHelper.GetModDependencies(data, obj.Version, obj.Loader);
             foreach (var item1 in list2)
             {
-                if (res.ContainsKey(item1.Info.ModId) || obj.Mods.ContainsKey(item1.Info.ModId))
+                if (res.ContainsKey(item1.ModId) || obj.Mods.ContainsKey(item1.ModId)
+                    || item1.ModId == data.project_id)
+                {
                     continue;
+                }
                 List<string> version = [];
-                List<(DownloadItemObj Item, ModInfoObj Info)> items = [];
+                List<DownloadModArg> items = [];
                 foreach (var item2 in item1.List)
                 {
                     version.Add(item2.name);
-                    items.Add((item2.MakeModDownloadObj(obj), item2.MakeModInfo()));
+                    items.Add(new()
+                    {
+                        Item = item2.MakeModDownloadObj(obj),
+                        Info = item2.MakeModInfo()
+                    });
                 }
-                res.Add(item1.Info.ModId, new()
-                {
-                    Download = false,
-                    Name = item1.Info.Name,
-                    ModVersion = version,
-                    Items = items,
-                    SelectVersion = 0
-                });
+                res.Add(item1.ModId, new(item1.Name, version, items, false));
             }
         }
 
-        return (data.MakeModDownloadObj(obj), data.MakeModInfo(), res.Values.ToList());
+        return new()
+        {
+            Item = data.MakeModDownloadObj(obj),
+            Info = data.MakeModInfo(),
+            List = [.. res.Values]
+        };
     }
 
-    public static async Task<bool> DownloadMod(GameSettingObj obj,
-        IList<(DownloadItemObj Item, ModInfoObj Info, ModDisplayModel Mod)> list)
+    public static void UpgradeMod(GameSettingObj obj, ICollection<ModUpgradeModel> list)
     {
-        foreach (var (Item, Info, Mod) in list)
+        WindowManager.ShowAddUpgade(obj, list);
+    }
+
+    /// <summary>
+    /// 下载模组
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    public static async Task<bool> DownloadMod(GameSettingObj obj, ICollection<DownloadModItemArg> list)
+    {
+        foreach (var item in list)
         {
-            PathHelper.Delete(Mod.Local);
+            PathHelper.Delete(item.Local);
         }
 
         var list1 = new List<DownloadItemObj>();
-        foreach (var (Item, Info, Mod) in list)
+        foreach (var item in list)
         {
-            Item.Later = (s) =>
+            item.Item.Later = (s) =>
             {
-                obj.AddModInfo(Info);
+                obj.AddModInfo(item.Info);
             };
-            list1.Add(Item);
+            list1.Add(item.Item);
         }
-        return await App.StartDownload(list1);
+        return await DownloadManager.StartAsync(list1);
     }
 
-    public static async Task<bool> DownloadMod(GameSettingObj obj,
-        IList<(DownloadItemObj Item, ModInfoObj Info)> list)
+    /// <summary>
+    /// 下载模组
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="list"></param>
+    /// <returns></returns>
+    public static async Task<bool> DownloadMod(GameSettingObj obj, ICollection<DownloadModArg> list)
     {
         var list1 = new List<DownloadItemObj>();
-        foreach (var (Item, Info) in list)
+        foreach (var item in list)
         {
-            Item.Later = (s) =>
+            item.Item.Later = (s) =>
             {
-                obj.AddModInfo(Info);
+                obj.AddModInfo(item.Info);
             };
-            list1.Add(Item);
+            list1.Add(item.Item);
         }
-        return await App.StartDownload(list1);
+        return await DownloadManager.StartAsync(list1);
     }
 
+    /// <summary>
+    /// 下载资源
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="obj"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public static async Task<bool> Download(FileType type, GameSettingObj obj, CurseForgeModObj.Data? data)
     {
         if (data == null)
@@ -502,7 +521,7 @@ public static class WebBinding
                     Overwrite = true
                 };
 
-                res = await App.StartDownload([item]);
+                res = await DownloadManager.StartAsync([item]);
                 if (!res)
                 {
                     return false;
@@ -510,7 +529,7 @@ public static class WebBinding
 
                 return await GameBinding.AddWorld(obj, item.Local);
             case FileType.Resourcepack:
-                return await App.StartDownload([new()
+                return await DownloadManager.StartAsync([new()
                 {
                     Name = data.displayName,
                     Url = data.downloadUrl,
@@ -520,7 +539,7 @@ public static class WebBinding
                     Overwrite = true
                 }]);
             case FileType.Shaderpack:
-                return await App.StartDownload([new()
+                return await DownloadManager.StartAsync([new()
                 {
                     Name = data.displayName,
                     Url = data.downloadUrl,
@@ -534,6 +553,13 @@ public static class WebBinding
         }
     }
 
+    /// <summary>
+    /// 下载资源
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="obj"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public static async Task<bool> Download(FileType type, GameSettingObj obj, ModrinthVersionObj? data)
     {
         if (data == null)
@@ -545,7 +571,7 @@ public static class WebBinding
 
         return type switch
         {
-            FileType.Resourcepack => await App.StartDownload([new()
+            FileType.Resourcepack => await DownloadManager.StartAsync([new()
                 {
                     Name = data.name,
                     Url = file.url,
@@ -553,7 +579,7 @@ public static class WebBinding
                     SHA1 = file.hashes.sha1,
                     Overwrite = true
                 }]),
-            FileType.Shaderpack => await App.StartDownload([new()
+            FileType.Shaderpack => await DownloadManager.StartAsync([new()
                 {
                     Name = data.name,
                     Url = file.url,
@@ -565,6 +591,12 @@ public static class WebBinding
         };
     }
 
+    /// <summary>
+    /// 下载地图资源
+    /// </summary>
+    /// <param name="obj1"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public static async Task<bool> Download(WorldObj obj1, CurseForgeModObj.Data? data)
     {
         if (data == null)
@@ -574,7 +606,7 @@ public static class WebBinding
 
         data.FixDownloadUrl();
 
-        return await App.StartDownload([new()
+        return await DownloadManager.StartAsync([new()
         {
             Name = data.displayName,
             Url = data.downloadUrl,
@@ -585,6 +617,12 @@ public static class WebBinding
         }]);
     }
 
+    /// <summary>
+    /// 下载地图资源
+    /// </summary>
+    /// <param name="obj1"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public static async Task<bool> Download(WorldObj obj1, ModrinthVersionObj? data)
     {
         if (data == null)
@@ -594,7 +632,7 @@ public static class WebBinding
 
         var file = data.files.FirstOrDefault(a => a.primary) ?? data.files[0];
 
-        return await App.StartDownload([new()
+        return await DownloadManager.StartAsync([new()
         {
             Name = data.name,
             Url = file.url,
@@ -604,61 +642,68 @@ public static class WebBinding
         }]);
     }
 
-    public static string? GetUrl(this FileItemObj obj)
+    /// <summary>
+    /// 获取原站地址
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public static string GetUrl(this CurseForgeObjList.Data obj)
     {
-        if (obj.SourceType == SourceType.CurseForge)
-        {
-            return (obj.Data as CurseForgeObjList.Data)!.links.websiteUrl;
-        }
-        else if (obj.SourceType == SourceType.Modrinth)
-        {
-            var obj1 = (obj.Data as ModrinthSearchObj.Hit)!;
-            return obj.FileType switch
-            {
-                FileType.ModPack => "https://modrinth.com/modpack/",
-                FileType.Shaderpack => "https://modrinth.com/shaders/",
-                FileType.Resourcepack => "https://modrinth.com/resourcepacks/",
-                FileType.DataPacks => "https://modrinth.com/datapacks/",
-                _ => "https://modrinth.com/mod/"
-            } + obj1.project_id;
-        }
-
-        return null;
+        return obj.links.websiteUrl;
     }
 
-    public static string? GetMcMod(this FileItemObj obj)
+    public static string GetUrl(this ModrinthSearchObj.Hit obj, FileType fileType)
     {
-        if ((obj.SourceType == SourceType.CurseForge
-            || obj.SourceType == SourceType.Modrinth)
-            && obj.Data1 is McModSearchItemObj obj1)
+        return fileType switch
         {
-            return $"https://www.mcmod.cn/class/{obj1.mcmod_id}.html";
-        }
-        else if (obj.SourceType == SourceType.McMod)
-        {
-            var obj2 = (obj.Data as McModSearchItemObj)!;
-            return $"https://www.mcmod.cn/class/{obj2.mcmod_id}.html";
-        }
-
-        return null;
+            FileType.ModPack => "https://modrinth.com/modpack/",
+            FileType.Shaderpack => "https://modrinth.com/shaders/",
+            FileType.Resourcepack => "https://modrinth.com/resourcepacks/",
+            FileType.DataPacks => "https://modrinth.com/datapacks/",
+            _ => "https://modrinth.com/mod/"
+        } + obj.project_id;
     }
 
+    /// <summary>
+    /// 获取McMod地址
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public static string? GetUrl(this McModSearchItemObj obj)
+    {
+        return $"https://www.mcmod.cn/class/{obj.mcmod_id}.html";
+    }
+
+    /// <summary>
+    /// 获取高清修复列表
+    /// </summary>
+    /// <returns></returns>
     public static async Task<List<OptifineObj>?> GetOptifine()
     {
-        var res = await OptifineAPI.GetOptifineVersion();
-        return res.Item2;
+        return await OptifineAPI.GetOptifineVersion();
     }
 
-    public static Task<(bool, string?)> DownloadOptifine(GameSettingObj obj, OptifineObj item)
+    /// <summary>
+    /// 下载高清修复
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    public static Task<MessageRes> DownloadOptifine(GameSettingObj obj, OptifineObj item)
     {
         return OptifineAPI.DownloadOptifine(obj, item);
     }
 
-    public static async Task<List<(DownloadItemObj Item, ModInfoObj Info, ModDisplayModel Mod)>>
-        CheckModUpdate(GameSettingObj game, List<ModDisplayModel> mods)
+    /// <summary>
+    /// 检查模组更新
+    /// </summary>
+    /// <param name="game"></param>
+    /// <param name="mods"></param>
+    /// <returns></returns>
+    public static async Task<List<ModUpgradeModel>> CheckModUpdate(GameSettingObj game, List<ModDisplayModel> mods)
     {
         string path = game.GetModsPath();
-        var list = new ConcurrentBag<(DownloadItemObj Item, ModInfoObj Info, ModDisplayModel Mod)>();
+        var list = new ConcurrentBag<ModUpgradeModel>();
         await Parallel.ForEachAsync(mods, async (item, cancel) =>
         {
             try
@@ -668,79 +713,96 @@ public static class WebBinding
                     return;
                 }
 
-                var type1 = FuntionUtils.CheckNotNumber(item.PID) || FuntionUtils.CheckNotNumber(item.FID) ?
-                   SourceType.Modrinth : SourceType.CurseForge;
+                var type1 = DownloadItemHelper.TestSourceType(item.PID, item.FID);
 
-                var list1 = await GetPackFile(type1, item.PID, 0,
+                var list1 = await GetFileList(type1, item.PID, 0,
                    game.Version, game.Loader, FileType.Mod);
-                if (list1 == null || list1.Count == 0)
+                if (list1 == null || list1.Count == 0
+                || list1[0].ID1 == item.FID)
                 {
                     return;
                 }
-                var item1 = list1[0];
-                if (item1.ID1 != item.FID)
+
+                item.IsNew = true;
+
+                List<string> version = [];
+                List<DownloadModArg> items = [];
+                foreach (var item1 in list1)
                 {
-                    switch (type1)
+                    if (item1.ID1 == item.FID)
                     {
-                        case SourceType.CurseForge:
-                            if (item1.Data is CurseForgeModObj.Data data)
-                            {
-                                list.Add((data.MakeModDownloadObj(game, path), data.MakeModInfo(InstancesPath.Name11), item));
-                            }
-                            break;
-                        case SourceType.Modrinth:
-                            if (item1.Data is ModrinthVersionObj data1)
-                            {
-                                list.Add((data1.MakeModDownloadObj(game), data1.MakeModInfo(), item));
-                            }
-                            break;
+                        continue;
                     }
-                    Dispatcher.UIThread.Post(() =>
+
+                    if (item1.Data is CurseForgeModObj.Data data)
                     {
-                        item.IsNew = true;
-                    });
+                        version.Add(data.displayName);
+                        items.Add(new()
+                        {
+                            Item = data.MakeModDownloadObj(path),
+                            Info = data.MakeModInfo(InstancesPath.Name11)
+                        });
+                    }
+                    else if (item1.Data is ModrinthVersionObj data1)
+                    {
+                        version.Add(data1.name);
+                        items.Add(new()
+                        {
+                            Item = data1.MakeModDownloadObj(game),
+                            Info = data1.MakeModInfo()
+                        });
+                    }
                 }
+
+                list.Add(new(item.Local, item.Name, version, items, false));
             }
             catch (Exception e)
             {
-                Logs.Error(App.Lang("Gui.Error16"), e);
+                Logs.Error(App.Lang("WebBinding.Error1"), e);
             }
         });
 
         return [.. list];
     }
 
+    /// <summary>
+    /// 打开McMod网页
+    /// </summary>
+    /// <param name="obj"></param>
     public static void OpenMcmod(ModDisplayModel obj)
     {
         BaseBinding.OpUrl($"https://search.mcmod.cn/s?key={obj.Name}");
     }
 
-    public static async Task<List<FileItemObj>?> SearchMcmod(string key, int page)
+    /// <summary>
+    /// 搜索模组
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="page"></param>
+    /// <param name="loader"></param>
+    /// <param name="version"></param>
+    /// <param name="modtype"></param>
+    /// <param name="sort"></param>
+    /// <returns></returns>
+    public static async Task<List<FileItemModel>?> SearchMcmod(string name, int page, Loaders loader, string version, string modtype, int sort)
     {
-        var list = await ColorMCAPI.GetMcModFromName(key, page);
+        var list = await ColorMCAPI.GetMcMod(name, page, loader, version, modtype, sort);
         if (list == null)
             return null;
 
-        var list1 = new List<FileItemObj>();
+        var list1 = new List<FileItemModel>();
         foreach (var item in list.Values)
         {
-            list1.Add(new()
-            {
-                Logo = item.mcmod_icon.StartsWith("//")
-                    ? "https:" + item.mcmod_icon : item.mcmod_icon,
-                Name = item.mcmod_name,
-                Summary = item.mcmod_text,
-                Author = item.mcmod_author,
-                FileType = FileType.Mod,
-                SourceType = SourceType.McMod,
-                Data = item,
-                ModifiedDate = item.mcmod_time.ToString()
-            });
+            list1.Add(new(item, FileType.Mod));
         }
 
         return list1;
     }
 
+    /// <summary>
+    /// 打开网页
+    /// </summary>
+    /// <param name="type"></param>
     public static void OpenWeb(WebType type)
     {
         BaseBinding.OpUrl(type switch
@@ -759,47 +821,97 @@ public static class WebBinding
             WebType.OpenFrp => "https://console.openfrp.net/home/",
             WebType.OpenFrpApi => "https://github.com/ZGIT-Network/OPENFRP-APIDOC",
             WebType.Live2DCore => "https://www.live2d.com/download/cubism-sdk/download-native/",
+            WebType.ColorMCDownload => "https://github.com/Coloryr/ColorMC/releases",
+            WebType.EditSkin => "https://www.minecraft.net/en-us/msaprofile/mygames/editskin",
+            WebType.LittleSkinEditSkin => "https://littleskin.cn/user/closet",
+            WebType.UIGuide => "https://github.com/Coloryr/ColorMC_Pic/blob/master/guide/Main.md#%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%AE%.9A%E5%88%B6",
+            WebType.UIGuide1 => "https://gitee.com/Coloryr/ColorMC_Pic/blob/master/guide/Main.md#%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%AE%9A%E5%88%B6",
             _ => "https://colormc.coloryr.com"
         });
     }
 
+    /// <summary>
+    /// 获取Forge支持的游戏版本
+    /// </summary>
+    /// <returns></returns>
     public static Task<List<string>?> GetForgeSupportVersion()
     {
-        return ForgeAPI.GetSupportVersion(false, BaseClient.Source);
+        return ForgeAPI.GetSupportVersion(false, WebClient.Source);
     }
+    /// <summary>
+    /// 获取Fabric支持的游戏版本
+    /// </summary>
+    /// <returns></returns>
     public static Task<List<string>?> GetFabricSupportVersion()
     {
-        return FabricAPI.GetSupportVersion(BaseClient.Source);
+        return FabricAPI.GetSupportVersion(WebClient.Source);
     }
+    /// <summary>
+    /// 获取Quilt支持的游戏版本
+    /// </summary>
+    /// <returns></returns>
     public static Task<List<string>?> GetQuiltSupportVersion()
     {
-        return QuiltAPI.GetSupportVersion(BaseClient.Source);
+        return QuiltAPI.GetSupportVersion(WebClient.Source);
     }
-
-    public static Task<List<string>?> GetNeoForgeVersion(string version)
-    {
-        return ForgeAPI.GetVersionList(true, version, BaseClient.Source);
-    }
-
+    /// <summary>
+    /// 获取NeoForge支持的游戏版本
+    /// </summary>
+    /// <returns></returns>
     public static Task<List<string>?> GetNeoForgeSupportVersion()
     {
-        return ForgeAPI.GetSupportVersion(true, BaseClient.Source);
+        return ForgeAPI.GetSupportVersion(true, WebClient.Source);
     }
+    /// <summary>
+    /// 获取Optifine支持的游戏版本
+    /// </summary>
+    /// <returns></returns>
+    public static async Task<List<string>?> GetOptifineSupportVersion()
+    {
+        return await OptifineAPI.GetSupportVersion();
+    }
+
+    /// <summary>
+    /// 获取Forge版本
+    /// </summary>
+    /// <param name="version">游戏版本</param>
+    /// <returns></returns>
     public static Task<List<string>?> GetForgeVersion(string version)
     {
-        return ForgeAPI.GetVersionList(false, version, BaseClient.Source);
+        return ForgeAPI.GetVersionList(false, version, WebClient.Source);
     }
-
+    /// <summary>
+    /// 获取Fabric版本
+    /// </summary>
+    /// <param name="version">游戏版本</param>
+    /// <returns></returns>
     public static Task<List<string>?> GetFabricVersion(string version)
     {
-        return FabricAPI.GetLoaders(version, BaseClient.Source);
+        return FabricAPI.GetLoaders(version, WebClient.Source);
     }
-
+    /// <summary>
+    /// 获取Quilt版本
+    /// </summary>
+    /// <param name="version">游戏版本</param>
+    /// <returns></returns>
     public static Task<List<string>?> GetQuiltVersion(string version)
     {
-        return QuiltAPI.GetLoaders(version, BaseClient.Source);
+        return QuiltAPI.GetLoaders(version, WebClient.Source);
     }
-
+    /// <summary>
+    /// 获取NeoForge版本
+    /// </summary>
+    /// <param name="version">游戏版本</param>
+    /// <returns></returns>
+    public static Task<List<string>?> GetNeoForgeVersion(string version)
+    {
+        return ForgeAPI.GetVersionList(true, version, WebClient.Source);
+    }
+    /// <summary>
+    /// 获取Optifine版本
+    /// </summary>
+    /// <param name="version">游戏版本</param>
+    /// <returns></returns>
     public static async Task<List<string>?> GetOptifineVersion(string version)
     {
         var list = await GetOptifine();
@@ -819,53 +931,73 @@ public static class WebBinding
         return list1;
     }
 
-    public static async Task<List<string>?> GetOptifineSupportVersion()
-    {
-        return await OptifineAPI.GetSupportVersion();
-    }
-
-    public static Task<string?> Push(string data)
+    /// <summary>
+    /// 向Mclo上传日志
+    /// </summary>
+    /// <param name="data"></param>
+    /// <returns></returns>
+    public static Task<string?> PushMclo(string data)
     {
         return McloAPI.Push(data);
     }
 
+    /// <summary>
+    /// 获取ColorMC更新日志
+    /// </summary>
+    /// <returns></returns>
     public static Task<string?> GetNewLog()
     {
-        return ColorMCAPI.GetNewLog();
+        return ColorMCCloudAPI.GetNewLog();
     }
 
-    public static async Task<List<NetFrpCloudServerModel>?> GetCloudServer()
+    /// <summary>
+    /// 获取映射列表
+    /// </summary>
+    /// <returns></returns>
+    public static async Task<List<FrpCloudObj>?> GetFrpServer(string version)
     {
-        var list = await ColorMCAPI.GetCloudServer();
+        var list = await ColorMCCloudAPI.GetCloudServer(version);
         if (list == null || list?["list"] is not { } list1)
         {
             return null;
         }
 
-        GameSocket.Clear();
-        var list2 = list1.ToObject<List<NetFrpCloudServerModel>>();
-        list2?.ForEach(GameSocket.AddServerInfo);
+        LaunchSocketUtils.Clear();
+        var list2 = list1.ToObject<List<FrpCloudObj>>();
+        list2?.ForEach(LaunchSocketUtils.AddServerInfo);
 
         return list2;
     }
 
-    public static Task<bool> ShareIP(string token, string ip)
+    /// <summary>
+    /// 共享映射
+    /// </summary>
+    /// <param name="token"></param>
+    /// <param name="ip"></param>
+    /// <returns></returns>
+    public static Task<bool> ShareIP(string token, string ip, FrpShareModel model)
     {
-        return ColorMCAPI.PutCloudServer(token, ip);
+        return ColorMCCloudAPI.PutCloudServer(token, ip, model);
     }
 
-    public static async Task<(bool, List<string>? Arch, List<string>? Os,
-        List<string>? MainVersion, List<JavaDownloadObj>? Download)> GetJavaList(int type, int os, int mainversion)
+    public static async Task<GetJavaListRes> GetJavaList(int type, int os, int mainversion)
     {
         if (SystemInfo.Os == OsType.Android)
         {
             var res = await GetPojavLauncherTeamList();
             if (res == null)
             {
-                return (false, null, null, null, null);
+                return new();
             }
 
-            return (true, [Arm64], [Android], ["", "8", "17", "21"], res);
+            return new()
+            {
+                Res = true,
+                Arch = [Arm64],
+                Os = [Android],
+                MainVersion = ["", "8", "17", "21"],
+                Download = res
+            };
         }
 
         if (mainversion == -1)
@@ -876,55 +1008,53 @@ public static class WebBinding
         switch (type)
         {
             case 0:
+                var res = await GetAdoptiumList(mainversion, os);
+                if (res.Res)
                 {
-                    var res = await GetAdoptiumList(mainversion, os);
-                    if (!res.Item1)
+                    return new()
                     {
-                        return (false, null, null, null, null);
-                    }
-                    else
-                    {
-                        return (true, res.Arch, AdoptiumApi.SystemType, await AdoptiumApi.GetJavaVersion(), res.Item3);
-                    }
+                        Res = true,
+                        Arch = res.Arch,
+                        Os = AdoptiumApi.SystemType,
+                        MainVersion = await AdoptiumApi.GetJavaVersion(),
+                        Download = res.Download
+                    };
                 }
+                break;
             case 1:
-                {
-                    return await GetZuluList();
-                }
+                return await GetZuluList();
             case 2:
+                var res1 = await GetDragonwellList();
+                if (res1 != null)
                 {
-                    var res = await GetDragonwellList();
-                    if (res == null)
+                    return new()
                     {
-                        return (false, null, null, null, null);
-                    }
-                    else
-                    {
-                        return (true, null, null, null, res);
-                    }
+                        Res = true,
+                        Download = res1
+                    };
                 }
+                break;
             case 3:
-                {
-                    return await GetOpenJ9List();
-                }
+                return await GetOpenJ9List();
             case 4:
+                return new()
                 {
-                    return (true, null, null, null, GetGraalvmList());
-                }
-            default:
-                return (false, null, null, null, null);
+                    Res = true,
+                    Download = GetGraalvmList()
+                };
         }
+
+        return new();
     }
 
-    private static async Task<(bool, List<string>? Arch, List<string>? Os, List<string>? MainVersion,
-        List<JavaDownloadObj>?)> GetZuluList()
+    private static async Task<GetJavaListRes> GetZuluList()
     {
         try
         {
             var list = await ZuluApi.GetJavaList();
             if (list == null)
             {
-                return (false, null, null, null, null);
+                return new();
             }
 
             var arch = new List<string>
@@ -954,7 +1084,7 @@ public static class WebBinding
                         orderby newGroup.Key descending
                         select newGroup.Key.ToString());
 
-            var list1 = new List<JavaDownloadObj>();
+            var list1 = new List<JavaDownloadModel>();
             foreach (var item in list)
             {
                 if (item.name.EndsWith(".deb") || item.name.EndsWith(".rpm")
@@ -977,111 +1107,118 @@ public static class WebBinding
                 });
             }
 
-            return (true, arch, os, mainversion, list1);
+            return new()
+            {
+                Res = true,
+                Arch = arch,
+                Os = os,
+                MainVersion = mainversion,
+                Download = list1
+            };
         }
         catch (Exception e)
         {
-            App.ShowError(App.Lang("Gui.Error46"), e);
-            return (false, null, null, null, null);
+            WindowManager.ShowError(App.Lang("WebBinding.Error2"), e);
+            return new();
         }
     }
 
-    private static List<JavaDownloadObj> GetGraalvmList()
+    private static List<JavaDownloadModel> GetGraalvmList()
     {
-        return new List<JavaDownloadObj>()
+        return
+        [
+            new()
             {
-                new()
-                {
-                    File = "graalvm-jdk-17_macos-aarch64_bin.tar.gz",
-                    Name = "17_macOS_ARM",
-                    Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_macos-aarch64_bin.tar.gz",
-                    Arch = "aarch64",
-                    MainVersion = "17",
-                    Os = "macos",
-                },
-                new()
-                {
-                    File = "graalvm-jdk-17_macos-x64_bin.tar.gz",
-                    Name = "17_macOS_x64",
-                    Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_macos-x64_bin.tar.gz",
-                    Arch = "x64",
-                    MainVersion = "17",
-                    Os = "macos",
-                },
-                new()
-                {
-                    File = "graalvm-jdk-17_linux-aarch64_bin.tar.gz",
-                    Name = "17_Linux_ARM",
-                    Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_linux-aarch64_bin.tar.gz",
-                    Arch = "aarch64",
-                    MainVersion = "17",
-                    Os = "linux",
-                },
-                new()
-                {
-                    File = "graalvm-jdk-17_linux-x64_bin.tar.gz",
-                    Name = "17_Linux_x64",
-                    Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_linux-x64_bin.tar.gz",
-                    Arch = "x64",
-                    MainVersion = "17",
-                    Os = "linux",
-                },
-                new()
-                {
-                    File = "graalvm-jdk-17_windows-x64_bin.zip",
-                    Name = "17_Windows_x64",
-                    Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_windows-x64_bin.zip",
-                    Arch = "x64",
-                    MainVersion = "17",
-                    Os = "windows",
-                },
+                File = "graalvm-jdk-17_macos-aarch64_bin.tar.gz",
+                Name = "17_macOS_ARM",
+                Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_macos-aarch64_bin.tar.gz",
+                Arch = "aarch64",
+                MainVersion = "17",
+                Os = "macos",
+            },
+            new()
+            {
+                File = "graalvm-jdk-17_macos-x64_bin.tar.gz",
+                Name = "17_macOS_x64",
+                Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_macos-x64_bin.tar.gz",
+                Arch = "x64",
+                MainVersion = "17",
+                Os = "macos",
+            },
+            new()
+            {
+                File = "graalvm-jdk-17_linux-aarch64_bin.tar.gz",
+                Name = "17_Linux_ARM",
+                Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_linux-aarch64_bin.tar.gz",
+                Arch = "aarch64",
+                MainVersion = "17",
+                Os = "linux",
+            },
+            new()
+            {
+                File = "graalvm-jdk-17_linux-x64_bin.tar.gz",
+                Name = "17_Linux_x64",
+                Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_linux-x64_bin.tar.gz",
+                Arch = "x64",
+                MainVersion = "17",
+                Os = "linux",
+            },
+            new()
+            {
+                File = "graalvm-jdk-17_windows-x64_bin.zip",
+                Name = "17_Windows_x64",
+                Url = "https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_windows-x64_bin.zip",
+                Arch = "x64",
+                MainVersion = "17",
+                Os = "windows",
+            },
 
-                new()
-                {
-                    File = "graalvm-jdk-21_macos-aarch64_bin.tar.gz",
-                    Name = "21_macOS_ARM",
-                    Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_macos-aarch64_bin.tar.gz",
-                    Arch = "aarch64",
-                    MainVersion = "21",
-                    Os = "macos",
-                },
-                new()
-                {
-                    File = "graalvm-jdk-21_macos-x64_bin.tar.gz",
-                    Name = "21_macOS_x64",
-                    Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_macos-x64_bin.tar.gz",
-                    Arch = "x64",
-                    MainVersion = "21",
-                    Os = "macos",
-                },
-                new()
-                {
-                    File = "graalvm-jdk-21_linux-aarch64_bin.tar.gz",
-                    Name = "21_Linux_ARM",
-                    Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-aarch64_bin.tar.gz",
-                    Arch = "aarch64",
-                    MainVersion = "21",
-                    Os = "linux",
-                },
-                new()
-                {
-                    File = "graalvm-jdk-21_linux-x64_bin.tar.gz",
-                    Name = "21_Linux_x64",
-                    Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-x64_bin.tar.gz",
-                    Arch = "x64",
-                    MainVersion = "21",
-                    Os = "linux",
-                },
-                new()
-                {
-                    File = "graalvm-jdk-21_windows-x64_bin.zip",
-                    Name = "21_Windows_x64",
-                    Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_windows-x64_bin.zip",
-                    Arch = "x64",
-                    MainVersion = "21",
-                    Os = "windows",
-                }
-            };
+            new()
+            {
+                File = "graalvm-jdk-21_macos-aarch64_bin.tar.gz",
+                Name = "21_macOS_ARM",
+                Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_macos-aarch64_bin.tar.gz",
+                Arch = "aarch64",
+                MainVersion = "21",
+                Os = "macos",
+            },
+            new()
+            {
+                File = "graalvm-jdk-21_macos-x64_bin.tar.gz",
+                Name = "21_macOS_x64",
+                Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_macos-x64_bin.tar.gz",
+                Arch = "x64",
+                MainVersion = "21",
+                Os = "macos",
+            },
+            new()
+            {
+                File = "graalvm-jdk-21_linux-aarch64_bin.tar.gz",
+                Name = "21_Linux_ARM",
+                Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-aarch64_bin.tar.gz",
+                Arch = "aarch64",
+                MainVersion = "21",
+                Os = "linux",
+            },
+            new()
+            {
+                File = "graalvm-jdk-21_linux-x64_bin.tar.gz",
+                Name = "21_Linux_x64",
+                Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-x64_bin.tar.gz",
+                Arch = "x64",
+                MainVersion = "21",
+                Os = "linux",
+            },
+            new()
+            {
+                File = "graalvm-jdk-21_windows-x64_bin.zip",
+                Name = "21_Windows_x64",
+                Url = "https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_windows-x64_bin.zip",
+                Arch = "x64",
+                MainVersion = "21",
+                Os = "windows",
+            }
+        ];
     }
 
     private static string ToStr(List<int> list)
@@ -1094,21 +1231,20 @@ public static class WebBinding
         return a[..^1];
     }
 
-    private static async Task<(bool, List<string>? Arch, List<JavaDownloadObj>?)>
-        GetAdoptiumList(int mainversion, int os)
+    private static async Task<GetJavaAdoptiumListRes> GetAdoptiumList(int mainversion, int os)
     {
         try
         {
             var versions = await AdoptiumApi.GetJavaVersion();
             if (versions == null)
             {
-                return (false, null, null);
+                return new();
             }
             var version = versions[mainversion];
             var list = await AdoptiumApi.GetJavaList(version, os);
             if (list == null)
             {
-                return (false, null, null);
+                return new();
             }
 
             var arch = new List<string>
@@ -1120,7 +1256,7 @@ public static class WebBinding
                           orderby newGroup.Key descending
                           select newGroup.Key);
 
-            var list3 = new List<JavaDownloadObj>();
+            var list3 = new List<JavaDownloadModel>();
             foreach (var item in list)
             {
                 if (item.binary.image_type == "debugimage")
@@ -1139,16 +1275,21 @@ public static class WebBinding
                 });
             }
 
-            return (true, arch, list3);
+            return new()
+            {
+                Res = true,
+                Arch = arch,
+                Download = list3
+            };
         }
         catch (Exception e)
         {
-            App.ShowError(App.Lang("Gui.Error46"), e);
-            return (false, null, null);
+            WindowManager.ShowError(App.Lang("WebBinding.Error2"), e);
+            return new();
         }
     }
 
-    private static void AddDragonwell(List<JavaDownloadObj> list, DragonwellObj.Item item)
+    private static void AddDragonwell(List<JavaDownloadModel> list, DragonwellObj.Item item)
     {
         string main = "8";
         string version = item.version8;
@@ -1341,7 +1482,7 @@ public static class WebBinding
         }
     }
 
-    private static async Task<List<JavaDownloadObj>?> GetDragonwellList()
+    private static async Task<List<JavaDownloadModel>?> GetDragonwellList()
     {
         try
         {
@@ -1351,7 +1492,7 @@ public static class WebBinding
                 return null;
             }
 
-            var list1 = new List<JavaDownloadObj>();
+            var list1 = new List<JavaDownloadModel>();
 
             AddDragonwell(list1, list.extended);
             AddDragonwell(list1, list.standard);
@@ -1360,24 +1501,23 @@ public static class WebBinding
         }
         catch (Exception e)
         {
-            App.ShowError(App.Lang("Gui.Error46"), e);
+            WindowManager.ShowError(App.Lang("WebBinding.Error2"), e);
             return null;
         }
     }
 
-    private static async Task<(bool ok, List<string>? Arch, List<string>? Os,
-        List<string>? MainVersion, List<JavaDownloadObj>?)> GetOpenJ9List()
+    private static async Task<GetJavaListRes> GetOpenJ9List()
     {
         try
         {
-            var (Arch, Os, MainVersion, Data) = await OpenJ9Api.GetJavaList();
-            if (Os == null)
+            var res = await OpenJ9Api.GetJavaList();
+            if (res == null)
             {
-                return (false, null, null, null, null);
+                return new();
             }
-            var list1 = new List<JavaDownloadObj>();
+            var list1 = new List<JavaDownloadModel>();
 
-            foreach (var item in Data!)
+            foreach (var item in res.Download!)
             {
                 var temp = item.name.Split("<br>");
                 if (temp.Length != 3)
@@ -1413,20 +1553,27 @@ public static class WebBinding
                     });
             }
 
-            return (true, Arch, Os, MainVersion, list1);
+            return new()
+            {
+                Res = true,
+                Arch = res.Arch,
+                Os = res.Os,
+                MainVersion = res.MainVersion,
+                Download = list1
+            };
         }
         catch (Exception e)
         {
-            App.ShowError(App.Lang("Gui.Error46"), e);
-            return (false, null, null, null, null);
+            WindowManager.ShowError(App.Lang("WebBinding.Error2"), e);
+            return new();
         }
     }
 
-    private static async Task<List<JavaDownloadObj>?> GetPojavLauncherTeamList()
+    private static async Task<List<JavaDownloadModel>?> GetPojavLauncherTeamList()
     {
         try
         {
-            var list = new List<JavaDownloadObj>();
+            var list = new List<JavaDownloadModel>();
             var res = await ColorMCAPI.GetJavaList();
             if (res == null)
             {
@@ -1486,11 +1633,20 @@ public static class WebBinding
         }
     }
 
+    /// <summary>
+    /// 获取Java类型
+    /// </summary>
+    /// <returns></returns>
     public static List<string> GetJavaType()
     {
         return SystemInfo.Os == OsType.Android ? PhoneJavaType : PCJavaType;
     }
 
+    /// <summary>
+    /// 打开注册网页
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="name"></param>
     public static void OpenRegister(AuthType type, string? name)
     {
         switch (type)
@@ -1504,6 +1660,23 @@ public static class WebBinding
             case AuthType.LittleSkin:
                 BaseBinding.OpUrl("https://littleskin.cn/auth/register");
                 break;
+        }
+    }
+
+    /// <summary>
+    /// 获取Minecraft News
+    /// </summary>
+    /// <returns></returns>
+    public static async Task<MinecraftNewObj?> LoadNews(int page)
+    {
+        try
+        {
+            return await MinecraftAPI.GetMinecraftNew(page);
+        }
+        catch (Exception e)
+        {
+            Logs.Error(App.Lang("WebBinding.Error3"), e);
+            return null;
         }
     }
 }

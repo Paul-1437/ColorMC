@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model.GameEdit;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
@@ -26,7 +27,7 @@ public class GameEditFlyout1
 
         _ = new FlyoutsControl(
         [
-            (App.Lang("GameEditWindow.Flyouts1.Text1"), true, () =>
+            (App.Lang("GameEditWindow.Flyouts.Text1"), true, () =>
             {
                 if (single)
                 {
@@ -40,7 +41,7 @@ public class GameEditFlyout1
                     }
                 }
             }),
-            (App.Lang("GameEditWindow.Flyouts1.Text2"), true, ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text2"), true, ()=>
             {
                 if (single)
                 {
@@ -53,12 +54,12 @@ public class GameEditFlyout1
             }),
             (App.Lang("Button.OpFile"), single, ()=>
             {
-                PathBinding.OpFile(obj.Local);
+                PathBinding.OpenFileWithExplorer(obj.Local);
             }),
-            (App.Lang("GameEditWindow.Flyouts1.Text6"), true, async ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text6"), true, async ()=>
             {
                 var list = new List<IStorageFile>();
-                if (App.TopLevel is { } top)
+                if (TopLevel.GetTopLevel(con) is { } top)
                 {
                     foreach (var item in mods)
                     {
@@ -68,23 +69,23 @@ public class GameEditFlyout1
 
                         list.Add(data);
                     }
-                    await BaseBinding.CopyFileClipboard(list);
+                    await BaseBinding.CopyFileClipboard(top, list);
                 }
             }),
-            (App.Lang("GameEditWindow.Flyouts1.Text3"), single, ()=>
+            (App.Lang("GameEditWindow.Flyouts.Text3"), single, ()=>
             {
                 WebBinding.OpenMcmod(obj);
             }),
-            (App.Lang("GameEditWindow.Flyouts1.Text4"), single
+            (App.Lang("GameEditWindow.Flyouts.Text4"), single
                 && !string.IsNullOrWhiteSpace(obj?.Url), ()=>
                 {
                     BaseBinding.OpUrl(obj!.Url);
                 }),
-            (App.Lang("GameEditWindow.Flyouts1.Text5"), single
+            (App.Lang("GameEditWindow.Flyouts.Text5"), single
                 && !string.IsNullOrWhiteSpace(obj?.PID)
                 && !string.IsNullOrWhiteSpace(obj?.FID), ()=>
                 {
-                    App.ShowAdd(obj!.Obj.Game, obj);
+                    WindowManager.ShowAdd(obj!.Obj.Game, obj);
                 }),
         ], con);
     }

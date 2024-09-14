@@ -6,287 +6,23 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.Skin"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
-    xmlns:view2="clr-namespace:ColorMC.Gui.UI.Controls.Skin"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
+    xmlns:view2="clr-namespace:ColorMC.Gui.UI.Controls.Skin.OpenGL"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="model:SkinModel"
     mc:Ignorable="d">
-    <Grid Margin="5" ColumnDefinitions="4*,1.5*">
-        <Panel Grid.Column="0">
-            <Border
-                Padding="{setting:Style BorderPadding1}"
-                Background="{setting:Colors GroupBack}"
-                BorderBrush="{setting:Colors GroupColor}"
-                BorderThickness="2"
-                CornerRadius="{setting:Style ButtonCornerRadius}">
-                <Panel>
-                    <view2:SkinRender Name="Skin" />
-                    <Grid
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        ColumnDefinitions="*,*,*"
-                        RowDefinitions="*,*,*">
-                        <RepeatButton
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Move}"
-                            CommandParameter="{x:Static arg:MoveType.LeftUp}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↖" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Move}"
-                            CommandParameter="{x:Static arg:MoveType.Up}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↑" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="0"
-                            Grid.Column="2"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Move}"
-                            CommandParameter="{x:Static arg:MoveType.RightUp}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↗" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Move}"
-                            CommandParameter="{x:Static arg:MoveType.Left}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="←" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="1"
-                            Grid.Column="2"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Move}"
-                            CommandParameter="{x:Static arg:MoveType.Right}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="→" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="3"
-                            Grid.Column="0"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Move}"
-                            CommandParameter="{x:Static arg:MoveType.LeftDown}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↙" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="3"
-                            Grid.Column="1"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Move}"
-                            CommandParameter="{x:Static arg:MoveType.Down}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↓" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="3"
-                            Grid.Column="2"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Move}"
-                            CommandParameter="{x:Static arg:MoveType.RightDown}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↘" />
-                        </RepeatButton>
-                    </Grid>
-                    <Grid
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
-                        ColumnDefinitions="*,*,*"
-                        RowDefinitions="*,*,*">
-                        <RepeatButton
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Rot}"
-                            CommandParameter="{x:Static arg:MoveType.LeftUp}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↖" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Rot}"
-                            CommandParameter="{x:Static arg:MoveType.Up}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↑" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="0"
-                            Grid.Column="2"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Rot}"
-                            CommandParameter="{x:Static arg:MoveType.RightUp}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↗" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="1"
-                            Grid.Column="0"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Rot}"
-                            CommandParameter="{x:Static arg:MoveType.Left}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="←" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="1"
-                            Grid.Column="2"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Rot}"
-                            CommandParameter="{x:Static arg:MoveType.Right}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="→" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="3"
-                            Grid.Column="0"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Rot}"
-                            CommandParameter="{x:Static arg:MoveType.LeftDown}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↙" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="3"
-                            Grid.Column="1"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Rot}"
-                            CommandParameter="{x:Static arg:MoveType.Down}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↓" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Grid.Row="3"
-                            Grid.Column="2"
-                            Width="40"
-                            Height="40"
-                            Background="Transparent"
-                            Command="{Binding Rot}"
-                            CommandParameter="{x:Static arg:MoveType.RightDown}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↘" />
-                        </RepeatButton>
-                    </Grid>
-                    <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <RepeatButton
-                            Width="40"
-                            Height="40"
-                            HorizontalAlignment="Center"
-                            Background="Transparent"
-                            Command="{Binding Scoll}"
-                            CommandParameter="{x:Static arg:MoveType.Up}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↑" />
-                        </RepeatButton>
-                        <RepeatButton
-                            Width="40"
-                            Height="40"
-                            HorizontalAlignment="Center"
-                            Background="Transparent"
-                            Command="{Binding Scoll}"
-                            CommandParameter="{x:Static arg:MoveType.Down}"
-                            Delay="100"
-                            Interval="20">
-                            <TextBlock Foreground="{setting:Colors Button}" Text="↓" />
-                        </RepeatButton>
-                    </StackPanel>
-                    <StackPanel VerticalAlignment="Bottom">
-                        <TextBlock
-                            Margin="2"
-                            HorizontalAlignment="Left"
-                            Foreground="{setting:Colors Button}"
-                            Text="{Binding NowFps}" />
-                        <TextBlock
-                            Margin="2"
-                            Foreground="{setting:Colors Button}"
-                            Text="{Binding Info}"
-                            TextWrapping="Wrap" />
-                    </StackPanel>
-
-                    <Panel Background="{setting:Colors Bottom1}" IsVisible="{Binding !HaveSkin, FallbackValue=false}">
-                        <TextBlock
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontSize="20"
-                            Foreground="{setting:Colors Font}"
-                            Text="{Binding Text}" />
-                    </Panel>
-                </Panel>
-            </Border>
-        </Panel>
+    <DockPanel Margin="10,0,10,10">
         <Border
             Grid.Column="1"
-            Margin="5,0,0,0"
-            Padding="{setting:Style BorderPadding}"
-            Background="{setting:Colors GroupBack}"
-            BorderBrush="{setting:Colors GroupColor}"
-            BorderThickness="2"
-            CornerRadius="{setting:Style ButtonCornerRadius}">
-            <ScrollViewer>
-                <StackPanel Background="{setting:Colors TranBack}">
+            Margin="10"
+            Classes="t2"
+            DockPanel.Dock="Right">
+            <ScrollViewer Margin="15">
+                <StackPanel>
                     <UniformGrid>
                         <Button
-                            Height="30"
+                            Height="35"
                             Margin="-2,0,0,0"
                             HorizontalAlignment="Stretch"
                             Classes="top"
@@ -296,15 +32,16 @@
                             ToolTip.VerticalOffset="-30" />
                         <Button
                             Name="Button2"
-                            Height="30"
+                            Height="35"
                             Margin="0,0,-2,0"
                             HorizontalAlignment="Stretch"
                             Classes="top"
                             Content="{setting:Localize SkinWindow.Text1}"
+                            IsEnabled="{Binding HaveSkin}"
                             ToolTip.Tip="{setting:Localize ToolTip.Text15}"
                             ToolTip.VerticalOffset="-30" />
                         <Button
-                            Height="30"
+                            Height="35"
                             Margin="-2,0,0,0"
                             HorizontalAlignment="Stretch"
                             Classes="top"
@@ -313,7 +50,7 @@
                             ToolTip.Tip="{setting:Localize ToolTip.Text16}"
                             ToolTip.VerticalOffset="-30" />
                         <Button
-                            Height="30"
+                            Height="35"
                             Margin="0,0,-2,0"
                             HorizontalAlignment="Stretch"
                             Classes="top"
@@ -323,64 +60,322 @@
                             ToolTip.Tip="{setting:Localize ToolTip.Text17}"
                             ToolTip.VerticalOffset="-30" />
                     </UniformGrid>
-                    <ComboBox
-                        Margin="0,5,0,0"
-                        HorizontalAlignment="Stretch"
-                        ItemsSource="{Binding SkinTypeList}"
-                        SelectedIndex="{Binding Type}" />
-                    <ToggleSwitch
-                        Margin="0,0,0,-5"
-                        IsChecked="{Binding EnableTop}"
-                        OffContent="{setting:Localize SkinWindow.Text5}"
-                        OnContent="{setting:Localize SkinWindow.Text5}" />
-                    <ToggleSwitch
-                        Margin="0,0,0,-5"
-                        IsChecked="{Binding EnableCape}"
-                        OffContent="{setting:Localize SkinWindow.Text6}"
-                        OnContent="{setting:Localize SkinWindow.Text6}" />
-                    <ToggleSwitch
-                        Margin="0,0,0,-5"
-                        IsChecked="{Binding EnableAnimation}"
-                        OffContent="{setting:Localize SkinWindow.Text7}"
-                        OnContent="{setting:Localize SkinWindow.Text7}" />
-                    <ToggleSwitch
-                        Margin="0,0,0,-5"
-                        IsChecked="{Binding EnableMSAA}"
-                        OffContent="{setting:Localize SkinWindow.Text9}"
-                        OnContent="{setting:Localize SkinWindow.Text9}" />
-                    <ComboBox
-                        Margin="0,5,0,0"
-                        HorizontalAlignment="Stretch"
-                        ItemsSource="{Binding SkinRotateList}"
-                        SelectedIndex="{Binding RotateType}" />
-                    <Slider
-                        Margin="0,-10,0,-10"
-                        Maximum="360"
-                        Minimum="{Binding MinX}"
-                        Value="{Binding RotateX}" />
-                    <Slider
-                        Margin="0,-10,0,-10"
-                        Maximum="360"
-                        Minimum="{Binding MinY}"
-                        Value="{Binding RotateY}" />
-                    <Slider
-                        Margin="0,-10,0,-10"
-                        IsEnabled="{Binding EnableZ}"
-                        Maximum="360"
-                        Minimum="{Binding MinZ}"
-                        Value="{Binding RotateZ}" />
-
-                    <Button
-                        Height="30"
-                        Margin="-2"
-                        HorizontalAlignment="Stretch"
-                        Classes="top"
-                        Command="{Binding Reset}"
-                        Content="{setting:Localize SkinWindow.Text8}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text18}"
-                        ToolTip.VerticalOffset="-30" />
+                    <StackPanel IsEnabled="{Binding HaveSkin}">
+                        <ComboBox
+                            Margin="0,5,0,0"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{Binding SkinTypeList}"
+                            SelectedIndex="{Binding Type}" />
+                        <ToggleSwitch
+                            Margin="0,0,0,-5"
+                            IsChecked="{Binding EnableTop}"
+                            OffContent="{setting:Localize SkinWindow.Text5}"
+                            OnContent="{setting:Localize SkinWindow.Text5}" />
+                        <ToggleSwitch
+                            Margin="0,0,0,-5"
+                            IsChecked="{Binding EnableCape}"
+                            OffContent="{setting:Localize SkinWindow.Text6}"
+                            OnContent="{setting:Localize SkinWindow.Text6}" />
+                        <ToggleSwitch
+                            Margin="0,0,0,-5"
+                            IsChecked="{Binding EnableAnimation}"
+                            OffContent="{setting:Localize SkinWindow.Text7}"
+                            OnContent="{setting:Localize SkinWindow.Text7}" />
+                        <ToggleSwitch
+                            Margin="0,0,0,-5"
+                            IsChecked="{Binding EnableMSAA}"
+                            OffContent="{setting:Localize SkinWindow.Text9}"
+                            OnContent="{setting:Localize SkinWindow.Text9}" />
+                        <StackPanel IsEnabled="{Binding !EnableAnimation}">
+                            <ComboBox
+                                Margin="0,5,0,0"
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding SkinRotateList}"
+                                SelectedIndex="{Binding RotateType}" />
+                            <Slider
+                                Margin="0,-10,0,-10"
+                                Maximum="360"
+                                Minimum="{Binding MinX}"
+                                Value="{Binding RotateX}" />
+                            <Slider
+                                Margin="0,-10,0,-10"
+                                Maximum="360"
+                                Minimum="{Binding MinY}"
+                                Value="{Binding RotateY}" />
+                            <Slider
+                                Margin="0,-10,0,-10"
+                                IsEnabled="{Binding EnableZ}"
+                                Maximum="360"
+                                Minimum="{Binding MinZ}"
+                                Value="{Binding RotateZ}" />
+                            <Button
+                                Height="35"
+                                Margin="-2"
+                                HorizontalAlignment="Stretch"
+                                Classes="top"
+                                Command="{Binding Reset}"
+                                Content="{setting:Localize SkinWindow.Text8}"
+                                ToolTip.Tip="{setting:Localize ToolTip.Text18}"
+                                ToolTip.VerticalOffset="-30" />
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </Border>
-    </Grid>
+        <Panel Margin="10,10,0,10">
+            <view2:SkinRender Name="Skin" IsVisible="{Binding HaveSkin}" />
+            <Grid
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                ColumnDefinitions="*,*,*"
+                IsVisible="{Binding HaveSkin}"
+                RowDefinitions="*,*,*">
+                <RepeatButton
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Move}"
+                    CommandParameter="{x:Static arg:MoveType.LeftUp}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↖" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Move}"
+                    CommandParameter="{x:Static arg:MoveType.Up}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↑" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Move}"
+                    CommandParameter="{x:Static arg:MoveType.RightUp}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↗" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Move}"
+                    CommandParameter="{x:Static arg:MoveType.Left}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="←" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Move}"
+                    CommandParameter="{x:Static arg:MoveType.Right}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="→" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="3"
+                    Grid.Column="0"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Move}"
+                    CommandParameter="{x:Static arg:MoveType.LeftDown}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↙" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Move}"
+                    CommandParameter="{x:Static arg:MoveType.Down}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↓" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="3"
+                    Grid.Column="2"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Move}"
+                    CommandParameter="{x:Static arg:MoveType.RightDown}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↘" />
+                </RepeatButton>
+            </Grid>
+            <Grid
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                ColumnDefinitions="*,*,*"
+                IsVisible="{Binding HaveSkin}"
+                RowDefinitions="*,*,*">
+                <RepeatButton
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Rot}"
+                    CommandParameter="{x:Static arg:MoveType.LeftUp}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↖" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Rot}"
+                    CommandParameter="{x:Static arg:MoveType.Up}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↑" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Rot}"
+                    CommandParameter="{x:Static arg:MoveType.RightUp}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↗" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Rot}"
+                    CommandParameter="{x:Static arg:MoveType.Left}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="←" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Rot}"
+                    CommandParameter="{x:Static arg:MoveType.Right}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="→" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="3"
+                    Grid.Column="0"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Rot}"
+                    CommandParameter="{x:Static arg:MoveType.LeftDown}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↙" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Rot}"
+                    CommandParameter="{x:Static arg:MoveType.Down}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↓" />
+                </RepeatButton>
+                <RepeatButton
+                    Grid.Row="3"
+                    Grid.Column="2"
+                    Width="40"
+                    Height="40"
+                    Background="Transparent"
+                    Command="{Binding Rot}"
+                    CommandParameter="{x:Static arg:MoveType.RightDown}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↘" />
+                </RepeatButton>
+            </Grid>
+            <StackPanel
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                IsVisible="{Binding HaveSkin}">
+                <RepeatButton
+                    Width="40"
+                    Height="40"
+                    HorizontalAlignment="Center"
+                    Background="Transparent"
+                    Command="{Binding Scoll}"
+                    CommandParameter="{x:Static arg:MoveType.Up}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↑" />
+                </RepeatButton>
+                <RepeatButton
+                    Width="40"
+                    Height="40"
+                    HorizontalAlignment="Center"
+                    Background="Transparent"
+                    Command="{Binding Scoll}"
+                    CommandParameter="{x:Static arg:MoveType.Down}"
+                    Delay="100"
+                    Interval="20">
+                    <TextBlock Text="↓" />
+                </RepeatButton>
+            </StackPanel>
+            <StackPanel VerticalAlignment="Bottom" IsVisible="{Binding HaveSkin}">
+                <TextBlock
+                    Margin="2"
+                    HorizontalAlignment="Left"
+                    Text="{Binding NowFps}" />
+                <TextBlock
+                    Margin="2"
+                    Text="{Binding Info}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Border Classes="t2" IsVisible="{Binding !HaveSkin, FallbackValue=true}">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="20"
+                    Foreground="{setting:Theme FontColor}"
+                    Text="{Binding Text}" />
+            </Border>
+        </Panel>
+    </DockPanel>
 </UserControl>

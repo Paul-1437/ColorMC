@@ -1,25 +1,20 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using ColorMC.Core.Objs;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.Add;
-using ColorMC.Gui.UI.Windows;
+using ColorMC.Gui.UI.Model.Items;
 
 namespace ColorMC.Gui.UI.Controls.Add;
 
-public partial class AddControl : UserControl, IUserControl
+public partial class AddControl : BaseUserControl
 {
     private readonly GameSettingObj _obj;
-
-    public IBaseWindow Window => App.FindRoot(VisualRoot);
-
-    public string Title => string.Format(App.Lang("AddWindow.Title"), _obj.Name);
-
-    public string UseName { get; }
 
     public AddControl()
     {
@@ -28,43 +23,65 @@ public partial class AddControl : UserControl, IUserControl
 
     public AddControl(GameSettingObj obj) : this()
     {
-        UseName = (ToString() ?? "GameSettingObj") + ":" + obj.UUID;
-
         _obj = obj;
 
-        VersionFiles.DoubleTapped += VersionFiles_DoubleTapped;
-        OptifineFiles.DoubleTapped += OptifineFiles_DoubleTapped;
-        ModDownloadFiles.DoubleTapped += ModDownloadFiles_DoubleTapped;
+        Title = string.Format(App.Lang("AddWindow.Title"), obj.Name);
+        UseName = (ToString() ?? "GameSettingObj") + ":" + obj.UUID;
 
         VersionDisplay.PointerPressed += VersionDisplay_PointerPressed;
         OptifineDisplay.PointerPressed += OptifineDisplay_PointerPressed;
         ModDownloadDisplay.PointerPressed += ModDownloadDisplay_PointerPressed;
-
-        ScrollViewer1.PointerWheelChanged += ScrollViewer1_PointerWheelChanged;
     }
 
-    private void ScrollViewer1_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
-    {
-        if (DataContext is AddControlModel model)
-        {
-            model.Wheel(e.Delta.Y);
-        }
-    }
-
-    public void SetBaseModel(BaseModel model)
+    public override TopModel GenModel(BaseModel model)
     {
         var amodel = new AddControlModel(model, _obj);
         amodel.PropertyChanged += Model_PropertyChanged;
-
-        DataContext = amodel;
+        return amodel;
     }
 
-    public void OnKeyDown(object? sender, KeyEventArgs e)
+    public override Task<bool> OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.F5)
         {
             (DataContext as AddControlModel)!.Reload();
+
+            return Task.FromResult(true);
         }
+
+        return Task.FromResult(false);
+    }
+    public override Bitmap GetIcon()
+    {
+        var icon = ImageManager.GetGameIcon(_obj);
+        return icon ?? ImageManager.GameIcon;
+    }
+
+    public override void Closed()
+    {
+        WindowManager.AddWindows.Remove(_obj.UUID);
+    }
+
+    public override void Opened()
+    {
+        Window.SetTitle(Title);
+
+        (DataContext as AddControlModel)!.Display = true;
+    }
+
+    public async Task GoSet()
+    {
+        await (DataContext as AddControlModel)!.GoSet();
+    }
+
+    public void GoTo(FileType type)
+    {
+        (DataContext as AddControlModel)?.GoTo(type);
+    }
+
+    public void GoFile(SourceType type, string pid)
+    {
+        (DataContext as AddControlModel)!.GoFile(type, pid);
     }
 
     private void Model_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -76,11 +93,13 @@ public partial class AddControl : UserControl, IUserControl
             {
                 if (model.OptifineDisplay == true)
                 {
-                    App.CrossFade300.Start(null, OptifineDisplay);
+                    ThemeManager.CrossFade300.Start(null, OptifineDisplay);
+                    ThemeManager.CrossFade300.Start(ScrollViewer1, null);
                 }
                 else
                 {
-                    App.CrossFade300.Start(OptifineDisplay, null);
+                    ThemeManager.CrossFade300.Start(OptifineDisplay, null);
+                    ThemeManager.CrossFade300.Start(null, ScrollViewer1);
                 }
             });
         }
@@ -90,11 +109,13 @@ public partial class AddControl : UserControl, IUserControl
             {
                 if (model.ModDownloadDisplay == true)
                 {
-                    App.CrossFade300.Start(null, ModDownloadDisplay);
+                    ThemeManager.CrossFade300.Start(null, ModDownloadDisplay);
+                    ThemeManager.CrossFade300.Start(ScrollViewer1, null);
                 }
                 else
                 {
-                    App.CrossFade300.Start(ModDownloadDisplay, null);
+                    ThemeManager.CrossFade300.Start(ModDownloadDisplay, null);
+                    ThemeManager.CrossFade300.Start(null, ScrollViewer1);
                 }
             });
         }
@@ -104,21 +125,19 @@ public partial class AddControl : UserControl, IUserControl
             {
                 if (model.VersionDisplay == true)
                 {
-                    App.CrossFade300.Start(null, VersionDisplay);
+                    ThemeManager.CrossFade300.Start(null, VersionDisplay);
+                    ThemeManager.CrossFade300.Start(ScrollViewer1, null);
                 }
                 else
                 {
-                    App.CrossFade300.Start(VersionDisplay, null);
+                    ThemeManager.CrossFade300.Start(VersionDisplay, null);
+                    ThemeManager.CrossFade300.Start(null, ScrollViewer1);
                 }
             });
         }
         else if (e.PropertyName == "ScrollToHome")
         {
             ScrollViewer1.ScrollToHome();
-        }
-        else if (e.PropertyName == "WindowClose")
-        {
-            Window.Close();
         }
     }
 
@@ -149,49 +168,9 @@ public partial class AddControl : UserControl, IUserControl
             e.Handled = true;
         }
     }
-    private void ModDownloadFiles_DoubleTapped(object? sender, TappedEventArgs e)
-    {
-        var item = (DataContext as AddControlModel)!.Mod;
-        if (item != null)
-        {
-            item.Download = !item.Download;
-        }
-    }
 
-    private async void OptifineFiles_DoubleTapped(object? sender, TappedEventArgs e)
+    public void GoUpgrade(ICollection<ModUpgradeModel> list)
     {
-        await (DataContext as AddControlModel)!.DownloadOptifine();
-    }
-
-    private async void VersionFiles_DoubleTapped(object? sender, RoutedEventArgs e)
-    {
-        await (DataContext as AddControlModel)!.GoFile();
-    }
-
-    public void Closed()
-    {
-        App.AddWindows.Remove(_obj.UUID);
-    }
-
-    public void GoFile(SourceType type, string pid)
-    {
-        (DataContext as AddControlModel)!.GoFile(type, pid);
-    }
-
-    public void Opened()
-    {
-        Window.SetTitle(Title);
-
-        (DataContext as AddControlModel)!.Display = true;
-    }
-
-    public async Task GoSet()
-    {
-        await (DataContext as AddControlModel)!.GoSet();
-    }
-
-    public void GoTo(FileType type)
-    {
-        (DataContext as AddControlModel)?.GoTo(type);
+        (DataContext as AddControlModel)!.Upgrade(list);
     }
 }

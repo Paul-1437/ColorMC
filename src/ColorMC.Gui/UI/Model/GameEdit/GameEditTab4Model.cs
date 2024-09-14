@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -53,67 +55,13 @@ public partial class GameEditModel
     [RelayCommand]
     public void AddMod()
     {
-        App.ShowAdd(_obj, FileType.Mod);
+        WindowManager.ShowAdd(_obj, FileType.Mod);
     }
 
     [RelayCommand]
     public void OpenMod()
     {
-        PathBinding.OpPath(_obj, PathType.ModPath);
-    }
-
-    [RelayCommand]
-    public async Task StartSetMod()
-    {
-        if (_isModSet)
-            return;
-
-        _isModSet = true;
-        await App.ShowAddSet(_obj);
-        _isModSet = false;
-    }
-
-    [RelayCommand]
-    public async Task ImportMod()
-    {
-        var file = await PathBinding.AddFile(_obj, FileType.Mod);
-
-        if (file == null)
-            return;
-
-        if (file == false)
-        {
-            Model.Progress(App.Lang("GameEditWindow.Tab4.Error2"));
-            return;
-        }
-
-        Model.Notify(App.Lang("GameEditWindow.Tab4.Info2"));
-        await LoadMod();
-    }
-
-    [RelayCommand]
-    public async Task CheckMod()
-    {
-        Model.Progress(App.Lang("GameEditWindow.Tab4.Info10"));
-        var res = await WebBinding.CheckModUpdate(_obj, _modItems);
-        Model.ProgressClose();
-        if (res.Count > 0)
-        {
-            var res1 = await Model.ShowWait(string.Format(
-                App.Lang("GameEditWindow.Tab4.Info11"), res.Count));
-            if (res1)
-            {
-                Model.Progress(App.Lang("GameEditWindow.Tab4.Info12"));
-                await WebBinding.DownloadMod(_obj, res);
-                Model.ProgressClose();
-
-                await LoadMod();
-            }
-        }
-        else
-        {
-            Model.Show(App.Lang("GameEditWindow.Tab4.Info13"));
-        }
+        PathBinding.OpenPath(_obj, PathType.ModPath);
     }
 
     [RelayCommand]
@@ -158,8 +106,7 @@ public partial class GameEditModel
         LoadMod1();
     }
 
-    [RelayCommand]
-    public async Task DependTestMod()
+    private async void DependTestMod()
     {
         Model.Progress(App.Lang("GameEditWindow.Tab4.Info15"));
         var res = await GameBinding.ModCheck(_modItems);
@@ -168,6 +115,96 @@ public partial class GameEditModel
         {
             Model.Notify(App.Lang("GameEditWindow.Tab4.Info16"));
         }
+    }
+
+    public async void StartSetMod()
+    {
+        if (_isModSet)
+            return;
+
+        _isModSet = true;
+        await WindowManager.ShowAddSet(_obj);
+        _isModSet = false;
+    }
+
+    private async void StartAutoSetMod()
+    {
+        if (_isModSet)
+            return;
+
+        var res = await Model.ShowWait(App.Lang("GameEditWindow.Tab4.Info18"));
+
+        _isModSet = true;
+        Model.Progress(App.Lang("GameEditWindow.Tab4.Info19"));
+        var res1 = await GameBinding.AutoMarkMods(_obj, res);
+        Model.ProgressClose();
+        if (!res1.State)
+        {
+            Model.Show(string.Format(App.Lang("GameEditWindow.Tab4.Error4"), res1.Data));
+        }
+        else
+        {
+            Model.Show(string.Format(App.Lang("GameEditWindow.Tab4.Info20"), res1.Data));
+        }
+        _isModSet = false;
+    }
+
+    /// <summary>
+    /// 检查模组更新
+    /// </summary>
+    private async void CheckMod()
+    {
+        Model.Progress(App.Lang("GameEditWindow.Tab4.Info10"));
+        var res = await WebBinding.CheckModUpdate(_obj, _modItems);
+        Model.ProgressClose();
+        if (res.Count > 0)
+        {
+            var res1 = await Model.ShowWait(string.Format(
+                App.Lang("GameEditWindow.Tab4.Info11"), res.Count));
+            if (res1)
+            {
+                WebBinding.UpgradeMod(_obj, res);
+            }
+        }
+        else
+        {
+            Model.Show(App.Lang("GameEditWindow.Tab4.Info13"));
+        }
+    }
+
+    private async void ImportMod()
+    {
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var res = await PathBinding.AddFile(top, _obj, FileType.Schematic);
+
+        if (res == null)
+            return;
+
+        if (res == false)
+        {
+            Model.Show(App.Lang("GameEditWindow.Tab11.Error1"));
+            return;
+        }
+
+        Model.Show(App.Lang("GameEditWindow.Tab11.Info1"));
+        LoadSchematic();
+        var file = await PathBinding.AddFile(top, _obj, FileType.Mod);
+
+        if (file == null)
+            return;
+
+        if (file == false)
+        {
+            Model.Progress(App.Lang("GameEditWindow.Tab4.Error2"));
+            return;
+        }
+
+        Model.Notify(App.Lang("GameEditWindow.Tab4.Info2"));
+        await LoadMod();
     }
 
     public async void DropMod(IDataObject data)
@@ -223,14 +260,14 @@ public partial class GameEditModel
         {
             return;
         }
-        if (BaseBinding.IsGameRun(_obj))
+        if (GameManager.IsGameRun(_obj))
         {
             return;
         }
         var res = GameBinding.ModEnableDisable(item.Obj);
-        if (!res.Item1)
+        if (!res.State)
         {
-            Model.Show(res.Item2!);
+            Model.Show(res.Message!);
         }
         else
         {
@@ -276,13 +313,13 @@ public partial class GameEditModel
     private void DisplayMod(List<string> list)
     {
         ModList.Clear();
+        ModFilter = 3;
+        var builder = new StringBuilder();
         foreach (var item in list)
         {
-            var list1 = from item1 in _modItems
-                        where item1.Modid == item
-                        select item1;
-            ModList.AddRange(list1);
+            builder.Append(item).Append(',');
         }
+        ModText = builder.ToString();
     }
 
     private void LoadMod1()
@@ -295,35 +332,77 @@ public partial class GameEditModel
         else
         {
             string fil = ModText.ToLower();
+            var args = fil.Split(',').ToList();
+            ModList.Clear();
             switch (ModFilter)
             {
                 case 0:
-                    var list = from item in _modItems
-                               where item.Name.Contains(fil, StringComparison.OrdinalIgnoreCase)
-                               select item;
-                    ModList.Clear();
-                    ModList.AddRange(list);
+                    foreach (var item in _modItems)
+                    {
+                        foreach (var item1 in args)
+                        {
+                            if (string.IsNullOrWhiteSpace(item1))
+                            {
+                                continue;
+                            }
+                            if (item.Name.Contains(item1, StringComparison.OrdinalIgnoreCase))
+                            {
+                                ModList.Add(item);
+                                break;
+                            }
+                        }
+                    }
                     break;
                 case 1:
-                    list = from item in _modItems
-                           where item.Local.Contains(fil, StringComparison.OrdinalIgnoreCase)
-                           select item;
-                    ModList.Clear();
-                    ModList.AddRange(list);
+                    foreach (var item in _modItems)
+                    {
+                        foreach (var item1 in args)
+                        {
+                            if (string.IsNullOrWhiteSpace(item1))
+                            {
+                                continue;
+                            }
+                            if (item.Local.Contains(item1, StringComparison.OrdinalIgnoreCase))
+                            {
+                                ModList.Add(item);
+                                break;
+                            }
+                        }
+                    }
                     break;
                 case 2:
-                    list = from item in _modItems
-                           where item.Author.Contains(fil, StringComparison.OrdinalIgnoreCase)
-                           select item;
-                    ModList.Clear();
-                    ModList.AddRange(list);
+                    foreach (var item in _modItems)
+                    {
+                        foreach (var item1 in args)
+                        {
+                            if (string.IsNullOrWhiteSpace(item1))
+                            {
+                                continue;
+                            }
+                            if (item.Author.Contains(item1, StringComparison.OrdinalIgnoreCase))
+                            {
+                                ModList.Add(item);
+                                break;
+                            }
+                        }
+                    }
                     break;
                 case 3:
-                    list = from item in _modItems
-                           where item.Modid?.Contains(fil, StringComparison.OrdinalIgnoreCase) == true
-                           select item;
-                    ModList.Clear();
-                    ModList.AddRange(list);
+                    foreach (var item in _modItems)
+                    {
+                        foreach (var item1 in args)
+                        {
+                            if (string.IsNullOrWhiteSpace(item1))
+                            {
+                                continue;
+                            }
+                            if (item.Modid.Contains(item1, StringComparison.OrdinalIgnoreCase))
+                            {
+                                ModList.Add(item);
+                                break;
+                            }
+                        }
+                    }
                     break;
             }
         }

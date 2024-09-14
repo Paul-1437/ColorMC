@@ -40,14 +40,14 @@ public static class ForgeAPI
                     return s_neoSupportVersion;
                 }
                 string url = UrlHelper.ForgeVersion(local);
-                var data = await BaseClient.GetStringAsync(url);
-                if (data.Item1 == false)
+                var data = await WebClient.GetStringAsync(url);
+                if (data.State == false)
                 {
                     ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                         new Exception(url), false);
                     return null;
                 }
-                var obj = JsonConvert.DeserializeObject<List<string>>(data.Item2!);
+                var obj = JsonConvert.DeserializeObject<List<string>>(data.Message!);
                 if (obj == null)
                     return null;
 
@@ -91,8 +91,8 @@ public static class ForgeAPI
                 string url = neo
                     ? UrlHelper.NeoForgeVersions(mc, local, v222)
                     : UrlHelper.ForgeVersions(mc, local);
-                var data = await BaseClient.GetStringAsync(url);
-                if (data.Item1 == false)
+                var data = await WebClient.GetStringAsync(url);
+                if (data.State == false)
                 {
                     ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                         new Exception(url), false);
@@ -102,7 +102,7 @@ public static class ForgeAPI
 
                 if (neo)
                 {
-                    var obj = JsonConvert.DeserializeObject<List<NeoForgeVersionObj>>(data.Item2!);
+                    var obj = JsonConvert.DeserializeObject<List<NeoForgeVersionObj>>(data.Message!);
                     if (obj == null)
                         return null;
 
@@ -113,7 +113,7 @@ public static class ForgeAPI
                 }
                 else
                 {
-                    var obj = JsonConvert.DeserializeObject<List<ForgeVersionObj1>>(data.Item2!);
+                    var obj = JsonConvert.DeserializeObject<List<ForgeVersionObj1>>(data.Message!);
                     if (obj == null)
                         return null;
 
@@ -193,8 +193,8 @@ public static class ForgeAPI
     {
         var url = neo ? UrlHelper.NeoForgeVersions(mc, SourceLocal.Offical, false) :
                     UrlHelper.ForgeVersion(SourceLocal.Offical);
-        var html = await BaseClient.GetStringAsync(url);
-        if (html.Item1 == false)
+        var html = await WebClient.GetStringAsync(url);
+        if (html.State == false)
         {
             ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                 new Exception(url), false);
@@ -202,7 +202,7 @@ public static class ForgeAPI
         }
 
         var xml = new XmlDocument();
-        xml.LoadXml(html.Item2!);
+        xml.LoadXml(html.Message!);
 
         var list = new List<string>();
 
@@ -284,8 +284,8 @@ public static class ForgeAPI
         {
             url = UrlHelper.NeoForgeVersions(mc, SourceLocal.Offical, true);
 
-            html = await BaseClient.GetStringAsync(url);
-            if (html.Item1 == false)
+            html = await WebClient.GetStringAsync(url);
+            if (html.State == false)
             {
                 ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
@@ -293,7 +293,7 @@ public static class ForgeAPI
             }
 
             xml = new XmlDocument();
-            xml.LoadXml(html.Item2!);
+            xml.LoadXml(html.Message!);
 
             node = xml.SelectNodes("//metadata/versioning/versions/version");
             if (node?.Count > 0)
@@ -302,7 +302,7 @@ public static class ForgeAPI
                 {
                     var str = item.InnerText;
                     var args = str.Split('.');
-                    var mc1 = "1." + args[0] + "." + args[1];
+                    var mc1 = "1." + args[0] + (args[1] == "0" ? "" : "." + args[1]);
                     var version = str;
 
                     if (!s_neoSupportVersion!.Contains(mc1))
@@ -328,6 +328,4 @@ public static class ForgeAPI
             }
         }
     }
-
-
 }

@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Threading;
 using ColorMC.Gui.UI.Flyouts;
 using ColorMC.Gui.UI.Model.Setting;
@@ -11,8 +10,6 @@ public partial class Tab8Control : UserControl
     public Tab8Control()
     {
         InitializeComponent();
-
-        ScrollViewer1.PointerWheelChanged += ScrollViewer1_PointerWheelChanged;
 
         DataGrid1.CellPointerPressed += DataGrid1_CellPointerPressed;
         DataGrid2.CellPointerPressed += DataGrid2_CellPointerPressed;
@@ -38,14 +35,6 @@ public partial class Tab8Control : UserControl
         else
         {
             LongPressed.Pressed(() => Flyout1((sender as Control)!));
-        }
-    }
-
-    private void ScrollViewer1_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
-    {
-        if (DataContext is SettingModel model && model.NowView == 6)
-        {
-            model.WhellChange(e.Delta.Y);
         }
     }
 

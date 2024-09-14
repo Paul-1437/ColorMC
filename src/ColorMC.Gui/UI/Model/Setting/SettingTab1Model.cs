@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -30,10 +31,10 @@ public partial class SettingModel
             return;
         }
 
-        var path1 = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}/ColorMC/run";
+        var path1 = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/ColorMC/run";
         PathHelper.Delete(path1);
 
-        App.Reboot();
+        ColorMCGui.Reboot();
     }
 
     [RelayCommand]
@@ -45,22 +46,32 @@ public partial class SettingModel
             return;
         }
 
-        var path = await PathBinding.SelectPath(PathType.RunDir);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var path = await PathBinding.SelectPath(top, PathType.RunDir);
         if (path == null)
         {
             return;
         }
 
-        var path1 = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}/ColorMC/run";
+        var path1 = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/ColorMC/run";
         PathHelper.WriteText(path1, path);
 
-        App.Reboot();
+        ColorMCGui.Reboot();
     }
 
     [RelayCommand]
     public async Task Open1()
     {
-        var file = await PathBinding.SelectFile(FileType.Config);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Config);
         if (file.Item1 != null)
         {
             Local1 = file.Item1;
@@ -70,7 +81,12 @@ public partial class SettingModel
     [RelayCommand]
     public async Task Open2()
     {
-        var file = await PathBinding.SelectFile(FileType.AuthConfig);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.AuthConfig);
         if (file.Item1 != null)
         {
             Local2 = file.Item1;
@@ -80,7 +96,13 @@ public partial class SettingModel
     [RelayCommand]
     public async Task Open3()
     {
-        var file = await PathBinding.SelectFile(FileType.Config);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+
+        var file = await PathBinding.SelectFile(top, FileType.Config);
         if (file.Item1 != null)
         {
             Local3 = file.Item1;
@@ -90,7 +112,12 @@ public partial class SettingModel
     [RelayCommand]
     public async Task Open4()
     {
-        var file = await PathBinding.SelectFile(FileType.Config);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Config);
         if (file.Item1 != null)
         {
             Local4 = file.Item1;
@@ -121,7 +148,7 @@ public partial class SettingModel
         catch (Exception e1)
         {
             Model.Show(App.Lang("SettingWindow.Tab1.Error3"));
-            App.ShowError(App.Lang("SettingWindow.Tab1.Error3"), e1);
+            WindowManager.ShowError(App.Lang("SettingWindow.Tab1.Error3"), e1);
         }
         finally
         {
@@ -184,7 +211,7 @@ public partial class SettingModel
         catch (Exception e1)
         {
             Model.Show(App.Lang("SettingWindow.Tab1.Error3"));
-            App.ShowError(App.Lang("SettingWindow.Tab1.Error3"), e1);
+            WindowManager.ShowError(App.Lang("SettingWindow.Tab1.Error3"), e1);
         }
         finally
         {
@@ -216,7 +243,7 @@ public partial class SettingModel
         catch (Exception e1)
         {
             Model.Show(App.Lang("SettingWindow.Tab1.Error3"));
-            App.ShowError(App.Lang("SettingWindow.Tab1.Error3"), e1);
+            WindowManager.ShowError(App.Lang("SettingWindow.Tab1.Error3"), e1);
         }
         finally
         {
@@ -224,8 +251,7 @@ public partial class SettingModel
         }
     }
 
-    [RelayCommand]
-    public async Task Reset()
+    private async void Reset()
     {
         var res = await Model.ShowWait(App.Lang("SettingWindow.Tab1.Info1"));
         if (!res)
@@ -235,8 +261,7 @@ public partial class SettingModel
         Model.Notify(App.Lang("SettingWindow.Tab1.Info2"));
     }
 
-    [RelayCommand]
-    public async Task ClearUser()
+    private async void ClearUser()
     {
         var res = await Model.ShowWait(App.Lang("SettingWindow.Tab1.Info3"));
         if (!res)
@@ -246,9 +271,32 @@ public partial class SettingModel
         Model.Notify(App.Lang("SettingWindow.Tab1.Info4"));
     }
 
-    [RelayCommand]
-    public void Open()
+    private async void DumpUser()
     {
-        PathBinding.OpPath(PathType.BasePath);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var res = await PathBinding.SaveFile(top, FileType.User, null);
+        if (res == true)
+        {
+            Model.Notify(App.Lang("SettingWindow.Tab1.Info17"));
+        }
+    }
+
+    private void OpenDownloadPath()
+    {
+        PathBinding.OpenPath(PathType.DownloadPath);
+    }
+
+    private void Open()
+    {
+        PathBinding.OpenPath(PathType.BasePath);
+    }
+
+    private void OpenPicPath()
+    {
+        PathBinding.OpenPath(PathType.PicPath);
     }
 }

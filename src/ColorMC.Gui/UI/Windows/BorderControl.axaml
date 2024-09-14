@@ -1,0 +1,77 @@
+<UserControl
+    x:Class="ColorMC.Gui.UI.Windows.BorderControl"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Panel>
+        <Border Margin="5" BoxShadow="0 0 3 1 #1A000000, 0 0 5 -1 #FF000000" />
+        <Rectangle
+            Name="NorthWest"
+            Width="5"
+            Height="5"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Cursor="TopLeftCorner"
+            Fill="Transparent" />
+        <Rectangle
+            Name="North"
+            Height="5"
+            Margin="5,0,5,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Top"
+            Cursor="TopSide"
+            Fill="Transparent" />
+        <Rectangle
+            Name="NorthEast"
+            Width="5"
+            Height="5"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Cursor="TopRightCorner"
+            Fill="Transparent" />
+        <Rectangle
+            Name="West"
+            Width="5"
+            Margin="0,5,0,5"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Stretch"
+            Cursor="LeftSide"
+            Fill="Transparent" />
+        <Rectangle
+            Name="East"
+            Width="5"
+            Margin="0,5,0,5"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Stretch"
+            Cursor="RightSide"
+            Fill="Transparent" />
+        <Rectangle
+            Name="SouthWest"
+            Width="5"
+            Height="5"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            Cursor="BottomLeftCorner"
+            Fill="Transparent" />
+        <Rectangle
+            Name="South"
+            Height="5"
+            Margin="5,0,5,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Bottom"
+            Cursor="BottomSide"
+            Fill="Transparent" />
+        <Rectangle
+            Name="SouthEast"
+            Width="5"
+            Height="5"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            Cursor="BottomRightCorner"
+            Fill="Transparent" />
+    </Panel>
+</UserControl>

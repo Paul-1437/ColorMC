@@ -5,21 +5,21 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.GameCloud"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="model:GameCloudModel"
     mc:Ignorable="d">
-    <Panel Name="ScrollViewer1" Margin="5,0,5,5">
-        <Border Classes="t2">
-            <DockPanel>
+    <DockPanel Margin="0,0,10,15">
+        <Border Margin="10,5,10,3" Classes="t2">
+            <DockPanel Margin="15">
                 <StackPanel
                     HorizontalAlignment="Right"
                     DockPanel.Dock="Bottom"
                     Orientation="Horizontal">
                     <Button
                         Width="100"
-                        Height="25"
+                        Height="30"
                         Margin="0,0,5,0"
                         Command="{Binding MakeEnable}"
                         Content="{setting:Localize GameCloudWindow.Tab1.Text1}"
@@ -28,7 +28,8 @@
                         ToolTip.VerticalOffset="-30" />
                     <Button
                         Width="100"
-                        Height="25"
+                        Height="30"
+                        Margin="0,0,0,0"
                         Command="{Binding MakeDisable}"
                         Content="{setting:Localize GameCloudWindow.Tab1.Text3}"
                         IsEnabled="{Binding Enable}"
@@ -36,14 +37,16 @@
                         ToolTip.VerticalOffset="-30" />
                 </StackPanel>
                 <StackPanel IsEnabled="{Binding Enable}">
-                    <TextBlock Text="{setting:Localize GameCloudWindow.Tab1.Text2}" />
-                    <TextBox
-                        Margin="0,5,5,0"
-                        Classes="input1"
-                        IsEnabled="False"
-                        IsReadOnly="True"
-                        Text="{Binding UUID}" />
-                    <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                    <TextBlock
+                        Margin="0,0,0,10"
+                        FontSize="16"
+                        Text="{setting:Localize GameCloudWindow.Tab1.Text2}" />
+                    <TextBlock
+                        Margin="0,0,0,10"
+                        FontSize="16"
+                        Foreground="{setting:Theme MainColor}"
+                        Text="{Binding UUID, FallbackValue=UUID}" />
+                    <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
                         <TextBlock Margin="0,0,5,0" Text="{setting:Localize GameCloudWindow.Tab1.Text4}" />
                         <TextBlock Text="{Binding ConfigTime}" />
                     </StackPanel>
@@ -52,8 +55,7 @@
                         <TextBlock Text="{Binding LocalConfigTime}" />
                     </StackPanel>
                 </StackPanel>
-
             </DockPanel>
         </Border>
-    </Panel>
+    </DockPanel>
 </UserControl>

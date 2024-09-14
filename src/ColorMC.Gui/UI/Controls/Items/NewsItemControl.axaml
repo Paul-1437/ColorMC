@@ -1,0 +1,58 @@
+<UserControl
+    x:Class="ColorMC.Gui.UI.Controls.Items.NewsItemControl"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:app="clr-namespace:ColorMC.Gui.Manager"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.Items"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
+    x:DataType="model:NewsItemModel"
+    mc:Ignorable="d">
+    <Panel>
+        <Image
+            Width="230"
+            Height="230"
+            Source="{Binding Image^, FallbackValue={x:Static app:ImageManager.LoadIcon}}" />
+        <DockPanel VerticalAlignment="Bottom">
+            <Border
+                Name="Border1"
+                Width="230"
+                Padding="20"
+                Background="#B2000000"
+                DockPanel.Dock="Bottom">
+                <Panel>
+                    <StackPanel>
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            Foreground="White"
+                            Text="{Binding Title}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            Name="SubTitle"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Foreground="White"
+                            IsVisible="False"
+                            Text="{Binding SubTitle}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Panel>
+            </Border>
+            <TextBlock
+                Margin="0,0,0,-15"
+                Padding="5"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="White"
+                FontSize="16"
+                Foreground="Black"
+                Text="{Binding Category, FallbackValue=123}"
+                TextWrapping="Wrap" />
+        </DockPanel>
+    </Panel>
+</UserControl>

@@ -10,7 +10,6 @@ using ColorMC.Core.Game;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.LaunchPath;
 using ColorMC.Core.Objs;
-using ColorMC.Gui.Objs;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -29,18 +28,6 @@ public partial class GameExportModel : MenuModel
     private HierarchicalTreeDataGridSource<FileTreeNodeModel> _source;
 
     public string[] ExportTypes { get; init; } = LanguageBinding.GetExportName();
-
-    public override List<MenuObj> TabItems { get; init; } =
-    [
-        new() { Icon = "/Resource/Icon/GameExport/item1.svg",
-            Text = App.Lang("GameExportWindow.Tabs.Text1") },
-        new() { Icon = "/Resource/Icon/GameExport/item2.svg",
-            Text = App.Lang("GameExportWindow.Tabs.Text2") },
-        new() { Icon = "/Resource/Icon/GameExport/item3.svg",
-            Text = App.Lang("GameExportWindow.Tabs.Text3") },
-        new() { Icon = "/Resource/Icon/GameExport/item4.svg",
-            Text = App.Lang("GameExportWindow.Tabs.Text4") },
-    ];
 
     /// <summary>
     /// 在线下载的Mod列表
@@ -100,6 +87,30 @@ public partial class GameExportModel : MenuModel
         Obj = obj;
 
         _use = ToString() ?? "GameExportModel";
+
+        SetMenu(
+        [
+            new()
+            {
+                Icon = "/Resource/Icon/GameExport/item1.svg",
+                Text = App.Lang("GameExportWindow.Tabs.Text1")
+            },
+            new()
+            {
+                Icon = "/Resource/Icon/GameExport/item2.svg",
+                Text = App.Lang("GameExportWindow.Tabs.Text2")
+            },
+            new()
+            {
+                Icon = "/Resource/Icon/GameExport/item3.svg",
+                Text = App.Lang("GameExportWindow.Tabs.Text3")
+            },
+            new()
+            {
+                Icon = "/Resource/Icon/GameExport/item4.svg",
+                Text = App.Lang("GameExportWindow.Tabs.Text4")
+            },
+        ]);
     }
 
     async partial void OnTypeChanged(PackType value)
@@ -138,7 +149,7 @@ public partial class GameExportModel : MenuModel
             return;
         }
 
-        PathBinding.OpFile(SelectMod.Obj.Local);
+        PathBinding.OpenFileWithExplorer(SelectMod.Obj.Local);
     }
 
     [RelayCommand]
@@ -205,7 +216,12 @@ public partial class GameExportModel : MenuModel
         }
 
         Model.Progress(App.Lang("GameExportWindow.Info1"));
-        var file = await PathBinding.Export(this);
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.Export(top, this);
         Model.ProgressClose();
         if (file == null)
         {
@@ -380,7 +396,7 @@ public partial class GameExportModel : MenuModel
         Source = Files.Source;
     }
 
-    protected override void Close()
+    public override void Close()
     {
         Mods.Clear();
         OtherFiles.Clear();

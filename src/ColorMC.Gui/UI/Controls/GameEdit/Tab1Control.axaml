@@ -5,115 +5,113 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.GameEdit"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:panel="clr-namespace:ColorMC.Gui.UI.Views"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     xmlns:svg="clr-namespace:ColorMC.Gui.UI.Views.Svg"
-    d:DesignHeight="600"
     d:DesignWidth="800"
     x:DataType="model:GameEditModel"
     mc:Ignorable="d">
-    <ScrollViewer Name="ScrollViewer1">
-        <StackPanel Margin="5,0,5,0">
-            <Border Margin="0,0,0,5" Classes="t2">
-                <StackPanel>
+    <ScrollViewer>
+        <StackPanel Margin="0,0,10,15">
+            <Border Margin="10,5,10,3" Classes="t2">
+                <StackPanel Margin="15,15,5,15">
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
+                            Fill="{setting:Theme FontColor}"
                             Path="/Resource/Icon/GameEdit/svg1.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Stroke="{setting:Theme FontColor}" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize Text.GameVersion}" />
                     </StackPanel>
-                    <WrapPanel Margin="0,0,0,0">
-                        <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                    <panel:WrapPanelWithStretch AutoMax="{Binding MinMode}">
+                        <DockPanel MinWidth="230" Margin="0,0,10,10">
                             <TextBlock Margin="0,0,5,0" Text="{setting:Localize AddGameWindow.Tab1.Text6}" />
                             <ComboBox
-                                Width="200"
-                                Margin="0,0,5,0"
+                                HorizontalAlignment="Stretch"
                                 IsEnabled="{Binding !IsLoad}"
                                 ItemsSource="{Binding VersionTypeList}"
                                 SelectedIndex="{Binding VersionType}" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                        </DockPanel>
+                        <DockPanel MinWidth="230" Margin="0,0,10,10">
                             <TextBlock Margin="0,0,5,0" Text="{setting:Localize Text.Version}" />
                             <ComboBox
-                                Width="200"
-                                Margin="0,0,5,0"
+                                HorizontalAlignment="Stretch"
                                 IsEnabled="{Binding !IsLoad}"
                                 ItemsSource="{Binding GameVersionList}"
                                 SelectedItem="{Binding GameVersion}" />
-                        </StackPanel>
+                        </DockPanel>
                         <Button
                             Width="100"
-                            Height="30"
-                            Margin="-2,-7,3,-2"
+                            Height="35"
+                            Margin="-2,-3,7,7"
+                            HorizontalAlignment="Right"
                             Classes="top"
                             Command="{Binding GameVersionReload}"
                             Content="{setting:Localize GameEditWindow.Tab1.Text2}"
                             IsEnabled="{Binding !IsLoad}"
                             ToolTip.Tip="{setting:Localize ToolTip.Text81}"
                             ToolTip.VerticalOffset="-30" />
-                    </WrapPanel>
-                    <WrapPanel>
-                        <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                    </panel:WrapPanelWithStretch>
+                    <panel:WrapPanelWithStretch AutoMax="{Binding MinMode}" IsEnabled="{Binding !GameVersionEmpty}">
+                        <DockPanel MinWidth="230" Margin="0,0,10,10">
                             <TextBlock Margin="0,0,5,0" Text="{setting:Localize GameEditWindow.Tab1.Text13}" />
                             <ComboBox
-                                Name="ComboBox1"
-                                Width="180"
-                                Margin="0,0,5,0"
+                                HorizontalAlignment="Stretch"
                                 IsEnabled="{Binding !IsLoad}"
                                 ItemsSource="{Binding LangList}"
                                 SelectedIndex="{Binding Lang}" />
-                        </StackPanel>
+                        </DockPanel>
                         <Button
                             Width="100"
-                            Height="30"
-                            Margin="-2,-7,3,-2"
+                            Height="35"
+                            Margin="-2,-3,7,7"
+                            HorizontalAlignment="Right"
                             Classes="top"
                             Command="{Binding LangReload}"
                             Content="{setting:Localize Button.Refash}"
                             IsEnabled="{Binding !IsLoad}"
                             ToolTip.Tip="{setting:Localize ToolTip.Text99}"
                             ToolTip.VerticalOffset="-30" />
-                    </WrapPanel>
-                    <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                    </panel:WrapPanelWithStretch>
+                    <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
+                            Fill="{setting:Theme FontColor}"
                             Path="/Resource/Icon/GameEdit/svg2.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Stroke="{setting:Theme FontColor}" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize AddGameWindow.Tab1.Text4}" />
                     </StackPanel>
-                    <WrapPanel>
-                        <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                    <panel:WrapPanelWithStretch AutoMax="{Binding MinMode}" IsEnabled="{Binding !GameVersionEmpty}">
+                        <DockPanel MinWidth="230" Margin="0,0,10,10">
                             <TextBlock Margin="0,0,5,0" Text="{setting:Localize AddGameWindow.Tab1.Text6}" />
                             <ComboBox
-                                Width="200"
-                                Margin="0,0,5,0"
+                                HorizontalAlignment="Stretch"
                                 IsEnabled="{Binding !IsLoad}"
                                 ItemsSource="{Binding LoaderTypeList}"
                                 SelectedIndex="{Binding LoaderType}" />
-                        </StackPanel>
-                        <StackPanel
-                            Margin="0,0,0,5"
-                            IsEnabled="{Binding !IsLoad}"
-                            Orientation="Horizontal">
+                        </DockPanel>
+                        <DockPanel
+                            MinWidth="230"
+                            Margin="0,0,10,10"
+                            IsEnabled="{Binding !IsLoad}">
                             <TextBlock Margin="0,0,5,0" Text="{setting:Localize Text.Version}" />
                             <ComboBox
-                                Width="200"
-                                Margin="0,0,5,0"
+                                HorizontalAlignment="Stretch"
                                 IsEnabled="{Binding EnableLoader}"
                                 ItemsSource="{Binding LoaderVersionList}"
                                 SelectedItem="{Binding LoaderVersion}" />
-                        </StackPanel>
-
-                        <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                        </DockPanel>
+                        <StackPanel
+                            Margin="0,0,10,10"
+                            HorizontalAlignment="Right"
+                            Orientation="Horizontal">
                             <Button
                                 Width="100"
-                                Height="30"
+                                Height="35"
                                 Margin="-2,-3,3,-2"
                                 Classes="top"
                                 Command="{Binding LoaderReload}"
@@ -122,16 +120,16 @@
                                 ToolTip.VerticalOffset="-30" />
                             <Button
                                 Width="100"
-                                Height="30"
-                                Margin="-2,-3,3,-2"
+                                Height="35"
+                                Margin="-2,-3,-3,-2"
                                 Classes="top"
                                 Command="{Binding LoaderVersionLoad}"
                                 Content="{setting:Localize AddGameWindow.Tab1.Text12}"
                                 ToolTip.Tip="{setting:Localize ToolTip.Text82}"
                                 ToolTip.VerticalOffset="-30" />
                         </StackPanel>
-                    </WrapPanel>
-                    <StackPanel IsEnabled="{Binding CustomLoader}">
+                    </panel:WrapPanelWithStretch>
+                    <StackPanel IsEnabled="{Binding CustomLoader}" IsVisible="{Binding CustomLoader}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Margin="0,0,0,5" Text="{setting:Localize GameEditWindow.Tab1.Text15}" />
                             <TextBlock Margin="0,0,0,5" Text="{Binding LoaderInfo}" />
@@ -143,12 +141,13 @@
                                 OnContent="{setting:Localize AddGameWindow.Tab1.Text16}" />
                             <Button
                                 Width="100"
-                                Height="30"
-                                Margin="-2,-2,0,-2"
+                                Height="35"
+                                Margin="-2,-3,3,-2"
+                                Padding="5,0,5,0"
                                 HorizontalAlignment="Right"
                                 Classes="top"
                                 Command="{Binding SelectLoader}"
-                                Content="{setting:Localize Button.Select}"
+                                Content="{setting:Localize AddGameWindow.Tab1.Text21}"
                                 ToolTip.Tip="{setting:Localize ToolTip.Text127}"
                                 ToolTip.VerticalOffset="-30" />
                         </Panel>
@@ -158,51 +157,56 @@
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
+                            Fill="{setting:Theme FontColor}"
                             Path="/Resource/Icon/GameEdit/svg3.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Stroke="{setting:Theme FontColor}" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize AddGameWindow.Tab1.Text5}" />
                     </StackPanel>
-                    <WrapPanel Orientation="Horizontal">
-                        <ComboBox
-                            Name="ComboBox3"
-                            Width="200"
-                            ItemsSource="{Binding GroupList}"
-                            SelectedItem="{Binding Group}" />
+                    <panel:WrapPanelWithStretch Margin="" AutoMax="{Binding MinMode}">
+                        <DockPanel MinWidth="230" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize Text.Group}" />
+                            <ComboBox
+                                HorizontalAlignment="Stretch"
+                                ItemsSource="{Binding GroupList}"
+                                SelectedItem="{Binding Group}" />
+                        </DockPanel>
                         <Button
                             Width="100"
-                            Height="30"
-                            Margin="3,-2,3,-2"
+                            Height="35"
+                            Margin="-2,-3,7,7"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
                             Classes="top"
                             Command="{Binding AddGroup}"
                             Content="{setting:Localize AddGameWindow.Tab1.Text9}"
                             ToolTip.Tip="{setting:Localize ToolTip.Text84}"
                             ToolTip.VerticalOffset="-30" />
-                    </WrapPanel>
+                    </panel:WrapPanelWithStretch>
                 </StackPanel>
             </Border>
-            <Border Margin="0,0,0,5" Classes="t2">
-                <StackPanel>
+            <Border Margin="10,5,10,3" Classes="t2">
+                <StackPanel Margin="15">
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
+                            Fill="{setting:Theme FontColor}"
                             Path="/Resource/Icon/GameEdit/svg4.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Stroke="{setting:Theme FontColor}" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize GameEditWindow.Tab1.Text12}" />
                     </StackPanel>
-                    <WrapPanel>
+                    <WrapPanel Margin="0,0,0,5">
                         <CheckBox
                             Name="CheckBox1"
                             Margin="0,0,5,0"
                             Content="{setting:Localize GameEditWindow.Tab1.Text3}"
                             IsChecked="{Binding ModPack}" />
                         <Button
-                            Width="120"
-                            Height="30"
-                            Margin="3,-2,3,-2"
+                            Width="100"
+                            Height="35"
+                            Margin="3,-3,3,-2"
+                            Padding="5,0,5,0"
                             Classes="top"
                             Command="{Binding CheckModPackUpdate}"
                             Content="{setting:Localize GameEditWindow.Tab1.Text10}"
@@ -210,99 +214,25 @@
                             ToolTip.Tip="{setting:Localize ToolTip.Text51}"
                             ToolTip.VerticalOffset="-30" />
                     </WrapPanel>
-                    <WrapPanel Orientation="Horizontal">
+                    <panel:WrapPanelWithStretch AutoMax="{Binding MinMode}">
                         <TextBlock Width="110" Text="{setting:Localize GameEditWindow.Tab1.Text8}" />
                         <TextBox
-                            Grid.Column="0"
-                            Width="160"
-                            Margin="5,2,0,2"
-                            Classes="input1"
+                            MinWidth="200"
+                            HorizontalAlignment="Stretch"
                             IsEnabled="{Binding ModPack}"
                             Text="{Binding PID}"
                             Watermark="{setting:Localize GameEditWindow.Tab1.Text8}" />
-                    </WrapPanel>
-                    <WrapPanel Margin="0,5,0,0" Orientation="Horizontal">
+                    </panel:WrapPanelWithStretch>
+                    <panel:WrapPanelWithStretch Margin="0,10,0,0" AutoMax="{Binding MinMode}">
                         <TextBlock Width="110" Text="{setting:Localize GameEditWindow.Tab1.Text9}" />
                         <TextBox
-                            Grid.Column="1"
-                            Width="160"
-                            Margin="5,2,0,2"
-                            Classes="input1"
+                            MinWidth="200"
+                            HorizontalAlignment="Stretch"
                             IsEnabled="{Binding ModPack}"
                             Text="{Binding FID}"
                             Watermark="{setting:Localize GameEditWindow.Tab1.Text9}" />
-                    </WrapPanel>
+                    </panel:WrapPanelWithStretch>
                 </StackPanel>
-            </Border>
-            <Border Margin="0,0,0,5" Classes="t2">
-                <WrapPanel Margin="0,0,0,-5">
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-2,3,3"
-                        Classes="top"
-                        Command="{Binding Delete}"
-                        Content="{setting:Localize Button.Delete}"
-                        IsEnabled="{Binding !GameRun}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text36}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-2,3,3"
-                        Classes="top"
-                        Command="{Binding ExportGame}"
-                        Content="{setting:Localize GameEditWindow.Tab1.Text11}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text66}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-2,3,3"
-                        Classes="top"
-                        Command="{Binding OpenGameLog}"
-                        Content="{setting:Localize GameEditWindow.Tab1.Text7}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text65}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-2,3,3"
-                        Classes="top"
-                        Command="{Binding OpenConfigEdit}"
-                        Content="{setting:Localize GameEditWindow.Tab1.Text6}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text50}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-2,3,3"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Bottom"
-                        Classes="top"
-                        Command="{Binding Open}"
-                        Content="{setting:Localize Button.OpFile}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text39}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="120"
-                        Height="30"
-                        Margin="-2,-2,3,3"
-                        Classes="top"
-                        Command="{Binding OpenServerPack}"
-                        Content="{setting:Localize GameEditWindow.Tab1.Text5}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text47}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="120"
-                        Height="30"
-                        Margin="-2,-2,3,3"
-                        Classes="top"
-                        Command="{Binding GenGameInfo}"
-                        Content="{setting:Localize GameEditWindow.Tab1.Text14}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text132}"
-                        ToolTip.VerticalOffset="-30" />
-                </WrapPanel>
             </Border>
         </StackPanel>
     </ScrollViewer>

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
-using ColorMC.Core.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace ColorMC.Gui.UI.Model.Items;
@@ -17,22 +16,12 @@ public partial class ModDisplayModel : ObservableObject
 
     public string Name { get; init; }
     public string Modid => Obj.modid;
-    public string Version => Obj.version + (IsNew ? " " + App.Lang("Gui.Info8") : "");
+    public string Version => Obj.version + (IsNew ? " " + App.Lang("GameEditWindow.Tab4.Info21") : "");
     public string Local => Obj.Local;
     public string Author => MakeString(Obj.authorList);
     public string? Url => Obj.url;
     public string Loader => Obj.Loader.GetName();
-    public string Source
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(PID) || string.IsNullOrWhiteSpace(FID))
-                return "";
-            return FuntionUtils.CheckNotNumber(PID) || FuntionUtils.CheckNotNumber(FID) ?
-                SourceType.Modrinth.GetName() : SourceType.CurseForge.GetName();
-        }
-    }
-
+    public string Source { get; init; }
     public string? PID => Obj1?.ModId;
     public string? FID => Obj1?.FileId;
 
@@ -45,6 +34,23 @@ public partial class ModDisplayModel : ObservableObject
     /// Mod内容
     /// </summary>
     public ModObj Obj;
+
+    public ModDisplayModel(ModObj obj, ModInfoObj? obj1)
+    {
+        Obj = obj;
+        Obj1 = obj1;
+
+        Name = obj.ReadFail ? App.Lang("GameBinding.Info15") : obj.name;
+        Enable = !obj.Disable;
+        if (string.IsNullOrWhiteSpace(PID) || string.IsNullOrWhiteSpace(FID))
+        {
+            Source = "";
+        }
+        else
+        {
+            Source = DownloadItemHelper.TestSourceType(PID, FID).GetName();
+        }
+    }
 
     public void LocalChange()
     {

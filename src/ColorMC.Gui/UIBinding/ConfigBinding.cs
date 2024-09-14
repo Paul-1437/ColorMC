@@ -1,13 +1,17 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using ColorMC.Core.Config;
-using ColorMC.Core.Downloader;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Net;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
+using ColorMC.Gui.Frp;
+using ColorMC.Gui.Joystick;
+using ColorMC.Gui.Manager;
+using ColorMC.Gui.MusicPlayer;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.Utils;
-using ColorMC.Gui.Utils.LaunchSetting;
+
 
 namespace ColorMC.Gui.UIBinding;
 
@@ -33,7 +37,7 @@ public static class ConfigBinding
         var res = ConfigUtils.Load(dir, true);
         if (res)
         {
-            BaseClient.Init();
+            WebClient.Init();
         }
 
         return res;
@@ -48,9 +52,7 @@ public static class ConfigBinding
         var res = GuiConfigUtils.Load(dir, true);
         if (res)
         {
-            ColorSel.Load();
-            FontSel.Load();
-            StyleSel.Load();
+            ThemeManager.Init();
         }
 
         return res;
@@ -63,16 +65,7 @@ public static class ConfigBinding
     /// <returns></returns>
     public static bool LoadFrpConfig(string local)
     {
-        return FrpConfigUtils.Load(local, true);
-    }
-
-    /// <summary>
-    /// 获取所有配置文件
-    /// </summary>
-    /// <returns></returns>
-    public static (ConfigObj, GuiConfigObj) GetAllConfig()
-    {
-        return (ConfigUtils.Config, GuiConfigUtils.Config);
+        return FrpConfig.Load(local, true);
     }
 
     /// <summary>
@@ -81,9 +74,9 @@ public static class ConfigBinding
     public static void SetRgb(bool enable)
     {
         GuiConfigUtils.Config.RGB = enable;
-
         GuiConfigUtils.Save();
-        ColorSel.Load();
+
+        ThemeManager.Init();
     }
 
     /// <summary>
@@ -94,26 +87,19 @@ public static class ConfigBinding
         GuiConfigUtils.Config.RGBS = v1;
         GuiConfigUtils.Config.RGBV = v2;
         GuiConfigUtils.Save();
-        ColorSel.Load();
+
+        ThemeManager.Init();
     }
 
     /// <summary>
     /// 设置启动器颜色
     /// </summary>
-    public static void SetColor(string main, string back, string back1, string font1, string font2,
-        string back2, string back3, string font3, string font4)
+    public static void SetColor(string main)
     {
         GuiConfigUtils.Config.ColorMain = main;
-        GuiConfigUtils.Config.ColorLight.ColorBack = back;
-        GuiConfigUtils.Config.ColorLight.ColorTranBack = back1;
-        GuiConfigUtils.Config.ColorLight.ColorFont1 = font1;
-        GuiConfigUtils.Config.ColorLight.ColorFont2 = font2;
-        GuiConfigUtils.Config.ColorDark.ColorBack = back2;
-        GuiConfigUtils.Config.ColorDark.ColorTranBack = back3;
-        GuiConfigUtils.Config.ColorDark.ColorFont1 = font3;
-        GuiConfigUtils.Config.ColorDark.ColorFont2 = font4;
         GuiConfigUtils.Save();
-        ColorSel.Load();
+
+        ThemeManager.Init();
     }
 
     /// <summary>
@@ -121,17 +107,7 @@ public static class ConfigBinding
     /// </summary>
     public static void ResetColor()
     {
-        SetColor(
-            ColorSel.MainColorStr,
-            ColorSel.BackLigthColorStr,
-            ColorSel.Back1LigthColorStr,
-            ColorSel.ButtonLightFontStr,
-            ColorSel.FontLigthColorStr,
-            ColorSel.BackDarkColorStr,
-            ColorSel.Back1DarkColorStr,
-            ColorSel.ButtonDarkFontStr,
-            ColorSel.FontDarkColorStr
-        );
+        SetColor(ThemeManager.MainColorStr);
     }
 
     /// <summary>
@@ -139,10 +115,10 @@ public static class ConfigBinding
     /// </summary>
     public static void DeleteGuiImageConfig()
     {
-        App.RemoveImage();
         GuiConfigUtils.Config.BackImage = null;
         GuiConfigUtils.Save();
-        App.OnPicUpdate();
+
+        ImageManager.RemoveImage();
     }
 
     /// <summary>
@@ -158,9 +134,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.BackImage = dir;
         GuiConfigUtils.Save();
 
-        await App.LoadImage();
-
-        App.OnPicUpdate();
+        await ImageManager.LoadBGImage();
     }
 
     /// <summary>
@@ -175,9 +149,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.BackLimit = enable;
         GuiConfigUtils.Save();
 
-        await App.LoadImage();
-
-        App.OnPicUpdate();
+        await ImageManager.LoadBGImage();
     }
 
     /// <summary>
@@ -189,7 +161,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.BackTran = data;
         GuiConfigUtils.Save();
 
-        App.OnPicUpdate();
+        ImageManager.OnPicUpdate();
     }
 
     /// <summary>
@@ -203,7 +175,8 @@ public static class ConfigBinding
         GuiConfigUtils.Config.WindowTran = open;
         GuiConfigUtils.Save();
 
-        App.OnPicUpdate();
+        ThemeManager.Init();
+        ImageManager.OnPicUpdate();
     }
 
     /// <summary>
@@ -212,7 +185,7 @@ public static class ConfigBinding
     /// <param name="value"></param>
     public static void SetDownloadSource(SourceLocal value)
     {
-        if (DownloadManager.State != DownloadState.End)
+        if (BaseBinding.IsDownload)
         {
             return;
         }
@@ -221,7 +194,7 @@ public static class ConfigBinding
         ConfigUtils.Config.Http.Source = value;
         ConfigUtils.Save();
 
-        BaseClient.Init();
+        WebClient.Init();
     }
 
     /// <summary>
@@ -230,7 +203,7 @@ public static class ConfigBinding
     /// <param name="value"></param>
     public static void SetDownloadThread(int value)
     {
-        if (DownloadManager.State != DownloadState.End)
+        if (BaseBinding.IsDownload)
         {
             return;
         }
@@ -249,7 +222,7 @@ public static class ConfigBinding
     /// <param name="password"></param>
     public static void SetDownloadProxy(string ip, ushort port, string user, string password)
     {
-        if (DownloadManager.State != DownloadState.End)
+        if (BaseBinding.IsDownload)
         {
             return;
         }
@@ -261,7 +234,7 @@ public static class ConfigBinding
         ConfigUtils.Config.Http.ProxyPassword = password;
         ConfigUtils.Save();
 
-        BaseClient.Init();
+        WebClient.Init();
     }
 
     /// <summary>
@@ -272,7 +245,7 @@ public static class ConfigBinding
     /// <param name="v3"></param>
     public static void SetDownloadProxyEnable(bool v1, bool v2, bool v3)
     {
-        if (DownloadManager.State != DownloadState.End)
+        if (BaseBinding.IsDownload)
         {
             return;
         }
@@ -283,7 +256,7 @@ public static class ConfigBinding
         ConfigUtils.Config.Http.GameProxy = v3;
         ConfigUtils.Save();
 
-        BaseClient.Init();
+        WebClient.Init();
     }
 
     /// <summary>
@@ -294,7 +267,7 @@ public static class ConfigBinding
     /// <param name="v3"></param>
     public static void SetDownloadCheck(bool v1, bool v2, bool v3)
     {
-        if (DownloadManager.State != DownloadState.End)
+        if (BaseBinding.IsDownload)
         {
             return;
         }
@@ -390,7 +363,7 @@ public static class ConfigBinding
         ConfigUtils.Config.Window = obj;
         ConfigUtils.Save();
 
-        BaseClient.Init();
+        WebClient.Init();
     }
 
     /// <summary>
@@ -424,7 +397,7 @@ public static class ConfigBinding
 
         GuiConfigUtils.Save();
 
-        FontSel.Load();
+        ThemeManager.Init();
     }
 
     /// <summary>
@@ -460,7 +433,7 @@ public static class ConfigBinding
 
             GuiConfigUtils.Save();
 
-            App.Reboot();
+            ColorMCGui.Reboot();
         }
     }
 
@@ -489,14 +462,13 @@ public static class ConfigBinding
     /// 设置主题色
     /// </summary>
     /// <param name="type"></param>
-    public static async void SetColorType(ColorType type)
+    public static void SetColorType(ColorType type)
     {
         GuiConfigUtils.Config.ColorType = type;
         GuiConfigUtils.Save();
 
-        App.ColorChange();
-        ColorSel.Load();
-        await App.LoadImage();
+        ThemeManager.Init();
+        ImageManager.OnPicUpdate();
     }
 
     /// <summary>
@@ -539,8 +511,9 @@ public static class ConfigBinding
 
         GuiConfigUtils.Save();
 
-        App.MainWindow?.MotdLoad();
-        ColorSel.Load();
+        WindowManager.MainWindow?.MotdLoad();
+
+        ThemeManager.Init();
     }
 
     /// <summary>
@@ -555,7 +528,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.ServerCustom.GameName = v2;
         GuiConfigUtils.Save();
 
-        App.MainWindow?.LoadMain();
+        WindowManager.MainWindow?.LoadMain();
     }
 
     /// <summary>
@@ -563,11 +536,10 @@ public static class ConfigBinding
     /// </summary>
     /// <param name="enable"></param>
     /// <param name="value"></param>
-    public static void SetUI(bool enable, string? value)
+    public static void SetUI(bool enable)
     {
         GuiConfigUtils.Config.ServerCustom ??= GuiConfigUtils.MakeServerCustomConfig();
         GuiConfigUtils.Config.ServerCustom.EnableUI = enable;
-        GuiConfigUtils.Config.ServerCustom.UIFile = value;
         GuiConfigUtils.Save();
     }
 
@@ -579,7 +551,7 @@ public static class ConfigBinding
     /// <param name="v3"></param>
     /// <param name="v4"></param>
     /// <param name="v5"></param>
-    public static void SetMusic(bool v1, bool v2, string? v3, int v4, bool v5)
+    public static void SetMusic(bool v1, bool v2, string? v3, int v4, bool v5, bool v6)
     {
         GuiConfigUtils.Config.ServerCustom ??= GuiConfigUtils.MakeServerCustomConfig();
         GuiConfigUtils.Config.ServerCustom.PlayMusic = v1;
@@ -587,7 +559,10 @@ public static class ConfigBinding
         GuiConfigUtils.Config.ServerCustom.Music = v3;
         GuiConfigUtils.Config.ServerCustom.Volume = v4;
         GuiConfigUtils.Config.ServerCustom.RunPause = v5;
+        GuiConfigUtils.Config.ServerCustom.MusicLoop = v6;
         GuiConfigUtils.Save();
+
+        Media.Loop = v6;
     }
 
     /// <summary>
@@ -596,22 +571,19 @@ public static class ConfigBinding
     /// <param name="enableOneLogin"></param>
     /// <param name="login"></param>
     /// <param name="url"></param>
-    public static void SetLoginLock(bool enableOneLogin, int login, string url)
+    public static void SetLoginLock(bool enableOneLogin, List<LockLoginSetting> list)
     {
         GuiConfigUtils.Config.ServerCustom ??= GuiConfigUtils.MakeServerCustomConfig();
         GuiConfigUtils.Config.ServerCustom.LockLogin = enableOneLogin;
-        GuiConfigUtils.Config.ServerCustom.LoginType = login;
-        GuiConfigUtils.Config.ServerCustom.LoginUrl = url;
+        GuiConfigUtils.Config.ServerCustom.LockLogins = list;
         GuiConfigUtils.Save();
-    }
 
-    /// <summary>
-    /// 是否锁定了登录
-    /// </summary>
-    /// <returns></returns>
-    public static bool IsLockLogin()
-    {
-        return GuiConfigUtils.Config.ServerCustom.LockLogin;
+        UserBinding.OnUserEdit();
+        if (WindowManager.UserWindow != null)
+        {
+            WindowManager.UserWindow.Close();
+            WindowManager.ShowUser();
+        }
     }
 
     /// <summary>
@@ -623,7 +595,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.Live2D.Model = null;
         GuiConfigUtils.Save();
 
-        App.MainWindow?.DeleteModel();
+        WindowManager.MainWindow?.DeleteModel();
     }
 
     /// <summary>
@@ -636,7 +608,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.Live2D.Enable = enable;
         GuiConfigUtils.Save();
 
-        App.MainWindow?.ChangeModel();
+        WindowManager.MainWindow?.ChangeModel();
     }
 
     /// <summary>
@@ -649,7 +621,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.Live2D.Model = live2DModel;
         GuiConfigUtils.Save();
 
-        App.MainWindow?.ChangeModel();
+        WindowManager.MainWindow?.ChangeModel();
     }
 
     /// <summary>
@@ -666,7 +638,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.Live2D.Pos = pos;
         GuiConfigUtils.Save();
 
-        App.MainWindow?.ChangeLive2DSize();
+        WindowManager.MainWindow?.ChangeLive2DSize();
     }
 
     /// <summary>
@@ -679,20 +651,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.Live2D.LowFps = value;
         GuiConfigUtils.Save();
 
-        App.MainWindow?.ChangeLive2DMode();
-    }
-
-    /// <summary>
-    /// 设置圆角样式
-    /// </summary>
-    /// <param name="value"></param>
-    public static void SetStyle(int value)
-    {
-        GuiConfigUtils.Config.Style ??= GuiConfigUtils.MakeStyleSettingConfig();
-        GuiConfigUtils.Config.Style.ButtonCornerRadius = value;
-        GuiConfigUtils.Save();
-
-        StyleSel.Load();
+        WindowManager.MainWindow?.ChangeLive2DMode();
     }
 
     /// <summary>
@@ -706,7 +665,7 @@ public static class ConfigBinding
         GuiConfigUtils.Config.Style.AmFade = value1;
         GuiConfigUtils.Save();
 
-        App.LoadPageSlide();
+        ThemeManager.LoadPageSlide();
     }
 
     /// <summary>
@@ -730,29 +689,14 @@ public static class ConfigBinding
     }
 
     /// <summary>
-    /// 设置圆角样式
-    /// </summary>
-    /// <param name="enablePicRadius"></param>
-    /// <param name="enableBorderRadius"></param>
-    public static void SetRadiusEnable(bool enablePicRadius, bool enableBorderRadius)
-    {
-        GuiConfigUtils.Config.Style ??= GuiConfigUtils.MakeStyleSettingConfig();
-        GuiConfigUtils.Config.Style.EnablePicRadius = enablePicRadius;
-        GuiConfigUtils.Config.Style.EnableBorderRadius = enableBorderRadius;
-        GuiConfigUtils.Save();
-
-        StyleSel.Load();
-    }
-
-    /// <summary>
     /// 设置Frp密钥
     /// </summary>
     /// <param name="key"></param>
     public static void SetFrpKeySakura(string key)
     {
-        FrpConfigUtils.Config.SakuraFrp ??= new();
-        FrpConfigUtils.Config.SakuraFrp.Key = key;
-        FrpConfigUtils.Save();
+        FrpConfig.Config.SakuraFrp ??= new();
+        FrpConfig.Config.SakuraFrp.Key = key;
+        FrpConfig.Save();
     }
 
     /// <summary>
@@ -761,9 +705,9 @@ public static class ConfigBinding
     /// <param name="key"></param>
     public static void SetFrpKeyOpenFrp(string key)
     {
-        FrpConfigUtils.Config.OpenFrp ??= new();
-        FrpConfigUtils.Config.OpenFrp.Key = key;
-        FrpConfigUtils.Save();
+        FrpConfig.Config.OpenFrp ??= new();
+        FrpConfig.Config.OpenFrp.Key = key;
+        FrpConfig.Save();
     }
 
     /// <summary>
@@ -773,10 +717,10 @@ public static class ConfigBinding
     /// <returns></returns>
     public static InputControlObj NewInput(string name)
     {
-        var obj = InputConfigUtils.MakeInputControl();
+        var obj = JoystickConfig.MakeInputControl();
         obj.Name = name;
-        InputConfigUtils.PutConfig(obj);
-        InputConfigUtils.Save(obj);
+        JoystickConfig.PutConfig(obj);
+        JoystickConfig.Save(obj);
 
         return obj;
     }
@@ -789,7 +733,7 @@ public static class ConfigBinding
     public static void SaveInput(InputControlObj obj, bool item)
     {
         obj.ItemCycle = item;
-        InputConfigUtils.Save(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -815,7 +759,7 @@ public static class ConfigBinding
         {
             obj.Keys[key] = obj1;
         }
-        InputConfigUtils.Save(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -826,7 +770,7 @@ public static class ConfigBinding
     public static void DeleteInput(InputControlObj obj, byte key)
     {
         obj.Keys.Remove(key);
-        InputConfigUtils.Save(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -841,7 +785,7 @@ public static class ConfigBinding
         {
             obj.AxisKeys[uuid] = obj1;
         }
-        InputConfigUtils.Save(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -853,7 +797,7 @@ public static class ConfigBinding
     {
         if (obj.AxisKeys.Remove(key))
         {
-            InputConfigUtils.Save(obj);
+            JoystickConfig.Save(obj);
         }
     }
 
@@ -867,7 +811,7 @@ public static class ConfigBinding
     {
         obj.ItemCycleLeft = left;
         obj.ItemCycleRight = right;
-        InputConfigUtils.Save(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -881,7 +825,7 @@ public static class ConfigBinding
         obj.RotateRate = value;
         obj.CursorRate = value1;
         obj.DownRate = value2;
-        InputConfigUtils.Save(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -894,7 +838,7 @@ public static class ConfigBinding
     {
         obj.RotateAxis = inputRotateAxis;
         obj.CursorAxis = inputCursorAxis;
-        InputConfigUtils.Save(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -907,7 +851,7 @@ public static class ConfigBinding
     {
         obj.RotateDeath = inputRotate;
         obj.CursorDeath = inputCursor;
-        InputConfigUtils.Save(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -920,15 +864,15 @@ public static class ConfigBinding
         GuiConfigUtils.Config.Input.NowConfig = uuid;
         GuiConfigUtils.Save();
     }
-    
+
     /// <summary>
     /// 保存手柄配置
     /// </summary>
     /// <param name="obj"></param>
     public static void SaveInputConfig(InputControlObj obj)
     {
-        InputConfigUtils.PutConfig(obj);
-        InputConfigUtils.Save(obj);
+        JoystickConfig.PutConfig(obj);
+        JoystickConfig.Save(obj);
     }
 
     /// <summary>
@@ -937,6 +881,33 @@ public static class ConfigBinding
     /// <param name="obj"></param>
     public static void RemoveInputConfig(InputControlObj obj)
     {
-        InputConfigUtils.Remove(obj);
+        JoystickConfig.Remove(obj);
+    }
+
+    /// <summary>
+    /// 设置头像角度
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    public static void SetHeadXY(int x, int y)
+    {
+        GuiConfigUtils.Config.Head ??= new();
+        GuiConfigUtils.Config.Head.X = x;
+        GuiConfigUtils.Config.Head.Y = y;
+        GuiConfigUtils.Save();
+
+        UserBinding.ReloadSkin();
+    }
+
+    /// <summary>
+    /// 设置头像角度
+    /// </summary>
+    public static void SetHeadType(HeadType type)
+    {
+        GuiConfigUtils.Config.Head ??= new();
+        GuiConfigUtils.Config.Head.Type = type;
+        GuiConfigUtils.Save();
+
+        UserBinding.ReloadSkin();
     }
 }

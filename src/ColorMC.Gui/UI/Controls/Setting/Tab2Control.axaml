@@ -5,179 +5,140 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.Setting"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:panel="clr-namespace:ColorMC.Gui.UI.Views"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     xmlns:svg="clr-namespace:ColorMC.Gui.UI.Views.Svg"
-    xmlns:view="clr-namespace:ColorMC.Gui.Objs"
-    d:DesignHeight="1300"
+    xmlns:view="clr-namespace:ColorMC.Gui.UI.Model.Items"
     d:DesignWidth="800"
     x:DataType="model:SettingModel"
     mc:Ignorable="d">
-    <ScrollViewer Name="ScrollViewer1" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="5,0,5,0">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="0,0,10,15">
             <Border
-                Margin="0,0,0,5"
+                Margin="10,5,10,3"
                 Classes="t2"
                 IsVisible="{Binding Phone}">
-                <StackPanel Name="PhoneSetting">
+                <StackPanel Name="PhoneSetting" Margin="15">
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
-                            Path="/Resource/Icon/Setting/svg22.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Path="/Resource/Icon/Setting/svg22.svg" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize SettingWindow.Tab2.Text43}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
             <Border
-                Margin="0,0,0,5"
+                Margin="10,5,10,3"
                 Classes="t2"
                 IsEnabled="{Binding !Phone}">
-                <StackPanel>
+                <StackPanel Margin="15,15,5,15">
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
-                            Path="/Resource/Icon/Setting/svg1.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Path="/Resource/Icon/Setting/svg1.svg" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize SettingWindow.Tab2.Text46}" />
                     </StackPanel>
-
-                    <StackPanel>
+                    <panel:WrapPanelWithStretch Margin="0,0,0,-5" AutoMax="{Binding MinMode}">
                         <ToggleSwitch
-                            Margin="0,0,10,0"
+                            Margin="0,0,10,10"
                             VerticalAlignment="Center"
                             IsChecked="{Binding WindowMode}"
                             IsEnabled="{Binding EnableWindowMode}"
                             OffContent="{setting:Localize SettingWindow.Tab2.Text22}"
                             OnContent="{setting:Localize SettingWindow.Tab2.Text22}" />
-                        <WrapPanel Orientation="Horizontal">
-                            <ToggleSwitch
-                                Margin="0,0,10,0"
-                                VerticalAlignment="Center"
-                                IsChecked="{Binding EnableWindowTran}"
-                                OffContent="{setting:Localize SettingWindow.Tab2.Text9}"
-                                OnContent="{setting:Localize SettingWindow.Tab2.Text9}" />
-                            <ComboBox
-                                Width="150"
-                                Margin="5,0,0,0"
-                                VerticalAlignment="Center"
-                                IsEnabled="{Binding EnableWindowTran}"
-                                ItemsSource="{Binding TranTypeList}"
-                                SelectedIndex="{Binding WindowTranType}" />
-                        </WrapPanel>
-                    </StackPanel>
+                        <ToggleSwitch
+                            Margin="0,0,10,10"
+                            VerticalAlignment="Center"
+                            IsChecked="{Binding EnableWindowTran}"
+                            OffContent="{setting:Localize SettingWindow.Tab2.Text9}"
+                            OnContent="{setting:Localize SettingWindow.Tab2.Text9}" />
+                        <ComboBox
+                            MinWidth="150"
+                            Margin="0,0,10,10"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{Binding EnableWindowTran}"
+                            ItemsSource="{Binding TranTypeList}"
+                            SelectedIndex="{Binding WindowTranType}" />
+                    </panel:WrapPanelWithStretch>
                     <TextBlock
-                        Margin="0,5,0,0"
+                        Margin="0,0,10,0"
                         Text="{setting:Localize SettingWindow.Tab2.Text6}"
                         TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
-            <Border Margin="0,0,0,5" Classes="t2">
-                <StackPanel>
+            <Border Margin="10,5,10,3" Classes="t2">
+                <StackPanel Margin="15,15,5,15">
                     <!--  语言  -->
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
-                            Path="/Resource/Icon/Setting/svg2.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Path="/Resource/Icon/Setting/svg2.svg" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize SettingWindow.Tab2.Text47}" />
                     </StackPanel>
-                    <WrapPanel Margin="0,0,0,-5">
-                        <StackPanel Margin="0,0,5,5" Orientation="Horizontal">
+                    <panel:WrapPanelWithStretch Margin="0,0,0,-5" AutoMax="{Binding MinMode}">
+                        <DockPanel MinWidth="180" Margin="0,0,10,10">
                             <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text1}" />
                             <ComboBox
-                                Width="150"
-                                Margin="0,0,5,0"
+                                HorizontalAlignment="Stretch"
                                 ItemsSource="{Binding LanguageList}"
                                 SelectedIndex="{Binding Language}" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
-                            <ToggleSwitch
-                                Margin="0,0,10,0"
-                                IsChecked="{Binding IsDefaultFont}"
-                                OffContent="{setting:Localize SettingWindow.Tab2.Text20}"
-                                OnContent="{setting:Localize SettingWindow.Tab2.Text20}" />
-                            <ComboBox
-                                Width="150"
-                                Margin="0,0,5,0"
-                                IsEnabled="{Binding EnableFontList}"
-                                ItemsSource="{Binding FontList}"
-                                SelectedItem="{Binding FontItem}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate DataType="view:FontDisplayObj">
-                                        <StackPanel>
-                                            <TextBlock FontFamily="{Binding FontFamily}" Text="{Binding FontName}" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
-                    </WrapPanel>
-
+                        </DockPanel>
+                        <ToggleSwitch
+                            Margin="0,0,10,10"
+                            IsChecked="{Binding IsCutsomFont}"
+                            OffContent="{setting:Localize SettingWindow.Tab2.Text20}"
+                            OnContent="{setting:Localize SettingWindow.Tab2.Text20}" />
+                        <ComboBox
+                            MinWidth="180"
+                            Margin="0,0,10,10"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="{Binding IsCutsomFont}"
+                            ItemsSource="{Binding FontList}"
+                            SelectedItem="{Binding FontItem}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="view:FontDisplayModel">
+                                    <StackPanel>
+                                        <TextBlock FontFamily="{Binding FontFamily}" Text="{Binding FontName}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </panel:WrapPanelWithStretch>
                     <TextBlock
-                        Margin="0,5,0,0"
+                        Margin="0,0,10,0"
                         Text="{setting:Localize SettingWindow.Tab2.Text21}"
                         TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
-            <Border Margin="0,0,0,5" Classes="t2">
-                <StackPanel>
+            <Border Margin="10,5,10,3" Classes="t2">
+                <StackPanel Margin="15">
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
-                            Path="/Resource/Icon/Setting/svg3.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Path="/Resource/Icon/Setting/svg3.svg" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize SettingWindow.Tab2.Text39}" />
                     </StackPanel>
-
-                    <WrapPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock MinWidth="70" Text="{setting:Localize SettingWindow.Tab2.Text40}" />
+                    <panel:WrapPanelWithStretch Margin="0,0,0,-10" AutoMax="{Binding MinMode}">
+                        <DockPanel MinWidth="260" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text41}" />
+                            <TextBlock
+                                Width="40"
+                                Margin="0,0,5,0"
+                                DockPanel.Dock="Right"
+                                Text="{Binding AmTime, StringFormat='{}{0}'}" />
                             <Slider
-                                Width="150"
                                 Height="40"
                                 Margin="5,-10,5,0"
-                                HorizontalAlignment="Left"
-                                Foreground="{setting:Colors Main}"
-                                IsSnapToTickEnabled="True"
-                                LargeChange="1"
-                                Maximum="20"
-                                Minimum="0"
-                                SmallChange="1"
-                                TickFrequency="1"
-                                Value="{Binding ButtonCornerRadius}" />
-                            <TextBlock Width="40" Text="{Binding ButtonCornerRadius, StringFormat='{}{0}'}" />
-                        </StackPanel>
-                        <ToggleSwitch
-                            Margin="0,0,10,0"
-                            IsChecked="{Binding EnablePicRadius}"
-                            OffContent="{setting:Localize SettingWindow.Tab2.Text50}"
-                            OnContent="{setting:Localize SettingWindow.Tab2.Text50}" />
-                        <ToggleSwitch
-                            IsChecked="{Binding EnableBorderRadius}"
-                            OffContent="{setting:Localize SettingWindow.Tab2.Text51}"
-                            OnContent="{setting:Localize SettingWindow.Tab2.Text51}" />
-                    </WrapPanel>
-                    <WrapPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock MinWidth="70" Text="{setting:Localize SettingWindow.Tab2.Text41}" />
-                            <Slider
-                                Width="150"
-                                Height="40"
-                                Margin="5,-10,5,0"
-                                HorizontalAlignment="Left"
-                                Foreground="{setting:Colors Main}"
+                                HorizontalAlignment="Stretch"
+                                Foreground="{setting:Theme MainColor}"
                                 IsSnapToTickEnabled="True"
                                 LargeChange="1"
                                 Maximum="2000"
@@ -185,26 +146,24 @@
                                 SmallChange="1"
                                 TickFrequency="1"
                                 Value="{Binding AmTime}" />
-                            <TextBlock Width="40" Text="{Binding AmTime, StringFormat='{}{0}'}" />
-                        </StackPanel>
+                        </DockPanel>
                         <ToggleSwitch
+                            Margin="0,0,10,10"
                             IsChecked="{Binding AmFade}"
                             OffContent="{setting:Localize SettingWindow.Tab2.Text42}"
                             OnContent="{setting:Localize SettingWindow.Tab2.Text42}" />
-                    </WrapPanel>
+                    </panel:WrapPanelWithStretch>
                 </StackPanel>
             </Border>
-            <Border Margin="0,0,0,5" Classes="t2">
-                <StackPanel>
+            <Border Margin="10,5,10,3" Classes="t2">
+                <StackPanel Margin="15,15,5,15">
                     <!--  背景图  -->
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
-                            Path="/Resource/Icon/Setting/svg4.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Path="/Resource/Icon/Setting/svg4.svg" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize SettingWindow.Tab2.Text2}" />
                     </StackPanel>
                     <ToggleSwitch
@@ -213,46 +172,54 @@
                         OffContent="{setting:Localize SettingWindow.Tab2.Text44}"
                         OnContent="{setting:Localize SettingWindow.Tab2.Text44}" />
                     <TextBox
-                        MinWidth="300"
-                        Margin="0,0,5,5"
-                        Classes="input1"
+                        Margin="0,0,10,5"
                         IsEnabled="{Binding EnableBG}"
                         Text="{Binding Pic}"
                         Watermark="{setting:Localize SettingWindow.Tab2.Text3}" />
-                    <WrapPanel HorizontalAlignment="Right" IsEnabled="{Binding EnableBG}">
+                    <WrapPanel
+                        Margin="0,0,10,5"
+                        HorizontalAlignment="Right"
+                        IsEnabled="{Binding EnableBG}">
                         <Button
-                            Width="100"
-                            Height="30"
-                            Margin="-2,-2,3,-2"
+                            Width="90"
+                            Height="35"
+                            Margin="-2,-2,2,-2"
                             Classes="top"
                             Command="{Binding DeletePic}"
                             Content="{setting:Localize Button.Delete}" />
                         <Button
-                            Width="100"
-                            Height="30"
-                            Margin="-2,-2,3,-2"
+                            Width="90"
+                            Height="35"
+                            Margin="-2,-2,2,-2"
                             Classes="top"
                             Command="{Binding OpenPic}"
                             Content="{setting:Localize Button.Select}"
                             DockPanel.Dock="Right" />
                         <Button
-                            Width="100"
-                            Height="30"
-                            Margin="-2,-2,3,-2"
+                            Width="90"
+                            Height="35"
+                            Margin="-2,-2,-3,-2"
                             Classes="top"
                             Command="{Binding SetPic}"
-                            Content="{setting:Localize Button.Use}"
+                            Content="{setting:Localize SettingWindow.Tab2.Text61}"
                             DockPanel.Dock="Right" />
                     </WrapPanel>
-                    <WrapPanel IsEnabled="{Binding EnableBG}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text4}" />
+                    <panel:WrapPanelWithStretch
+                        Margin="0,0,0,0"
+                        AutoMax="{Binding MinMode}"
+                        IsEnabled="{Binding EnableBG}">
+                        <DockPanel MinWidth="260" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text4}" />
+                            <TextBlock
+                                Width="40"
+                                Margin="0,0,5,0"
+                                DockPanel.Dock="Right"
+                                Text="{Binding PicEffect, StringFormat='{}{0}%'}" />
                             <Slider
-                                Width="150"
                                 Height="40"
                                 Margin="5,-10,5,0"
-                                HorizontalAlignment="Left"
-                                Foreground="{setting:Colors Main}"
+                                HorizontalAlignment="Stretch"
+                                Foreground="{setting:Theme MainColor}"
                                 IsSnapToTickEnabled="True"
                                 LargeChange="1"
                                 Maximum="100"
@@ -260,29 +227,33 @@
                                 SmallChange="1"
                                 TickFrequency="1"
                                 Value="{Binding PicEffect}" />
-                            <TextBlock
-                                Width="40"
-                                Margin="0,0,5,0"
-                                Text="{Binding PicEffect, StringFormat='{}{0}%'}" />
-                        </StackPanel>
+                        </DockPanel>
                         <Button
                             Width="100"
-                            Height="30"
-                            Margin="-2"
+                            Height="35"
+                            Margin="-3,-3,7,7"
+                            HorizontalAlignment="Right"
                             VerticalAlignment="Center"
                             Classes="top"
                             Command="{Binding SetPic}"
-                            Content="{setting:Localize Button.Set}" />
-                    </WrapPanel>
-                    <WrapPanel IsEnabled="{Binding EnableBG}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text5}" />
+                            Content="{setting:Localize SettingWindow.Tab2.Text60}" />
+                    </panel:WrapPanelWithStretch>
+                    <panel:WrapPanelWithStretch
+                        Margin="0,0,0,0"
+                        AutoMax="{Binding MinMode}"
+                        IsEnabled="{Binding EnableBG}">
+                        <DockPanel MinWidth="260" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text5}" />
+                            <TextBlock
+                                Width="40"
+                                Margin="0,0,5,0"
+                                DockPanel.Dock="Right"
+                                Text="{Binding PicTran, StringFormat='{}{0}%'}" />
                             <Slider
-                                Width="150"
                                 Height="40"
                                 Margin="5,-10,5,0"
-                                HorizontalAlignment="Left"
-                                Foreground="{setting:Colors Main}"
+                                HorizontalAlignment="Stretch"
+                                Foreground="{setting:Theme MainColor}"
                                 IsSnapToTickEnabled="True"
                                 LargeChange="1"
                                 Maximum="100"
@@ -290,33 +261,35 @@
                                 SmallChange="1"
                                 TickFrequency="1"
                                 Value="{Binding PicTran}" />
-                            <TextBlock
-                                Width="40"
-                                Margin="0,0,5,0"
-                                Text="{Binding PicTran, StringFormat='{}{0}%'}" />
-                        </StackPanel>
+                        </DockPanel>
                         <Button
                             Width="100"
-                            Height="30"
-                            Margin="-2"
+                            Height="35"
+                            Margin="-3,-3,7,7"
+                            HorizontalAlignment="Right"
                             VerticalAlignment="Center"
                             Classes="top"
                             Command="{Binding SetPicTran}"
-                            Content="{setting:Localize Button.Set}" />
-                    </WrapPanel>
-                    <WrapPanel IsEnabled="{Binding EnableBG}" Orientation="Horizontal">
+                            Content="{setting:Localize SettingWindow.Tab2.Text60}" />
+                    </panel:WrapPanelWithStretch>
+                    <panel:WrapPanelWithStretch AutoMax="{Binding MinMode}" IsEnabled="{Binding EnableBG}">
                         <ToggleSwitch
+                            Margin="0,0,10,10"
                             VerticalAlignment="Center"
                             IsChecked="{Binding EnablePicResize}"
                             OffContent="{setting:Localize SettingWindow.Tab2.Text24}"
                             OnContent="{setting:Localize SettingWindow.Tab2.Text24}" />
-                        <StackPanel Orientation="Horizontal">
+                        <DockPanel MinWidth="200" Margin="0,0,10,10">
+                            <TextBlock
+                                Width="40"
+                                Margin="0,0,5,0"
+                                DockPanel.Dock="Right"
+                                Text="{Binding PicResize, StringFormat='{}{0}%'}" />
                             <Slider
-                                Width="150"
                                 Height="40"
                                 Margin="5,-10,5,0"
-                                HorizontalAlignment="Left"
-                                Foreground="{setting:Colors Main}"
+                                HorizontalAlignment="Stretch"
+                                Foreground="{setting:Theme MainColor}"
                                 IsEnabled="{Binding EnablePicResize}"
                                 IsSnapToTickEnabled="True"
                                 LargeChange="1"
@@ -325,50 +298,57 @@
                                 SmallChange="1"
                                 TickFrequency="1"
                                 Value="{Binding PicResize}" />
-                            <TextBlock
-                                Width="40"
-                                Margin="0,0,5,0"
-                                Text="{Binding PicResize, StringFormat='{}{0}%'}" />
-                        </StackPanel>
+                        </DockPanel>
                         <Button
                             Width="100"
-                            Height="30"
-                            Margin="-2"
+                            Height="35"
+                            Margin="-3,-3,7,7"
                             VerticalAlignment="Center"
                             Classes="top"
                             Command="{Binding SetPicSize}"
-                            Content="{setting:Localize Button.Set}"
+                            Content="{setting:Localize SettingWindow.Tab2.Text60}"
                             IsEnabled="{Binding EnablePicResize}" />
-                    </WrapPanel>
+                    </panel:WrapPanelWithStretch>
                     <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text18}" />
                 </StackPanel>
             </Border>
-            <Border Margin="0,0,0,5" Classes="t2">
-                <StackPanel>
+            <Border Margin="10,5,10,3" Classes="t2">
+                <StackPanel Margin="15">
                     <!--  颜色设置  -->
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
-                            Path="/Resource/Icon/Setting/svg5.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Path="/Resource/Icon/Setting/svg5.svg" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize SettingWindow.Tab2.Text7}" />
                     </StackPanel>
-
-                    <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal">
                         <RadioButton
-                            Margin="5,0,0,0"
+                            Margin="0,0,20,0"
                             VerticalAlignment="Center"
                             Content="{setting:Localize SettingWindow.Tab2.Text26}"
                             GroupName="Group1"
                             IsChecked="{Binding IsAutoColor}" />
+                        <RadioButton
+                            Margin="0,0,20,0"
+                            VerticalAlignment="Center"
+                            Content="{setting:Localize SettingWindow.Tab2.Text27}"
+                            GroupName="Group1"
+                            IsChecked="{Binding IsLightColor}" />
+                        <RadioButton
+                            Margin="0,0,20,0"
+                            VerticalAlignment="Center"
+                            Content="{setting:Localize SettingWindow.Tab2.Text28}"
+                            GroupName="Group1"
+                            IsChecked="{Binding IsDarkColor}" />
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <TextBlock Margin="5,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text8}" />
                         <ColorPicker Margin="0,0,5,0" Color="{Binding MainColor}" />
                         <Button
                             Width="100"
-                            Height="30"
+                            Height="35"
                             Margin="-2"
                             VerticalAlignment="Center"
                             Classes="top"
@@ -377,65 +357,27 @@
                             ToolTip.Tip="{setting:Localize ToolTip.Text124}"
                             ToolTip.VerticalOffset="-30" />
                     </StackPanel>
-                    <RadioButton
-                        Margin="5,0,0,0"
-                        VerticalAlignment="Center"
-                        Content="{setting:Localize SettingWindow.Tab2.Text27}"
-                        GroupName="Group1"
-                        IsChecked="{Binding IsLightColor}" />
-                    <WrapPanel Margin="0,0,0,5">
-                        <TextBlock Width="80" Text="{setting:Localize SettingWindow.Tab2.Text10}" />
-                        <ColorPicker Margin="0,0,5,0" Color="{Binding LightBackColor}" />
-                        <StackPanel Margin="0,0,5,0" Orientation="Horizontal">
-                            <TextBlock Width="80" Text="{setting:Localize SettingWindow.Tab2.Text11}" />
-                            <ColorPicker Color="{Binding LightTranColor}" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,5,0" Orientation="Horizontal">
-                            <TextBlock Width="80" Text="{setting:Localize SettingWindow.Tab2.Text16}" />
-                            <ColorPicker Color="{Binding LightFont1Color}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="80" Text="{setting:Localize SettingWindow.Tab2.Text17}" />
-                            <ColorPicker Color="{Binding LightFont2Color}" />
-                        </StackPanel>
-                    </WrapPanel>
-                    <RadioButton
-                        Margin="5,0,0,0"
-                        VerticalAlignment="Center"
-                        Content="{setting:Localize SettingWindow.Tab2.Text28}"
-                        GroupName="Group1"
-                        IsChecked="{Binding IsDarkColor}" />
-                    <WrapPanel Orientation="Horizontal">
-                        <TextBlock Width="80" Text="{setting:Localize SettingWindow.Tab2.Text10}" />
-                        <ColorPicker Margin="0,0,5,0" Color="{Binding DarkBackColor}" />
-                        <StackPanel Margin="0,0,5,0" Orientation="Horizontal">
-                            <TextBlock Width="80" Text="{setting:Localize SettingWindow.Tab2.Text11}" />
-                            <ColorPicker Color="{Binding DarkTranColor}" />
-                        </StackPanel>
-                        <StackPanel Margin="0,0,5,0" Orientation="Horizontal">
-                            <TextBlock Width="80" Text="{setting:Localize SettingWindow.Tab2.Text16}" />
-                            <ColorPicker Color="{Binding DarkFont1Color}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Width="80" Text="{setting:Localize SettingWindow.Tab2.Text17}" />
-                            <ColorPicker Color="{Binding DarkFont2Color}" />
-                        </StackPanel>
-                    </WrapPanel>
                     <!--  RGB模式  -->
                     <ToggleSwitch
                         IsChecked="{Binding EnableRGB}"
                         OffContent="{setting:Localize SettingWindow.Tab2.Text13}"
                         OnContent="{setting:Localize SettingWindow.Tab2.Text13}" />
-                    <WrapPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text14}" />
+                    <panel:WrapPanelWithStretch
+                        Margin="0,0,0,-10"
+                        AutoMax="{Binding MinMode}"
+                        IsEnabled="{Binding EnableRGB}">
+                        <DockPanel MinWidth="260" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text14}" />
+                            <TextBlock
+                                Width="40"
+                                Margin="0,0,5,0"
+                                DockPanel.Dock="Right"
+                                Text="{Binding RgbV1, StringFormat='{}{0}%'}" />
                             <Slider
-                                Width="150"
                                 Height="40"
                                 Margin="5,-10,5,0"
-                                HorizontalAlignment="Left"
-                                Foreground="{setting:Colors Main}"
-                                IsEnabled="{Binding EnableRGB}"
+                                HorizontalAlignment="Stretch"
+                                Foreground="{setting:Theme MainColor}"
                                 IsSnapToTickEnabled="True"
                                 LargeChange="1"
                                 Maximum="100"
@@ -443,20 +385,19 @@
                                 SmallChange="1"
                                 TickFrequency="1"
                                 Value="{Binding RgbV1}" />
+                        </DockPanel>
+                        <DockPanel MinWidth="260" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text15}" />
                             <TextBlock
                                 Width="40"
                                 Margin="0,0,5,0"
-                                Text="{Binding RgbV1, StringFormat='{}{0}%'}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text15}" />
+                                DockPanel.Dock="Right"
+                                Text="{Binding RgbV2, StringFormat='{}{0}%'}" />
                             <Slider
-                                Width="150"
                                 Height="40"
                                 Margin="5,-10,5,0"
-                                HorizontalAlignment="Left"
-                                Foreground="{setting:Colors Main}"
-                                IsEnabled="{Binding EnableRGB}"
+                                HorizontalAlignment="Stretch"
+                                Foreground="{setting:Theme MainColor}"
                                 IsSnapToTickEnabled="True"
                                 LargeChange="1"
                                 Maximum="100"
@@ -464,123 +405,199 @@
                                 SmallChange="1"
                                 TickFrequency="1"
                                 Value="{Binding RgbV2}" />
+                        </DockPanel>
+                    </panel:WrapPanelWithStretch>
+                </StackPanel>
+            </Border>
+            <Border Margin="10,5,10,3" Classes="t2">
+                <StackPanel Margin="15,15,5,15">
+                    <!--  头像设置  -->
+                    <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
+                        <svg:SvgControl
+                            Width="24"
+                            Height="24"
+                            Margin="0,0,5,0"
+                            Path="{Binding IconHead}" />
+                        <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize SettingWindow.Tab2.Text54}" />
+                    </StackPanel>
+                    <WrapPanel Margin="0,0,10,0">
+                        <RadioButton
+                            Margin="0,0,20,0"
+                            Content="{setting:Localize SettingWindow.Tab2.Text55}"
+                            GroupName="Group2"
+                            IsChecked="{Binding IsHead1}" />
+                        <RadioButton
+                            Margin="0,0,20,0"
+                            Content="{setting:Localize SettingWindow.Tab2.Text56}"
+                            GroupName="Group2"
+                            IsChecked="{Binding IsHead2}" />
+                        <RadioButton
+                            Content="{setting:Localize SettingWindow.Tab2.Text57}"
+                            GroupName="Group2"
+                            IsChecked="{Binding IsHead3}" />
+                    </WrapPanel>
+                    <panel:WrapPanelWithStretch
+                        Margin="0,0,0,-10"
+                        AutoMax="{Binding MinMode}"
+                        IsEnabled="{Binding IsHead3}">
+                        <DockPanel MinWidth="260" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text58}" />
                             <TextBlock
                                 Width="40"
                                 Margin="0,0,5,0"
-                                Text="{Binding RgbV2, StringFormat='{}{0}%'}" />
-                        </StackPanel>
-                    </WrapPanel>
+                                DockPanel.Dock="Right"
+                                Text="{Binding HeadX, StringFormat='{}{0}°'}" />
+                            <Slider
+                                Height="40"
+                                Margin="5,-10,5,0"
+                                HorizontalAlignment="Stretch"
+                                Foreground="{setting:Theme MainColor}"
+                                IsSnapToTickEnabled="True"
+                                LargeChange="1"
+                                Maximum="90"
+                                Minimum="0"
+                                SmallChange="1"
+                                TickFrequency="1"
+                                Value="{Binding HeadX}" />
+                        </DockPanel>
+                        <DockPanel MinWidth="260" Margin="0,0,10,10">
+                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text59}" />
+                            <TextBlock
+                                Width="40"
+                                Margin="0,0,5,0"
+                                DockPanel.Dock="Right"
+                                Text="{Binding HeadY, StringFormat='{}{0}°'}" />
+                            <Slider
+                                Height="40"
+                                Margin="5,-10,5,0"
+                                HorizontalAlignment="Stretch"
+                                Foreground="{setting:Theme MainColor}"
+                                IsSnapToTickEnabled="True"
+                                LargeChange="1"
+                                Maximum="90"
+                                Minimum="0"
+                                SmallChange="1"
+                                TickFrequency="1"
+                                Value="{Binding HeadY}" />
+                        </DockPanel>
+                    </panel:WrapPanelWithStretch>
                 </StackPanel>
             </Border>
-
             <Border
-                Margin="0,0,0,5"
+                Margin="10,5,10,3"
                 Classes="t2"
-                IsEnabled="{Binding !Phone}"
                 IsVisible="{Binding !Phone}">
-                <StackPanel>
+                <StackPanel Margin="15,15,5,15">
                     <!--  Live2D人物  -->
                     <StackPanel Margin="0,0,0,5" Orientation="Horizontal">
                         <svg:SvgControl
                             Width="24"
                             Height="24"
                             Margin="0,0,5,0"
-                            Fill="{setting:Colors Font}"
-                            Path="/Resource/Icon/Setting/svg6.svg"
-                            Stroke="{setting:Colors Font}" />
+                            Path="/Resource/Icon/Setting/svg6.svg" />
                         <TextBlock FontSize="{setting:Style FontTitle}" Text="{setting:Localize SettingWindow.Tab2.Text29}" />
                     </StackPanel>
-
-                    <WrapPanel>
-                        <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text30}" />
-                        <TextBlock Margin="5,0,5,0" Text="{Binding Live2DCoreState}" />
-                        <StackPanel Orientation="Horizontal">
-                            <Button
-                                Width="100"
-                                Height="30"
-                                Margin="-2,-2,3,-2"
-                                HorizontalAlignment="Right"
-                                Classes="top"
-                                Command="{Binding DownloadCore}"
-                                Content="{setting:Localize SettingWindow.Tab2.Text31}"
-                                IsEnabled="{Binding !CoreInstall}" />
-                            <Button
-                                Width="100"
-                                Height="30"
-                                Margin="-2,-2,3,-2"
-                                HorizontalAlignment="Right"
-                                Classes="top"
-                                Command="{Binding InstallCore}"
-                                Content="{setting:Localize SettingWindow.Tab2.Text49}"
-                                IsEnabled="{Binding !CoreInstall}" />
-                        </StackPanel>
+                    <WrapPanel Margin="0,0,10,5">
+                        <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text30}" />
+                        <TextBlock Text="{Binding Live2DCoreState}" />
                     </WrapPanel>
+                    <StackPanel
+                        Margin="0,0,10,0"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                        <Button
+                            Width="100"
+                            Height="35"
+                            Margin="-2,-2,3,-2"
+                            HorizontalAlignment="Right"
+                            Classes="top"
+                            Command="{Binding DownloadCore}"
+                            Content="{setting:Localize SettingWindow.Tab2.Text31}"
+                            IsEnabled="{Binding !CoreInstall}" />
+                        <Button
+                            Width="100"
+                            Height="35"
+                            Margin="-2,-2,-3,-2"
+                            HorizontalAlignment="Right"
+                            Classes="top"
+                            Command="{Binding InstallCore}"
+                            Content="{setting:Localize SettingWindow.Tab2.Text49}"
+                            IsEnabled="{Binding !CoreInstall}" />
+                    </StackPanel>
                     <StackPanel IsEnabled="{Binding CoreInstall}">
                         <ToggleSwitch
-                            Margin="0,0,5,0"
+                            Margin="0,0,10,0"
                             IsChecked="{Binding EnableLive2D}"
                             OffContent="{setting:Localize SettingWindow.Tab2.Text48}"
                             OnContent="{setting:Localize SettingWindow.Tab2.Text48}" />
                         <TextBox
-                            MinWidth="300"
-                            Margin="0,5,5,0"
-                            Classes="input1"
+                            Margin="0,5,10,0"
                             IsEnabled="{Binding EnableLive2D}"
                             Text="{Binding Live2DModel}"
                             Watermark="{setting:Localize SettingWindow.Tab2.Text33}" />
                         <WrapPanel
-                            Margin="0,5,0,0"
+                            Margin="0,5,10,0"
                             HorizontalAlignment="Right"
                             IsEnabled="{Binding EnableLive2D}">
                             <Button
-                                Width="100"
-                                Height="30"
-                                Margin="-2,-2,3,-2"
+                                Width="90"
+                                Height="35"
+                                Margin="-2,-2,2,-2"
                                 Classes="top"
                                 Command="{Binding DeleteLive2D}"
                                 Content="{setting:Localize Button.Delete}"
                                 DockPanel.Dock="Right" />
                             <Button
-                                Width="100"
-                                Height="30"
-                                Margin="-2,-2,3,-2"
+                                Width="90"
+                                Height="35"
+                                Margin="-2,-2,2,-2"
                                 Classes="top"
                                 Command="{Binding OpenLive2D}"
                                 Content="{setting:Localize Button.Select}"
                                 DockPanel.Dock="Right" />
                             <Button
-                                Width="100"
-                                Height="30"
-                                Margin="-2,-2,3,-2"
+                                Width="90"
+                                Height="35"
+                                Margin="-2,-2,-3,-2"
                                 Classes="top"
                                 Command="{Binding SetLive2D}"
-                                Content="{setting:Localize Button.Use}"
+                                Content="{setting:Localize SettingWindow.Tab2.Text61}"
                                 DockPanel.Dock="Right" />
                         </WrapPanel>
-                        <StackPanel
-                            Margin="0,5,0,0"
-                            IsEnabled="{Binding EnableLive2D}"
-                            Orientation="Horizontal">
-                            <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text52}" />
-                            <ComboBox
-                                Width="150"
-                                ItemsSource="{Binding PosList}"
-                                SelectedIndex="{Binding L2dPos}" />
+                        <panel:WrapPanelWithStretch Margin="0,5,0,-5" AutoMax="{Binding MinMode}">
                             <ToggleSwitch
-                                Margin="10,0,5,0"
+                                Margin="0,0,20,10"
+                                VerticalAlignment="Center"
                                 IsChecked="{Binding LowFps}"
                                 OffContent="{setting:Localize SettingWindow.Tab2.Text53}"
                                 OnContent="{setting:Localize SettingWindow.Tab2.Text53}" />
-                        </StackPanel>
-                        <WrapPanel IsEnabled="{Binding EnableLive2D}">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text34}" />
+                            <DockPanel
+                                MinWidth="230"
+                                Margin="0,0,10,10"
+                                IsEnabled="{Binding EnableLive2D}">
+                                <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text52}" />
+                                <ComboBox
+                                    HorizontalAlignment="Stretch"
+                                    ItemsSource="{Binding PosList}"
+                                    SelectedIndex="{Binding L2dPos}" />
+                            </DockPanel>
+                        </panel:WrapPanelWithStretch>
+                        <panel:WrapPanelWithStretch
+                            Margin="0,0,0,-5"
+                            AutoMax="{Binding MinMode}"
+                            IsEnabled="{Binding EnableLive2D}">
+                            <DockPanel MinWidth="260" Margin="0,0,10,10">
+                                <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text34}" />
+                                <TextBlock
+                                    Width="40"
+                                    Margin="0,0,5,0"
+                                    DockPanel.Dock="Right"
+                                    Text="{Binding L2dWidth, StringFormat='{}{0}%'}" />
                                 <Slider
-                                    Width="150"
                                     Height="40"
                                     Margin="5,-10,5,0"
-                                    HorizontalAlignment="Left"
-                                    Foreground="{setting:Colors Main}"
+                                    HorizontalAlignment="Stretch"
+                                    Foreground="{setting:Theme MainColor}"
                                     IsSnapToTickEnabled="True"
                                     LargeChange="1"
                                     Maximum="100"
@@ -588,19 +605,19 @@
                                     SmallChange="1"
                                     TickFrequency="1"
                                     Value="{Binding L2dWidth}" />
+                            </DockPanel>
+                            <DockPanel MinWidth="260" Margin="0,0,10,10">
+                                <TextBlock Margin="0,0,5,0" Text="{setting:Localize SettingWindow.Tab2.Text35}" />
                                 <TextBlock
                                     Width="40"
                                     Margin="0,0,5,0"
-                                    Text="{Binding L2dWidth, StringFormat='{}{0}%'}" />
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text35}" />
+                                    DockPanel.Dock="Right"
+                                    Text="{Binding L2dHeight, StringFormat='{}{0}%'}" />
                                 <Slider
-                                    Width="150"
                                     Height="40"
                                     Margin="5,-10,5,0"
-                                    HorizontalAlignment="Left"
-                                    Foreground="{setting:Colors Main}"
+                                    HorizontalAlignment="Stretch"
+                                    Foreground="{setting:Theme MainColor}"
                                     IsSnapToTickEnabled="True"
                                     LargeChange="1"
                                     Maximum="100"
@@ -608,11 +625,13 @@
                                     SmallChange="1"
                                     TickFrequency="1"
                                     Value="{Binding L2dHeight}" />
-                                <TextBlock Width="40" Text="{Binding L2dHeight, StringFormat='{}{0}%'}" />
-                            </StackPanel>
-                        </WrapPanel>
+                            </DockPanel>
+                        </panel:WrapPanelWithStretch>
                     </StackPanel>
-                    <TextBlock Text="{setting:Localize SettingWindow.Tab2.Text32}" TextWrapping="Wrap" />
+                    <TextBlock
+                        Margin="0,0,10,0"
+                        Text="{setting:Localize SettingWindow.Tab2.Text32}"
+                        TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
         </StackPanel>

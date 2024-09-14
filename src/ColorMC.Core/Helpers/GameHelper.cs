@@ -7,12 +7,10 @@ using ColorMC.Core.Objs.Loader;
 using ColorMC.Core.Objs.Minecraft;
 using ColorMC.Core.Objs.OtherLaunch;
 using ICSharpCode.SharpZipLib.Zip;
+using Newtonsoft.Json.Linq;
 
 namespace ColorMC.Core.Helpers;
 
-/// <summary>
-/// 游戏文件处理
-/// </summary>
 public static class GameHelper
 {
     /// <summary>
@@ -243,7 +241,7 @@ public static class GameHelper
     public static void ReadyOptifineWrapper()
     {
         OptifineWrapper = Path.GetFullPath(LibrariesPath.BaseDir +
-            "/com/coloryr/OptifineWrapper/1.0/OptifineWrapper-1.0.jar");
+            "/com/coloryr/OptifineWrapper/1.1/OptifineWrapper-1.1.jar");
         var file = new FileInfo(OptifineWrapper);
         if (!file.Exists)
         {
@@ -288,7 +286,7 @@ public static class GameHelper
             item.downloads.artifact.path = "net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar";
             item.downloads.artifact.sha1 = "1200e7ebeedbe0d10062093f32925a912020e747";
             item.downloads.artifact.url =
-                BaseClient.Source == SourceLocal.Offical
+                WebClient.Source == SourceLocal.Offical
                 ? $"{UrlHelper.MavenUrl[0]}net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar"
                 : $"{UrlHelper.MavenUrl[1]}net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar";
         }
@@ -300,7 +298,7 @@ public static class GameHelper
             item.downloads.artifact.path = "com/github/oshi/oshi-core/6.3.0/oshi-core-6.3.0.jar";
             item.downloads.artifact.sha1 = "9e98cf55be371cafdb9c70c35d04ec2a8c2b42ac";
             item.downloads.artifact.url =
-                BaseClient.Source == SourceLocal.Offical
+                WebClient.Source == SourceLocal.Offical
                 ? $"{UrlHelper.MavenUrl[0]}com/github/oshi/oshi-core/6.3.0/oshi-core-6.3.0.jar"
                 : $"{UrlHelper.MavenUrl[1]}com/github/oshi/oshi-core/6.3.0/oshi-core-6.3.0.jar";
         }
@@ -312,7 +310,7 @@ public static class GameHelper
             item.downloads.artifact.path = "org/ow2/asm/asm-all/5.0.4/asm-all-5.0.4.jar";
             item.downloads.artifact.sha1 = "e6244859997b3d4237a552669279780876228909";
             item.downloads.artifact.url =
-                BaseClient.Source == SourceLocal.Offical
+                WebClient.Source == SourceLocal.Offical
                 ? $"{UrlHelper.MavenUrl[0]}org/ow2/asm/asm-all/5.0.4/asm-all-5.0.4.jar"
                 : $"{UrlHelper.MavenUrl[1]}org/ow2/asm/asm-all/5.0.4/asm-all-5.0.4.jar";
         }
@@ -342,9 +340,36 @@ public static class GameHelper
                     continue;
                 }
 
-                using var stream1 = PathHelper.OpenWrite(file);
                 using var stream2 = zFile.GetInputStream(e);
-                stream2.CopyTo(stream1);
+                PathHelper.WriteBytes(file, stream2);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 解压native
+    /// </summary>
+    /// <param name="version">游戏版本</param>
+    /// <param name="stream">文件流</param>
+    public static void UnpackSave(string version, Stream stream)
+    {
+        using var zFile = new ZipFile(stream);
+        foreach (ZipEntry e in zFile)
+        {
+            if (e.Name.StartsWith("META-INF"))
+            {
+                continue;
+            }
+            else if (e.IsFile)
+            {
+                var file = Path.GetFullPath(LibrariesPath.GetNativeDir(version) + "/" + e.Name);
+                if (File.Exists(file))
+                {
+                    continue;
+                }
+
+                using var stream2 = zFile.GetInputStream(e);
+                PathHelper.WriteBytes(file, stream2);
             }
         }
     }
@@ -375,6 +400,11 @@ public static class GameHelper
                 game.Loader = Loaders.Forge;
                 game.LoaderVersion = item.version;
             }
+            else if (item.uid == "net.neoforged")
+            {
+                game.Loader = Loaders.NeoForge;
+                game.LoaderVersion = item.version;
+            }
             else if (item.uid == "net.fabricmc.fabric-loader")
             {
                 game.Loader = Loaders.Fabric;
@@ -391,6 +421,10 @@ public static class GameHelper
         if (list.TryGetValue("Name", out var item1))
         {
             game.Name = item1;
+        }
+        if (list.TryGetValue("name", out var item4))
+        {
+            game.Name = item4;
         }
         if (list.TryGetValue("JvmArgs", out item1))
         {
@@ -569,5 +603,294 @@ public static class GameHelper
         }
 
         return game;
+    }
+
+    /// <summary>
+    /// 转换到ColorMC数据
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public static GameSettingObj? ToColorMC(this OfficialObj obj)
+    {
+        var game = new GameSettingObj()
+        {
+            Name = obj.id,
+            Loader = Loaders.Normal
+        };
+
+        if (obj.patches != null)
+        {
+            foreach (var item1 in obj.patches)
+            {
+                var id = item1.id;
+                var version = item1.version ?? "";
+                if (id == "game")
+                {
+                    game.Version = version;
+                }
+                else if (id == "forge")
+                {
+                    game.LoaderVersion = version;
+                    game.Loader = Loaders.Forge;
+                }
+                else if (id == "fabric")
+                {
+                    game.LoaderVersion = version;
+                    game.Loader = Loaders.Fabric;
+                }
+                else if (id == "quilt")
+                {
+                    game.LoaderVersion = version;
+                    game.Loader = Loaders.Quilt;
+                }
+                else if (id == "neoforge")
+                {
+                    game.LoaderVersion = version;
+                    game.Loader = Loaders.NeoForge;
+                }
+            }
+        }
+        else
+        {
+            var versions = VersionPath.GetVersions();
+            if (versions == null)
+            {
+                return null;
+            }
+            if (!string.IsNullOrWhiteSpace(obj.inheritsFrom))
+            {
+                if (versions.versions.Any(item => item.id == obj.inheritsFrom) == true)
+                {
+                    game.Version = obj.inheritsFrom;
+                }
+            }
+            else
+            {
+                if (versions.versions.Any(item => item.id == obj.id) == true)
+                {
+                    game.Version = obj.id;
+                }
+            }
+
+            foreach (var item in obj.libraries)
+            {
+                if (item.name.Contains("minecraftforge"))
+                {
+                    var names = item.name.Split(':');
+                    if (names.Length >= 3 && (names[1] is "forge" or "fmlloader"))
+                    {
+                        var args = names[2].Split('-');
+                        if (args.Length >= 2 && versions.versions.Any(item => item.id == args[0]))
+                        {
+                            game.Loader = Loaders.Forge;
+                            game.LoaderVersion = args[1];
+                        }
+                        break;
+                    }
+                }
+                else if (item.name.Contains("neoforged"))
+                {
+                    if (obj.arguments?.game is { } list)
+                    {
+                        for (int a = 0; a < list.Count; a++)
+                        {
+                            if (list[a] is "--fml.neoForgeVersion" or "--fml.forgeVersion" && list.Count > a + 1)
+                            {
+                                game.Loader = Loaders.NeoForge;
+                                game.LoaderVersion = list[a + 1].ToString();
+                                break;
+                            }
+                        }
+                    }
+                }
+                else if (item.name.Contains("fabricmc"))
+                {
+                    var names = item.name.Split(':');
+                    if (names.Length >= 3 && names[1] == "fabric-loader")
+                    {
+                        game.Loader = Loaders.Fabric;
+                        game.LoaderVersion = names[2];
+                        break;
+                    }
+                }
+                else if (item.name.Contains("quiltmc"))
+                {
+                    var names = item.name.Split(':');
+                    if (names.Length >= 3 && names[1] == "quilt-loader")
+                    {
+                        game.Loader = Loaders.Quilt;
+                        game.LoaderVersion = names[2];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return game;
+    }
+
+    /// <summary>
+    /// 获取所有游戏版本
+    /// </summary>
+    /// <param name="type">类型</param>
+    /// <returns></returns>
+    public static async Task<List<string>> GetGameVersions(GameType type)
+    {
+        var list = new List<string>();
+        var ver = await VersionPath.GetVersionsAsync();
+        if (ver == null)
+        {
+            return list;
+        }
+
+        if (type == GameType.All)
+        {
+            foreach (var item in ver.versions)
+            {
+                list.Add(item.id);
+            }
+
+            return list;
+        }
+
+        foreach (var item in ver.versions)
+        {
+            if (item.type == "release")
+            {
+                if (type == GameType.Release)
+                {
+                    list.Add(item.id);
+                }
+            }
+            else if (item.type == "snapshot")
+            {
+                if (type == GameType.Snapshot)
+                {
+                    list.Add(item.id);
+                }
+            }
+            else
+            {
+                if (type == GameType.Other)
+                {
+                    list.Add(item.id);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    /// <summary>
+    /// 是否为Minecraft原版版本
+    /// </summary>
+    /// <param name="dir"></param>
+    /// <returns></returns>
+    public static bool IsMinecraftVersion(string dir)
+    {
+        bool find = false;
+        var files = PathHelper.GetFiles(dir);
+        foreach (var item3 in files)
+        {
+            if (find)
+            {
+                break;
+            }
+            if (item3.Name.EndsWith(".json"))
+            {
+                try
+                {
+                    var obj = JObject.Parse(PathHelper.ReadText(item3.FullName)!);
+                    if (obj.ContainsKey("id")
+                        && (obj.ContainsKey("arguments") || obj.ContainsKey("minecraftArguments"))
+                        && obj.ContainsKey("mainClass"))
+                    {
+                        find = true;
+                        break;
+                    }
+                }
+                catch
+                {
+
+                }
+            }
+        }
+
+        return find;
+    }
+
+    /// <summary>
+    /// 是否为MMC版本
+    /// </summary>
+    /// <param name="dir"></param>
+    /// <returns></returns>
+    public static bool IsMMCVersion(string dir)
+    {
+        var file1 = Path.GetFullPath(dir + "/mmc-pack.json");
+        var file2 = Path.GetFullPath(dir + "/instance.cfg");
+        if (File.Exists(file1) && File.Exists(file2))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 扫描目录下的游戏版本
+    /// </summary>
+    /// <param name="dir"></param>
+    /// <returns></returns>
+    public static List<string> ScanVersions(string dir)
+    {
+        var list = new List<string>();
+        var dirs = PathHelper.GetDirs(dir);
+        dirs.Insert(0, new DirectoryInfo(dir));
+        foreach (var item in dirs)
+        {
+            if (item.Name == "versions")
+            {
+                var dirs1 = PathHelper.GetDirs(item.FullName);
+                foreach (var item2 in dirs1)
+                {
+                    if (IsMinecraftVersion(item2.FullName))
+                    {
+                        list.Add(item2.FullName);
+                    }
+                }
+                if (list.Count > 0)
+                {
+                    return list;
+                }
+            }
+            if (item.Name == "instances")
+            {
+                var dirs1 = PathHelper.GetDirs(item.FullName);
+                foreach (var item2 in dirs1)
+                {
+                    if (IsMMCVersion(item2.FullName))
+                    {
+                        list.Add(item2.FullName);
+                    }
+                }
+                if (list.Count > 0)
+                {
+                    return list;
+                }
+            }
+
+            if (IsMinecraftVersion(item.FullName))
+            {
+                list.Add(item.FullName);
+                continue;
+            }
+
+            if (IsMMCVersion(item.FullName))
+            {
+                list.Add(item.FullName);
+            }
+        }
+
+        return list;
     }
 }

@@ -12,7 +12,7 @@ namespace ColorMC.Gui.UI.Model.GameEdit;
 
 public partial class GameEditModel
 {
-    public List<string> GCTypeList { get; init; } = JavaBinding.GetGCTypes();
+    public string[] GCTypeList { get; init; } = LanguageBinding.GetGCTypes();
     public ObservableCollection<string> JvmList { get; init; } = [];
 
     [ObservableProperty]
@@ -410,7 +410,21 @@ public partial class GameEditModel
     }
 
     [RelayCommand]
-    public async Task DeleteConfig()
+    public async Task OpenJava()
+    {
+        var top = Model.GetTopLevel();
+        if (top == null)
+        {
+            return;
+        }
+        var file = await PathBinding.SelectFile(top, FileType.Java);
+        if (file.Item1 != null)
+        {
+            JvmLocal = file.Item1;
+        }
+    }
+
+    private async void DeleteConfig()
     {
         var res = await Model.ShowWait(App.Lang("GameEditWindow.Tab2.Info1"));
         if (res)
@@ -418,16 +432,6 @@ public partial class GameEditModel
             GameBinding.DeleteConfig(_obj);
 
             ConfigLoad();
-        }
-    }
-
-    [RelayCommand]
-    public async Task OpenJava()
-    {
-        var file = await PathBinding.SelectFile(FileType.Java);
-        if (file.Item1 != null)
-        {
-            JvmLocal = file.Item1;
         }
     }
 

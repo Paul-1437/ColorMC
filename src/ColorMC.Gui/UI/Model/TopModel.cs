@@ -1,21 +1,40 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace ColorMC.Gui.UI.Model;
 
-public abstract class TopModel(BaseModel model) : ObservableObject
+public abstract partial class TopModel(BaseModel model) : ObservableObject
 {
+    public const string WindowCloseName = "WindowClose";
+
+    public const string MinModeName = nameof(MinMode);
+
     public BaseModel Model => model;
 
-    public void TopClose()
+    [ObservableProperty]
+    private bool _minMode;
+
+    public virtual void WidthChange(int index, double width)
     {
-        Close();
+        if (width < 470)
+        {
+            MinMode = true;
+        }
+        else
+        {
+            MinMode = false;
+        }
     }
-    protected abstract void Close();
+
+    /// <summary>
+    /// 上层UI用关闭通知
+    /// </summary>
+    public abstract void Close();
 
     /// <summary>
     /// 关闭窗口
     /// </summary>
     public void WindowClose()
     {
-        OnPropertyChanged("WindowClose");
+        OnPropertyChanged(WindowCloseName);
     }
 }

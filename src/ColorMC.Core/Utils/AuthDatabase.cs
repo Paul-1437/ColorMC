@@ -12,7 +12,9 @@ namespace ColorMC.Core.Utils;
 /// </summary>
 public static class AuthDatabase
 {
-    public static readonly ConcurrentDictionary<(string, AuthType), LoginObj> Auths = new();
+    private static readonly ConcurrentDictionary<UserKeyObj, LoginObj> s_auths = new();
+
+    public static Dictionary<UserKeyObj, LoginObj> Auths => new(s_auths);
 
     public const string Name = "auth.json";
     private static string s_local;
@@ -26,30 +28,31 @@ public static class AuthDatabase
         Logs.Info(LanguageHelper.Get("Core.Auth.Info1"));
 
         var path = (SystemInfo.Os == OsType.MacOS ?
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) :
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData))
-            + "/ColorMC/";
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/.ColorMC/" :
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)) + "/ColorMC/";
 
         Logs.Info(path);
 
         Directory.CreateDirectory(path);
 
         s_local = Path.GetFullPath(path + Name);
+
+        if (SystemInfo.Os == OsType.Windows)
+        {
+            var path1 = Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/ColorMC/" + Name);
+            if (File.Exists(path1) && !File.Exists(s_local))
+            {
+                File.Move(path1, s_local);
+            }
+        }
+
         if (File.Exists(s_local))
         {
             Load();
         }
         else
         {
-            string file1 = AppContext.BaseDirectory + Name;
-            if (File.Exists(file1))
-            {
-                PathHelper.MoveFile(file1, s_local);
-            }
-            else
-            {
-                Save();
-            }
+            Save();
         }
     }
 
@@ -67,7 +70,7 @@ public static class AuthDatabase
 
             foreach (var item in list)
             {
-                Auths.TryAdd((item.UUID, item.AuthType), item);
+                s_auths.TryAdd(item.GetKey(), item);
             }
         }
         catch
@@ -84,7 +87,7 @@ public static class AuthDatabase
         ConfigSave.AddItem(new()
         {
             Name = "auth.json",
-            Obj = Auths.Values,
+            Obj = s_auths.Values,
             Local = s_local
         });
     }
@@ -100,13 +103,15 @@ public static class AuthDatabase
             return;
         }
 
-        if (Auths.ContainsKey((obj.UUID, obj.AuthType)))
+        var key = obj.GetKey();
+
+        if (s_auths.ContainsKey(key))
         {
-            Auths[(obj.UUID, obj.AuthType)] = obj;
+            s_auths[key] = obj;
         }
         else
         {
-            Auths.TryAdd((obj.UUID, obj.AuthType), obj);
+            s_auths.TryAdd(key, obj);
         }
 
         Save();
@@ -117,7 +122,7 @@ public static class AuthDatabase
     /// </summary>
     public static LoginObj? Get(string uuid, AuthType type)
     {
-        if (Auths.TryGetValue((uuid, type), out var item))
+        if (s_auths.TryGetValue(new() { UUID = uuid, Type = type }, out var item))
         {
             return item;
         }
@@ -128,9 +133,9 @@ public static class AuthDatabase
     /// <summary>
     /// 删除账户
     /// </summary>
-    public static void Delete(LoginObj obj)
+    public static void Delete(this LoginObj obj)
     {
-        Auths.TryRemove((obj.UUID, obj.AuthType), out _);
+        s_auths.TryRemove(obj.GetKey(), out _);
         Save();
     }
 
@@ -139,22 +144,33 @@ public static class AuthDatabase
     /// </summary>
     public static bool LoadData(string dir)
     {
-        var list = JsonConvert.DeserializeObject<List<LoginObj>>(dir);
+        var data = PathHelper.ReadText(dir);
+        if (data == null)
+            return false;
+        var list = JsonConvert.DeserializeObject<List<LoginObj>>(data);
         if (list == null)
             return false;
 
         foreach (var item in list)
         {
-            if (Auths.ContainsKey((item.UUID, item.AuthType)))
+            var key = item.GetKey();
+
+            if (s_auths.ContainsKey(key))
             {
-                Auths[(item.UUID, item.AuthType)] = item;
+                s_auths[key] = item;
             }
             else
             {
-                Auths.TryAdd((item.UUID, item.AuthType), item);
+                s_auths.TryAdd(key, item);
             }
         }
 
         return true;
+    }
+
+    public static void ClearAuths()
+    {
+        s_auths.Clear();
+        Save();
     }
 }

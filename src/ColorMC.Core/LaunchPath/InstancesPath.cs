@@ -1,7 +1,7 @@
 using ColorMC.Core.Config;
 using ColorMC.Core.Helpers;
+using ColorMC.Core.Net;
 using ColorMC.Core.Objs;
-using ColorMC.Core.Objs.OtherLaunch;
 using ColorMC.Core.Utils;
 using Newtonsoft.Json;
 
@@ -37,33 +37,17 @@ public static class InstancesPath
     public const string Name23 = "temp";
     public const string Name24 = "cache";
     public const string Name25 = "loader.jar";
-
     public const string DefaultGroup = " ";
 
     /// <summary>
-    /// 游戏实例列表
+    /// 禁用文件夹监视
     /// </summary>
-    private readonly static Dictionary<string, GameSettingObj> s_installGames = [];
-    /// <summary>
-    /// 游戏实例组
-    /// </summary>
-    private readonly static Dictionary<string, List<GameSettingObj>> s_gameGroups = [];
-
-    /// <summary>
-    /// 基础路径
-    /// </summary>
-    public static string BaseDir { get; private set; }
+    public static bool DisableWatcher { private get; set; }
 
     /// <summary>
     /// 获取所有游戏实例
     /// </summary>
-    public static List<GameSettingObj> Games
-    {
-        get
-        {
-            return new(s_installGames.Values);
-        }
-    }
+    public static List<GameSettingObj> Games => new(s_installGames.Values);
 
     /// <summary>
     /// 获取所有游戏实例组
@@ -74,6 +58,23 @@ public static class InstancesPath
     /// 是否没有游戏实例
     /// </summary>
     public static bool IsNotGame => s_installGames.Count == 0;
+
+    private static FileSystemWatcher s_systemWatcher;
+    private static string s_baseDir;
+    private static bool s_init;
+    private static bool s_change;
+    private static int s_delay;
+
+    private static readonly object s_lock = new();
+
+    /// <summary>
+    /// 游戏实例列表
+    /// </summary>
+    private static readonly Dictionary<string, GameSettingObj> s_installGames = [];
+    /// <summary>
+    /// 游戏实例组
+    /// </summary>
+    private static readonly Dictionary<string, List<GameSettingObj>> s_gameGroups = [];
 
     /// <summary>
     /// 添加游戏实例到组
@@ -108,6 +109,11 @@ public static class InstancesPath
                 s_gameGroups.Add(obj.GroupName, list);
             }
         }
+
+        if (!s_init)
+        {
+            StartChange();
+        }
     }
 
     /// <summary>
@@ -131,6 +137,39 @@ public static class InstancesPath
                 s_gameGroups.Remove(obj.GroupName);
             }
         }
+
+        if (!s_init)
+        {
+            StartChange();
+        }
+    }
+
+    /// <summary>
+    /// 游戏实例数量修改任务
+    /// </summary>
+    private static void StartChange()
+    {
+        lock (s_lock)
+        {
+            s_delay = 500;
+            if (!s_change)
+            {
+                s_change = true;
+                Task.Run(() =>
+                {
+                    while (s_delay != 0)
+                    {
+                        Thread.Sleep(s_delay);
+                        lock (s_lock)
+                        {
+                            s_delay = 0;
+                        }
+                    }
+                    ColorMCCore.OnInstanceChange();
+                    s_change = false;
+                });
+            }
+        }
     }
 
     /// <summary>
@@ -139,37 +178,47 @@ public static class InstancesPath
     /// <param name="dir">运行路径</param>
     public static void Init(string dir)
     {
-        BaseDir = Path.GetFullPath(dir + "/" + Name);
+        s_init = true;
 
-        Directory.CreateDirectory(BaseDir);
+        s_baseDir = Path.GetFullPath(dir + "/" + Name);
+
+        Directory.CreateDirectory(s_baseDir);
 
         s_gameGroups.Add(DefaultGroup, []);
 
-        var list = Directory.GetDirectories(BaseDir);
+        var list = Directory.GetDirectories(s_baseDir);
         foreach (var item in list)
         {
-            var file = Path.GetFullPath(item + "/" + Name1);
-            GameSettingObj? game = null;
-            if (!File.Exists(file))
-            {
-                var file1 = Path.GetFullPath(item + "/" + "mmc-pack.json");
-                var file2 = Path.GetFullPath(item + "/" + "instance.cfg");
-                if (File.Exists(file1) && File.Exists(file2))
-                {
-                    var mmc = JsonConvert.DeserializeObject<MMCObj>(PathHelper.ReadText(file1)!);
-                    if (mmc == null)
-                        break;
+            LoadInstance(item);
+        }
 
-                    var mmc1 = PathHelper.ReadText(file2)!;
-                    game = GameHelper.ToColorMC(mmc, mmc1, out var icon);
-                    game.Icon = icon + ".png";
-                }
-            }
-            else
-            {
-                var data1 = PathHelper.ReadText(file)!;
-                game = JsonConvert.DeserializeObject<GameSettingObj>(data1);
-            }
+        s_systemWatcher = new FileSystemWatcher(s_baseDir);
+        s_systemWatcher.BeginInit();
+        s_systemWatcher.EnableRaisingEvents = true;
+        s_systemWatcher.IncludeSubdirectories = false;
+        s_systemWatcher.Created += SystemWatcher_Created;
+        s_systemWatcher.Deleted += SystemWatcher_Deleted;
+        s_systemWatcher.EndInit();
+
+        s_init = false;
+    }
+
+    /// <summary>
+    /// 加载游戏实例
+    /// </summary>
+    /// <param name="item"></param>
+    private static void LoadInstance(string item)
+    {
+        var file = Path.GetFullPath(item + "/" + Name1);
+        if (!File.Exists(file))
+        {
+            return;
+        }
+
+        try
+        {
+            var data1 = PathHelper.ReadText(file)!;
+            var game = JsonConvert.DeserializeObject<GameSettingObj>(data1);
             if (game != null)
             {
                 var path = Path.GetFileName(item);
@@ -182,6 +231,43 @@ public static class InstancesPath
                 game.ReadLaunchData();
                 game.AddToGroup();
             }
+        }
+        catch (Exception e)
+        {
+            Logs.Error(LanguageHelper.Get("Core.Game.Error19"), e);
+        }
+    }
+
+    private static void SystemWatcher_Deleted(object sender, FileSystemEventArgs e)
+    {
+        if (DisableWatcher)
+        {
+            return;
+        }
+
+        var local = e.FullPath;
+
+        var obj = s_installGames.Values.FirstOrDefault(item => item.DirName == e.Name);
+        obj?.RemoveFromGroup();
+    }
+
+    private static void SystemWatcher_Created(object sender, FileSystemEventArgs e)
+    {
+        if (DisableWatcher)
+        {
+            return;
+        }
+
+        var local = e.FullPath;
+        if (Directory.Exists(local))
+        {
+            var obj = s_installGames.Values.FirstOrDefault(item => item.DirName == e.Name);
+            if (obj != null)
+            {
+                return;
+            }
+
+            LoadInstance(local);
         }
     }
 
@@ -216,9 +302,14 @@ public static class InstancesPath
         return s_installGames.Values.FirstOrDefault(a => a.Name == name);
     }
 
+    /// <summary>
+    /// 是否存在该名字的实例
+    /// </summary>
+    /// <param name="name"></param>
+    /// <returns></returns>
     public static bool HaveGameWithName(string name)
     {
-        return s_installGames.ContainsKey(name);
+        return s_installGames.Values.Any(item => item.Name == name);
     }
 
     /// <summary>
@@ -242,7 +333,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetBasePath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}");
     }
 
     /// <summary>
@@ -252,7 +343,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetGamePath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}");
     }
 
     /// <summary>
@@ -262,7 +353,7 @@ public static class InstancesPath
     /// <returns>文件路径</returns>
     public static string GetGameJsonFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name1}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name1}");
     }
 
     /// <summary>
@@ -272,7 +363,7 @@ public static class InstancesPath
     /// <returns>文件路径</returns>
     public static string GetModPackJsonFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name4}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name4}");
     }
 
     /// <summary>
@@ -282,7 +373,7 @@ public static class InstancesPath
     /// <returns>文件路径</returns>
     public static string GetOptionsFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name5}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name5}");
     }
 
     /// <summary>
@@ -292,7 +383,7 @@ public static class InstancesPath
     /// <returns>文件路径</returns>
     public static string GetServersFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name6}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name6}");
     }
 
     /// <summary>
@@ -302,7 +393,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetScreenshotsPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name7}/");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name7}/");
     }
 
     /// <summary>
@@ -312,7 +403,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetResourcepacksPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name8}/");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name8}/");
     }
 
     /// <summary>
@@ -322,7 +413,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetShaderpacksPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name9}/");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name9}/");
     }
 
     /// <summary>
@@ -337,7 +428,7 @@ public static class InstancesPath
             obj.Icon = Name10;
             obj.Save();
         }
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{obj.Icon}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{obj.Icon}");
     }
 
     /// <summary>
@@ -347,7 +438,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetModsPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name11}/");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name11}/");
     }
 
     /// <summary>
@@ -357,7 +448,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetSavesPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name12}/");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name12}/");
     }
 
     /// <summary>
@@ -367,7 +458,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetSchematicsPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name16}/");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name16}/");
     }
 
     /// <summary>
@@ -377,7 +468,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetWorldBackupPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name18}/");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name18}/");
     }
 
     /// <summary>
@@ -387,7 +478,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetConfigPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name13}/");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name13}/");
     }
 
     /// <summary>
@@ -397,7 +488,7 @@ public static class InstancesPath
     /// <returns>文件路径</returns>
     public static string GetModInfoJsonFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name14}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name14}");
     }
 
     /// <summary>
@@ -407,7 +498,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetLogPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name2}/{Name15}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name2}/{Name15}");
     }
 
     /// <summary>
@@ -417,7 +508,7 @@ public static class InstancesPath
     /// <returns>路径</returns>
     public static string GetRemoveWorldPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name17}/{Name12}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name17}/{Name12}");
     }
 
     /// <summary>
@@ -427,7 +518,7 @@ public static class InstancesPath
     /// <returns>文件路径</returns>
     public static string GetServerPackFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name19}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name19}");
     }
 
     /// <summary>
@@ -437,7 +528,7 @@ public static class InstancesPath
     /// <returns>文件路径</returns>
     public static string GetServerPackOldFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name20}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name20}");
     }
 
     /// <summary>
@@ -447,7 +538,7 @@ public static class InstancesPath
     /// <returns></returns>
     public static string GetLaunchFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name21}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name21}");
     }
 
     /// <summary>
@@ -457,7 +548,7 @@ public static class InstancesPath
     /// <returns></returns>
     public static string GetLog4jFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name22}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name22}");
     }
 
     /// <summary>
@@ -467,7 +558,7 @@ public static class InstancesPath
     /// <returns></returns>
     public static string GetGameTempPath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name23}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name23}");
     }
 
     /// <summary>
@@ -477,7 +568,7 @@ public static class InstancesPath
     /// <returns></returns>
     public static string GetGameCachePath(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name24}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name24}");
     }
 
     /// <summary>
@@ -487,7 +578,7 @@ public static class InstancesPath
     /// <returns></returns>
     public static string GetGameLoaderFile(this GameSettingObj obj)
     {
-        return Path.GetFullPath($"{BaseDir}/{obj.DirName}/{Name25}");
+        return Path.GetFullPath($"{s_baseDir}/{obj.DirName}/{Name25}");
     }
 
     /// <summary>
@@ -495,56 +586,85 @@ public static class InstancesPath
     /// </summary>
     /// <param name="game">游戏实例</param>
     /// <returns>结果</returns>
-    public static async Task<GameSettingObj?> CreateGame(this GameSettingObj game,
-        ColorMCCore.Request request, ColorMCCore.GameOverwirte overwirte)
+    public static async Task<GameSettingObj?> CreateGame(CreateGameArg arg)
     {
-        var value = s_installGames.Values.FirstOrDefault(item => item.DirName == game.Name);
-        if (value != null)
+        try
         {
-            if (await overwirte(game) == false)
+            DisableWatcher = true;
+
+            var game = arg.Game;
+            if (HaveGameWithName(game.Name))
+            {
+                if (arg.Overwirte == null || await arg.Overwirte(game) == false)
+                {
+                    if (arg.Request != null && await arg.Request(LanguageHelper.Get("Core.Game.Error20")) == false)
+                    {
+                        return null;
+                    }
+                    int a = 1;
+                    string name;
+                    do
+                    {
+                        name = game.Name + $"({a++})";
+                    }
+                    while (HaveGameWithName(name));
+
+                    game.Name = name;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(game.Name))
+            {
+                throw new ArgumentException("Name can't be empty");
+            }
+            var value = s_installGames.Values.FirstOrDefault(item => item.DirName == game.Name);
+            if (value != null
+                && s_installGames.Remove(value.UUID, out var temp)
+                && !await Remove(temp, arg.Request))
             {
                 return null;
             }
 
-            if (s_installGames.Remove(value.UUID, out var temp))
+            game.DirName = game.Name;
+
+            var dir = game.GetBasePath();
+            if (!await PathHelper.DeleteFilesAsync(new DeleteFilesArg
             {
-                if (!await Remove(temp, request))
-                {
-                    return null;
-                }
+                Local = dir,
+                Request = arg.Request
+            }))
+            {
+                return null;
             }
+
+            try
+            {
+                Directory.CreateDirectory(dir);
+                Directory.CreateDirectory(game.GetGamePath());
+            }
+            catch (Exception e)
+            {
+                Logs.Error(string.Format(LanguageHelper.Get("Core.Game.Error15"), game.Name), e);
+                return null;
+            }
+
+            game.Mods ??= [];
+            game.LaunchData ??= new()
+            {
+                AddTime = DateTime.Now,
+                LastPlay = new()
+            };
+
+            game.Save();
+            game.SaveLaunchData();
+            game.AddToGroup();
+
+            return game;
         }
-        game.DirName = game.Name;
-
-        var dir = game.GetBasePath();
-        if (!await PathHelper.DeleteFilesAsync(dir, request))
+        finally
         {
-            return null;
+            DisableWatcher = false;
         }
-
-        try
-        {
-            Directory.CreateDirectory(dir);
-            Directory.CreateDirectory(game.GetGamePath());
-        }
-        catch (Exception e)
-        {
-            Logs.Error(string.Format(LanguageHelper.Get("Core.Game.Error15"), game.Name), e);
-            return null;
-        }
-
-        game.Mods ??= [];
-        game.LaunchData ??= new()
-        {
-            AddTime = DateTime.Now,
-            LastPlay = new()
-        };
-
-        game.Save();
-        game.SaveLaunchData();
-        game.AddToGroup();
-
-        return game;
     }
 
     /// <summary>
@@ -699,7 +819,12 @@ public static class InstancesPath
     {
         var obj1 = obj.CopyObj();
         obj1.Name = name;
-        obj1 = await CreateGame(obj1, request, overwirte);
+        obj1 = await CreateGame(new CreateGameArg
+        {
+            Game = obj1,
+            Request = request,
+            Overwirte = overwirte
+        });
         if (obj1 != null)
         {
             await PathHelper.CopyDir(GetGamePath(obj), GetGamePath(obj1));
@@ -785,43 +910,46 @@ public static class InstancesPath
             {
                 obj.Mods = res;
             }
-
-            if (obj.ModPack || !delete)
-            {
-                return;
-            }
-
-            var list = PathHelper.GetAllFile(obj.GetModsPath());
-            var remove = new List<string>();
-            foreach (var item in obj.Mods)
-            {
-                bool find = false;
-                foreach (var item1 in list)
-                {
-                    if (item.Value.File == item1.Name)
-                    {
-                        find = true;
-                        break;
-                    }
-                }
-
-                if (!find)
-                {
-                    remove.Add(item.Key);
-                }
-            }
-
-            if (remove.Count != 0)
-            {
-                remove.ForEach(item => obj.Mods.Remove(item));
-                obj.SaveModInfo();
-            }
         }
         catch (Exception e)
         {
             Logs.Error(LanguageHelper.Get("Core.Game.Error8"), e);
             obj.Mods = [];
             return;
+        }
+
+        if (obj.ModPack || !delete)
+        {
+            return;
+        }
+
+        var list = PathHelper.GetAllFile(obj.GetModsPath());
+        var remove = new List<string>();
+        foreach (var item in obj.Mods)
+        {
+            var name = item.Value.File
+                .Replace(".jar", "")
+                .Replace(".zip", "");
+            bool find = false;
+            foreach (var item1 in list)
+            {
+                if (item1.Name.Contains(name))
+                {
+                    find = true;
+                    break;
+                }
+            }
+
+            if (!find)
+            {
+                remove.Add(item.Key);
+            }
+        }
+
+        if (remove.Count != 0)
+        {
+            remove.ForEach(item => obj.Mods.Remove(item));
+            obj.SaveModInfo();
         }
     }
 
@@ -854,7 +982,6 @@ public static class InstancesPath
             {
                 LastPlay = new()
             };
-            return;
         }
     }
 
@@ -862,11 +989,15 @@ public static class InstancesPath
     /// 删除游戏实例
     /// </summary>
     /// <param name="obj">游戏实例</param>
-    public static Task<bool> Remove(this GameSettingObj obj, ColorMCCore.Request request)
+    public static Task<bool> Remove(this GameSettingObj obj, ColorMCCore.Request? request)
     {
         obj.RemoveFromGroup();
         PathHelper.Delete(obj.GetGameJsonFile());
-        return PathHelper.DeleteFilesAsync(obj.GetBasePath(), request);
+        return PathHelper.DeleteFilesAsync(new DeleteFilesArg
+        {
+            Local = obj.GetBasePath(),
+            Request = request
+        });
     }
 
     /// <summary>
@@ -875,38 +1006,32 @@ public static class InstancesPath
     /// <param name="obj">游戏实例</param>
     /// <param name="local">目标地址</param>
     /// <param name="unselect">未选择的文件</param>
+    /// <param name="dir">根目录方式复制</param>
     /// <returns></returns>
-    public static async Task<(bool, Exception?)> CopyFile(this GameSettingObj obj,
-        string local, List<string>? unselect)
+    public static async Task CopyFile(this GameSettingObj obj,
+        string local, List<string>? unselect, bool dir, ColorMCCore.ZipUpdate? state)
     {
-        try
+        local = Path.GetFullPath(local);
+        var list = PathHelper.GetAllFile(local);
+        if (unselect != null)
         {
-            local = Path.GetFullPath(local);
-            var list = PathHelper.GetAllFile(local);
-            if (unselect != null)
+            list.RemoveAll(item => unselect.Contains(item.FullName));
+        }
+        int basel = local.Length;
+        var local1 = dir ? obj.GetBasePath() : obj.GetGamePath();
+        await Task.Run(() =>
+        {
+            int index = 0;
+            foreach (var item in list)
             {
-                list.RemoveAll(item => unselect.Contains(item.FullName));
+                var path = item.FullName[basel..];
+                var info = new FileInfo(Path.GetFullPath(local1 + "/" + path));
+                info.Directory?.Create();
+                state?.Invoke(info.FullName, index, list.Count);
+                PathHelper.CopyFile(item.FullName, info.FullName);
+                index++;
             }
-            int basel = local.Length;
-            var local1 = obj.GetGamePath();
-            await Task.Run(() =>
-            {
-                foreach (var item in list)
-                {
-                    var path = item.FullName[basel..];
-                    var info = new FileInfo(Path.GetFullPath(local1 + "/" + path));
-                    info.Directory?.Create();
-                    PathHelper.CopyFile(item.FullName, info.FullName);
-                }
-            });
-            return (true, null);
-        }
-        catch (Exception e)
-        {
-            string temp = LanguageHelper.Get("Core.Game.Error13");
-            Logs.Error(temp, e);
-            return (false, e);
-        }
+        });
     }
 
     /// <summary>
@@ -920,13 +1045,11 @@ public static class InstancesPath
         if (File.Exists(file))
         {
             var res = await DownloadItemHelper.DecodeLoaderJarAsync(obj);
-
-            var name = res.name;
-
-            if (string.IsNullOrWhiteSpace(name))
+            if (res == null)
             {
                 return null;
             }
+            var name = res.Name;
 
             if (VersionPath.GetCustomLoaderObj(obj.UUID) == null)
             {
@@ -945,18 +1068,18 @@ public static class InstancesPath
     /// <param name="obj">游戏实例</param>
     /// <param name="path">自定义加载器路径</param>
     /// <returns></returns>
-    public static async Task<(bool, string?)> SetGameLoader(this GameSettingObj obj, string path)
+    public static async Task<MessageRes> SetGameLoader(this GameSettingObj obj, string path)
     {
         if (!File.Exists(path))
         {
-            return (false, LanguageHelper.Get("Core.Game.Error16"));
+            return new() { Message = LanguageHelper.Get("Core.Game.Error16") };
         }
 
         var list = await DownloadItemHelper.DecodeLoaderJarAsync(obj, path);
 
-        if (list.Item1 == null)
+        if (list == null)
         {
-            return (false, LanguageHelper.Get("Core.Game.Error17"));
+            return new() { Message = LanguageHelper.Get("Core.Game.Error17") };
         }
 
         var local = obj.GetGameLoaderFile();
@@ -964,6 +1087,73 @@ public static class InstancesPath
 
         PathHelper.CopyFile(path, local);
 
-        return (true, null);
+        return new() { State = true };
+    }
+
+    /// <summary>
+    /// 设置游戏实例图标
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="url">网址</param>
+    /// <returns></returns>
+    public static async Task<bool> SetGameIconFromUrl(this GameSettingObj obj, string url)
+    {
+        try
+        {
+            var data = await WebClient.GetBytesAsync(url);
+            if (data.State)
+            {
+                PathHelper.WriteBytes(obj.GetIconFile(), data.Data!);
+                ColorMCCore.OnInstanceIconChange(obj);
+                return true;
+            }
+        }
+        catch (Exception e)
+        {
+            Logs.Error("error set icon", e);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 设置游戏实例图标
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="file">文件地址</param>
+    /// <returns></returns>
+    public static bool SetGameIconFromFile(this GameSettingObj obj, string file)
+    {
+        if (!File.Exists(file))
+        {
+            return false;
+        }
+
+        PathHelper.CopyFile(file, obj.GetIconFile());
+        ColorMCCore.OnInstanceIconChange(obj);
+
+        return true;
+    }
+
+    /// <summary>
+    /// 设置游戏实例图标
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="data">图片数据</param>
+    public static void SetGameIconFromBytes(this GameSettingObj obj, byte[] data)
+    {
+        PathHelper.WriteBytes(obj.GetIconFile(), data);
+        ColorMCCore.OnInstanceIconChange(obj);
+    }
+
+    /// <summary>
+    /// 设置游戏实例图标
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <param name="data">图片数据</param>
+    public static void SetGameIconFromStream(this GameSettingObj obj, byte[] data)
+    {
+        PathHelper.WriteBytes(obj.GetIconFile(), data);
+        ColorMCCore.OnInstanceIconChange(obj);
     }
 }

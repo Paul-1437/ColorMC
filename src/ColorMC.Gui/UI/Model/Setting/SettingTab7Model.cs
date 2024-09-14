@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using ColorMC.Core;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.Input;
@@ -9,9 +10,22 @@ namespace ColorMC.Gui.UI.Model.Setting;
 
 public partial class SettingModel
 {
-    public Bitmap Bitmap => App.GameIcon;
+    public Bitmap Bitmap => ImageManager.GameIcon;
     public string Version => ColorMCCore.Version;
-    public string RunType => App.Lang(ColorMCGui.IsAot ? "SettingWindow.Tab7.Info1" : "SettingWindow.Tab7.Info2");
+    public string RunType => GetRunType();
+
+    private string GetRunType()
+    {
+        if (ColorMCGui.IsAot)
+        {
+            return App.Lang("SettingWindow.Tab7.Info1");
+        }
+        else if (ColorMCGui.IsMin)
+        {
+            return App.Lang("SettingWindow.Tab7.Info4");
+        }
+        return App.Lang("SettingWindow.Tab7.Info2");
+    }
 
     [RelayCommand]
     public void OpenUrl1(object urls)

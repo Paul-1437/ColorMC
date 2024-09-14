@@ -36,7 +36,6 @@ public partial class GameControl : UserControl
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
-        Opacity = 0;
         Dispatcher.UIThread.Post(FadeIn);
     }
 
@@ -152,7 +151,7 @@ public partial class GameControl : UserControl
             if (Math.Sqrt(Math.Pow(Math.Abs(pos.X - point.X), 2) + Math.Pow(Math.Abs(pos.Y - point.Y), 2)) > 30)
             {
                 LongPressed.Cancel();
-                model.Move(e);
+                model.Move(TopLevel.GetTopLevel(this), e);
                 e.Handled = true;
             }
         }

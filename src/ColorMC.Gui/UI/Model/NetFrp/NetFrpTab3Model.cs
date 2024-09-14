@@ -5,11 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using AvaloniaEdit.Document;
+using ColorMC.Core.Net.Motd;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Utils;
 using ColorMC.Gui.UI.Model.Items;
 using ColorMC.Gui.UIBinding;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DialogHostAvalonia;
 
 namespace ColorMC.Gui.UI.Model.NetFrp;
 
@@ -32,6 +34,8 @@ public partial class NetFrpModel
 
     private string _remoteIP;
     private string _localIP;
+    private bool _isSend;
+    private bool _isStoping;
 
     private NetFrpLocalModel _now;
 
@@ -55,6 +59,7 @@ public partial class NetFrpModel
             Stop();
         }
 
+        _isSend = false;
         _process = process;
         _remoteIP = ip;
         _localIP = model.Port;
@@ -91,6 +96,10 @@ public partial class NetFrpModel
 
     private void Process_OutputDataReceived(object sender, DataReceivedEventArgs e)
     {
+        if (_isSend)
+        {
+            return;
+        }
         Log(e.Data);
         if (e.Data?.Contains("TCP 隧道启动成功") == true
             || e.Data?.Contains("Your TCP proxy is available now") == true
@@ -98,6 +107,7 @@ public partial class NetFrpModel
             || e.Data?.Contains("或使用 IP 地址连接") == true)
         {
             _isOut.Add(_localIP);
+            _isSend = true;
             Dispatcher.UIThread.Post(() =>
             {
                 IsOk = true;
@@ -108,19 +118,57 @@ public partial class NetFrpModel
 
     public async void Share()
     {
+        var model = new FrpShareModel();
+        _ = ushort.TryParse(_localIP, out var port);
+
+        var info = await ServerMotd.GetServerInfo("localhost", port);
+        var version = "";
+        if (info?.Version?.Name is { } version1)
+        {
+            version = version1;
+        }
+        await model.Init(version);
+        var res1 = await DialogHost.Show(model, "ShareCon");
+        if (res1 is not true)
+        {
+            return;
+        }
+
+        if (model.Text?.Length > 80)
+        {
+            Model.Show(App.Lang("NetFrpWindow.Tab3.Error3"));
+            return;
+        }
+
+        if (IsRuning == false)
+        {
+            Model.Show(App.Lang("NetFrpWindow.Tab3.Error2"));
+            return;
+        }
+
         var res = await Model.ShowWait(App.Lang("NetFrpWindow.Tab3.Info3"));
         if (!res)
         {
             return;
         }
+
         var user = UserBinding.GetLastUser();
-        if (user == null || user.AuthType != AuthType.OAuth)
+        if (user?.AuthType != AuthType.OAuth)
         {
-            Model.Show(App.Lang("NetFrpWindow.Tab4.Error1"));
+            Model.ShowOk(App.Lang("NetFrpWindow.Tab4.Error1"), WindowClose);
             return;
         }
+        Model.Progress(App.Lang("NetFrpWindow.Tab4.Info2"));
+        res = await UserBinding.TestLogin(user);
+        Model.ProgressClose();
+        if (!res)
+        {
+            Model.ShowOk(App.Lang("NetFrpWindow.Tab4.Error2"), WindowClose);
+            return;
+        }
+
         Model.Progress(App.Lang("NetFrpWindow.Tab3.Info5"));
-        res = await WebBinding.ShareIP(user.AccessToken, _remoteIP);
+        res = await WebBinding.ShareIP(user.AccessToken, _remoteIP, model);
         Model.ProgressClose();
         if (!res)
         {
@@ -134,6 +182,11 @@ public partial class NetFrpModel
 
     public void Stop()
     {
+        if (_isStoping)
+        {
+            return;
+        }
+        _isStoping = true;
         IsOk = false;
         IsRuning = false;
 
@@ -142,10 +195,14 @@ public partial class NetFrpModel
             return;
         }
 
-        _process.Kill(true);
-        _process.Close();
-        _process.Dispose();
-        _process = null;
+        Task.Run(() =>
+        {
+            _process.Kill(true);
+            _process.Close();
+            _process.Dispose();
+            _process = null;
+            _isStoping = false;
+        });
     }
 
     public void Log(string? data)
@@ -194,6 +251,10 @@ public partial class NetFrpModel
         {
             Model.SetChoiseCall(_name, Stop);
             Model.SetChoiseContent(_name, App.Lang("NetFrpWindow.Tab3.Text2"));
+        }
+        else
+        {
+            RemoveClick();
         }
     }
 }

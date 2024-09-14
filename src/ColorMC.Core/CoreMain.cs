@@ -9,15 +9,13 @@ using ColorMC.Core.Net;
 using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Login;
 using ColorMC.Core.Utils;
-using DotNetty.Buffers;
-using DotNetty.Transport.Channels;
 
 namespace ColorMC.Core;
 
 public static class ColorMCCore
 {
-    public const string TopVersion = "A25";
-    public const string DateVersion = "20240508";
+    public const string TopVersion = "A30";
+    public const string DateVersion = "20240914";
 
     /// <summary>
     /// 版本号
@@ -95,12 +93,17 @@ public static class ColorMCCore
     /// 下载器状态更新
     /// </summary>
     /// <param name="state">状态</param>
-    public delegate void DownloaderUpdate(DownloadState state);
+    public delegate void DownloadUpdate(int thread, DownloadState state, int count);
+    /// <summary>
+    /// 下载任务状态更新
+    /// </summary>
+    /// <param name="state">状态</param>
+    public delegate void DownloadTaskUpdate(int all, int now);
     /// <summary>
     /// 下载项目状态更新
     /// </summary>
     /// <param name="obj">项目</param>
-    public delegate void DownloadItemUpdate(DownloadItemObj obj);
+    public delegate void DownloadItemUpdate(int thread, DownloadItemObj obj);
     /// <summary>
     /// 压缩包导入状态改变
     /// </summary>
@@ -114,9 +117,9 @@ public static class ColorMCCore
     public delegate void GameLaunch(GameSettingObj obj, LaunchState state);
 
     /// <summary>
-    /// 下载用的回调
+    /// 显示下载窗口
     /// </summary>
-    public static Func<ICollection<DownloadItemObj>, Task<bool>>? OnDownload { get; set; }
+    public static Func<DownloadArg>? OnDownload { get; set; }
 
     /// <summary>
     /// 错误显示回调
@@ -132,22 +135,26 @@ public static class ColorMCCore
     /// </summary>
     public static event Action<LanguageType>? LanguageReload;
     /// <summary>
-    /// 收到游戏数据包
-    /// </summary>
-    public static event Action<IChannel, IByteBuffer>? NettyPack;
-    /// <summary>
     /// 游戏退出事件
     /// </summary>
     public static event Action<GameSettingObj, LoginObj, int> GameExit;
-
+    /// <summary>
+    /// 游戏实例数量修改事件
+    /// </summary>
+    public static event Action? InstanceChange;
+    /// <summary>
+    /// 游戏实例图标修改事件
+    /// </summary>
+    public static event Action<GameSettingObj>? InstanceIconChange;
     /// <summary>
     /// 手机端启动
     /// </summary>
-    public static Func<LoginObj, GameSettingObj, JavaInfo, List<string>, Dictionary<string, string>, IGameHandel> PhoneGameLaunch { internal get; set; }
+    public static Func<LoginObj, GameSettingObj, JavaInfo, List<string>, 
+        Dictionary<string, string>, IGameHandel> PhoneGameLaunch { internal get; set; }
     /// <summary>
     /// 手机端Jvm安装
     /// </summary>
-    public static Action<Stream, string, ZipUpdate> PhoneJvmInstall { internal get; set; }
+    public static Action<Stream, string, ZipUpdate?> PhoneJvmInstall { internal get; set; }
     /// <summary>
     /// 手机端读Java信息
     /// </summary>
@@ -163,15 +170,12 @@ public static class ColorMCCore
     /// <summary>
     /// 手机端Jvm运行
     /// </summary>
-    public static Func<GameSettingObj, JavaInfo, string, List<string>, Dictionary<string, string>, Process> PhoneJvmRun { internal get; set; }
+    public static Func<GameSettingObj, JavaInfo, string, List<string>, 
+        Dictionary<string, string>, Process> PhoneJvmRun { internal get; set; }
     /// <summary>
     /// 手机端打开网页
     /// </summary>
     public static Action<string?> PhoneOpenUrl { get; set; }
-    /// <summary>
-    /// 获取一个空闲端口
-    /// </summary>
-    public static Func<int> GetFreePort { get; set; }
 
     /// <summary>
     /// 是否为新运行
@@ -189,20 +193,33 @@ public static class ColorMCCore
     internal static ConcurrentDictionary<string, IGameHandel> Games = [];
 
     /// <summary>
+    /// 启动器核心参数
+    /// </summary>
+    internal static CoreInitArg CoreArg;
+
+    /// <summary>
     /// 初始化阶段1
     /// </summary>
     /// <param name="dir">运行的路径</param>
-    public static void Init(string dir)
+    public static void Init(CoreInitArg arg)
     {
-        BaseDir = dir;
-        Directory.CreateDirectory(dir);
+        if (string.IsNullOrWhiteSpace(arg.Local))
+        {
+            throw new Exception("Local is empty");
+        }
+        CoreArg = arg;
+
+        BaseDir = arg.Local;
+        Directory.CreateDirectory(BaseDir);
+
         LanguageHelper.Load(LanguageType.zh_cn);
-        Logs.Init(dir);
-        ToolPath.Init(dir);
-        ConfigUtils.Init(dir);
-        BaseClient.Init();
+        Logs.Init(BaseDir);
+        ConfigUtils.Init(BaseDir);
+        WebClient.Init();
 
         Logs.Info(LanguageHelper.Get("Core.Info1"));
+        Logs.Info(SystemInfo.SystemName);
+        Logs.Info(SystemInfo.System);
     }
 
     /// <summary>
@@ -213,11 +230,11 @@ public static class ColorMCCore
         ConfigSave.Init();
         GameCount.Init(BaseDir);
         JvmPath.Init(BaseDir);
-        FrpPath.Init(BaseDir);
         LocalMaven.Init(BaseDir);
+        ToolPath.Init(BaseDir);
         DownloadManager.Init(BaseDir);
         AuthDatabase.Init();
-        MCPath.Init(BaseDir);
+        MinecraftPath.Init(BaseDir);
 
         Logs.Info(LanguageHelper.Get("Core.Info3"));
     }
@@ -243,12 +260,12 @@ public static class ColorMCCore
     }
 
     /// <summary>
-    /// 启动器产生错误
+    /// 启动器产生错误，并打开窗口显示
     /// </summary>
     /// <param name="text"></param>
     /// <param name="e"></param>
     /// <param name="close"></param>
-    public static void OnError(string text, Exception? e, bool close)
+    internal static void OnError(string text, Exception? e, bool close)
     {
         Error?.Invoke(text, e, close);
         Logs.Error(text, e);
@@ -268,13 +285,13 @@ public static class ColorMCCore
     /// 语言重载
     /// </summary>
     /// <param name="type"></param>
-    public static void OnLanguageReload(LanguageType type)
+    internal static void OnLanguageReload(LanguageType type)
     {
         LanguageReload?.Invoke(type);
     }
 
     /// <summary>
-    /// 游戏推出
+    /// 游戏退出
     /// </summary>
     /// <param name="obj"></param>
     /// <param name="obj1"></param>
@@ -299,12 +316,19 @@ public static class ColorMCCore
     }
 
     /// <summary>
-    /// 游戏发送消息给启动器
+    /// 游戏实例数量修改
     /// </summary>
-    /// <param name="channel"></param>
-    /// <param name="buffer"></param>
-    internal static void OnNettyPack(IChannel channel, IByteBuffer buffer)
+    internal static void OnInstanceChange()
     {
-        NettyPack?.Invoke(channel, buffer);
+        InstanceChange?.Invoke();
+    }
+
+    /// <summary>
+    /// 游戏图标修改
+    /// </summary>
+    /// <param name="obj"></param>
+    internal static void OnInstanceIconChange(GameSettingObj obj)
+    {
+        InstanceIconChange?.Invoke(obj);
     }
 }

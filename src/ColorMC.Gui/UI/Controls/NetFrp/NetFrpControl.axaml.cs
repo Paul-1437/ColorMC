@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Media.Imaging;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.NetFrp;
 
@@ -14,18 +16,18 @@ public partial class NetFrpControl : MenuControl
     private NetFrpTab4Control _tab4;
     private NetFrpTab5Control _tab5;
 
-    public override string Title => App.Lang("NetFrpWindow.Title");
-
-    public override string UseName { get; }
-
     public NetFrpControl()
     {
+        Title = App.Lang("NetFrpWindow.Title");
         UseName = ToString() ?? "NetFrpControl";
     }
 
     public override void Closed()
     {
-        App.NetFrpWindow = null;
+        WindowManager.NetFrpWindow = null;
+
+        var model = (DataContext as NetFrpModel)!;
+        model.RemoveClick();
     }
 
     public override async void Opened()
@@ -39,18 +41,16 @@ public partial class NetFrpControl : MenuControl
         }
     }
 
-    protected override MenuModel SetModel(BaseModel model)
+    public override TopModel GenModel(BaseModel model)
     {
         return new NetFrpModel(model);
     }
 
-    protected override Control ViewChange(bool iswhell, int old, int index)
+    protected override Control ViewChange(int old, int index)
     {
         var model = (DataContext as NetFrpModel)!;
         switch (old)
         {
-            case 0:
-            case 3:
             case 4:
                 model.RemoveClick();
                 break;
@@ -59,7 +59,6 @@ public partial class NetFrpControl : MenuControl
         {
             case 0:
                 model.LoadCloud();
-                model.SetTab4Click();
                 return _tab4 ??= new();
             case 1:
                 model.LoadSakura();
@@ -69,7 +68,6 @@ public partial class NetFrpControl : MenuControl
                 return _tab5 ??= new();
             case 3:
                 model.LoadLocal();
-                model.SetTab2Click();
                 return _tab2 ??= new();
             case 4:
                 model.SetTab3Click();
@@ -82,5 +80,10 @@ public partial class NetFrpControl : MenuControl
     public override Task<bool> Closing()
     {
         return (DataContext as NetFrpModel)!.Closing();
+    }
+
+    public override Bitmap GetIcon()
+    {
+        return ImageManager.GameIcon;
     }
 }

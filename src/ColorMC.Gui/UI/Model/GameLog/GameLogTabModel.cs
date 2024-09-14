@@ -8,6 +8,7 @@ using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Utils;
 using ColorMC.Core.Objs;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UIBinding;
 using ColorMC.Gui.Utils;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,6 +18,11 @@ namespace ColorMC.Gui.UI.Model.GameLog;
 
 public partial class GameLogModel : GameModel
 {
+    public const string NameEnd = "End";
+    public const string NameInsert = "Insert";
+    public const string NameTop = "Top";
+    public const string NameSearch = "Search";
+
     public ObservableCollection<string> FileList { get; init; } = [];
 
     [ObservableProperty]
@@ -57,15 +63,15 @@ public partial class GameLogModel : GameModel
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            if (BaseBinding.GameLogs.ContainsKey(Obj.UUID))
+            if (GameManager.GetGameLog(Obj.UUID) is { } text)
             {
-                Text = new(BaseBinding.GameLogs[Obj.UUID].ToString());
+                Text = new(text);
             }
             else
             {
                 Text = new();
             }
-            OnPropertyChanged("Top");
+            OnPropertyChanged(NameTop);
             return;
         }
 
@@ -79,7 +85,7 @@ public partial class GameLogModel : GameModel
         }
 
         Text = new(data);
-        OnPropertyChanged("Top");
+        OnPropertyChanged(NameTop);
     }
 
     [RelayCommand]
@@ -97,7 +103,7 @@ public partial class GameLogModel : GameModel
         }
 
         Model.Progress(App.Lang("GameLogWindow.Info6"));
-        var url = await WebBinding.Push(Text.Text);
+        var url = await WebBinding.PushMclo(Text.Text);
         Model.ProgressClose();
         if (url == null)
         {
@@ -106,9 +112,13 @@ public partial class GameLogModel : GameModel
         }
         else
         {
+            var top = Model.GetTopLevel();
+            if (top == null)
+            {
+                return;
+            }
             Model.ShowReadInfoOne(string.Format(App.Lang("GameLogWindow.Info5"), url), null);
-
-            await BaseBinding.CopyTextClipboard(url);
+            await BaseBinding.CopyTextClipboard(top, url);
             Model.Notify(App.Lang("GameLogWindow.Info7"));
         }
     }
@@ -124,7 +134,8 @@ public partial class GameLogModel : GameModel
     [RelayCommand]
     public void Stop()
     {
-        BaseBinding.StopGame(Obj);
+        GameManager.StopGame(Obj);
+        GameBinding.CancelLaunch();
         IsGameRun = false;
     }
 
@@ -137,9 +148,9 @@ public partial class GameLogModel : GameModel
         IsGameRun = true;
 
         var res = await GameBinding.Launch(Model, Obj, hide: GuiConfigUtils.Config.CloseBeforeLaunch);
-        if (!res.Item1)
+        if (!res.Res)
         {
-            Model.Show(res.Item2!);
+            Model.Show(res.Message!);
         }
         Load();
         if (File == null)
@@ -151,12 +162,12 @@ public partial class GameLogModel : GameModel
     [RelayCommand]
     public void Search()
     {
-        OnPropertyChanged("Search");
+        OnPropertyChanged(NameSearch);
     }
 
     public void Load()
     {
-        IsGameRun = BaseBinding.IsGameRun(Obj);
+        IsGameRun = GameManager.IsGameRun(Obj);
 
         if (IsGameRun)
         {
@@ -206,18 +217,18 @@ public partial class GameLogModel : GameModel
             Temp = temp.ToString();
             Dispatcher.UIThread.Invoke(() =>
             {
-                OnPropertyChanged("Insert");
+                OnPropertyChanged(NameInsert);
             });
             Temp = "";
         }
 
         if (IsAuto)
         {
-            OnPropertyChanged("End");
+            OnPropertyChanged(NameEnd);
         }
     }
 
-    protected override void Close()
+    public override void Close()
     {
         FileList.Clear();
         _run = false;
@@ -225,9 +236,13 @@ public partial class GameLogModel : GameModel
 
     public void LoadLast()
     {
-        if (BaseBinding.GameLogs.TryGetValue(Obj.UUID, out var temp))
+        if (GameManager.GetGameLog(Obj.UUID) is { } text)
         {
-            Text = new(temp.ToString());
+            Text = new(text);
+        }
+        else
+        {
+            Text = new();
         }
     }
 }

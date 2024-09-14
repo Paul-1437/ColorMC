@@ -5,7 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.Items"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     xmlns:svg="clr-namespace:ColorMC.Gui.UI.Views.Svg"
     Width="80"
     VerticalAlignment="Top"
@@ -15,25 +15,20 @@
     mc:Ignorable="d">
     <Panel Background="Transparent">
         <Button
-            Width="78"
+            Width="68"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Background="Transparent"
             BorderThickness="0"
             Command="{Binding AddGame}"
-            CornerRadius="{setting:Style ButtonCornerRadius}"
+            CornerRadius="5"
             IsVisible="{Binding IsNew, FallbackValue=False}">
             <StackPanel Margin="5">
                 <svg:SvgControl
-                    Width="70"
-                    Height="70"
-                    Fill="{setting:Colors Font}"
-                    Path="/Resource/Icon/add1.svg"
-                    Stroke="{setting:Colors Font}" />
-                <TextBlock
-                    Margin="0,0,0,5"
-                    HorizontalAlignment="Center"
-                    Text="{setting:Localize MainWindow.Text8}" />
+                    Width="65"
+                    Height="65"
+                    Path="/Resource/Icon/add1.svg" />
+                <TextBlock HorizontalAlignment="Center" Text="{setting:Localize MainWindow.Text8}" />
             </StackPanel>
         </Button>
         <Button
@@ -46,7 +41,7 @@
                         Width="70"
                         Height="70"
                         VerticalAlignment="Center"
-                        CornerRadius="{setting:Style PicRadius}">
+                        CornerRadius="5">
                         <Border.Background>
                             <ImageBrush Source="{Binding Pic}" Stretch="UniformToFill" />
                         </Border.Background>
@@ -68,12 +63,12 @@
                         Source="resm:ColorMC.Gui.Resource.Pic.load.png"
                         Stretch="UniformToFill" />
                     <Button
-                        Width="36"
-                        Height="36"
+                        Width="31"
+                        Height="31"
                         Margin="34,0,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Classes="top"
+                        BorderThickness="0"
                         ClipToBounds="False"
                         Command="{Binding EditGame}"
                         CornerRadius="20"
@@ -81,15 +76,15 @@
                         IsVisible="{Binding ButtonShow}"
                         ToolTip.Tip="{setting:Localize ToolTip.Text12}"
                         ToolTip.VerticalOffset="-30">
-                        <Svg Path="/Resource/Icon/edit.svg" />
+                        <svg:SvgControl Path="/Resource/Icon/edit.svg" />
                     </Button>
                     <Button
-                        Width="36"
-                        Height="36"
+                        Width="31"
+                        Height="31"
                         Margin="0,0,34,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Classes="top"
+                        BorderThickness="0"
                         ClipToBounds="False"
                         Command="{Binding Launch}"
                         CornerRadius="20"
@@ -97,7 +92,7 @@
                         IsVisible="{Binding ButtonShow}"
                         ToolTip.Tip="{setting:Localize ToolTip.Text11}"
                         ToolTip.VerticalOffset="-30">
-                        <Svg Path="/Resource/Icon/launch.svg" />
+                        <svg:SvgControl Path="/Resource/Icon/launch.svg" />
                     </Button>
                 </Panel>
                 <TextBlock

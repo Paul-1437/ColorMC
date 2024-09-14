@@ -6,201 +6,337 @@
     xmlns:dialog="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.Main"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     xmlns:svg="clr-namespace:ColorMC.Gui.UI.Views.Svg"
     xmlns:views="clr-namespace:ColorMC.Gui.UI.Controls"
     xmlns:views1="clr-namespace:ColorMC.Gui.UI.Controls.Items"
     xmlns:views2="clr-namespace:ColorMC.Gui.UI.Controls.Main"
-    d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="model:MainModel"
     DragDrop.AllowDrop="True"
     mc:Ignorable="d">
-    <dialog:DialogHost DisableOpeningAnimation="True" Identifier="MainCon">
+    <dialog:DialogHost
+        Background="{setting:Theme ButtonBG}"
+        DisableOpeningAnimation="True"
+        Identifier="MainCon"
+        OverlayBackground="Transparent">
         <dialog:DialogHost.DataTemplates>
             <DataTemplate DataType="model:MainModel">
-                <views2:MainGroupControl DataContext="{Binding}" />
+                <views2:GroupEditControl DataContext="{Binding}" />
             </DataTemplate>
             <DataTemplate DataType="model:JoystickSettingModel">
                 <views2:JoystickSettingControl DataContext="{Binding}" />
             </DataTemplate>
         </dialog:DialogHost.DataTemplates>
         <Panel>
-            <views2:Live2dControl
-                Width="{Binding Live2dWidth}"
-                Height="{Binding Live2dHeight}"
-                HorizontalAlignment="{Binding L2dPos}"
-                VerticalAlignment="{Binding L2dPos1}" />
-            <DockPanel Margin="5">
-                <Border
-                    Margin="0,0,0,3"
-                    Padding="3"
-                    Classes="t2"
-                    DockPanel.Dock="Top"
-                    IsVisible="{Binding !IsNotGame, FallbackValue=true}">
-                    <DockPanel>
-                        <Button
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Command="{Binding ShowUser}"
-                            DockPanel.Dock="Left"
-                            IsVisible="{Binding TopSide1}">
-                            <Panel>
-                                <Border
-                                    Width="38"
-                                    Height="38"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}">
-                                    <Border.Background>
-                                        <ImageBrush Source="{Binding Head}" Stretch="UniformToFill" />
-                                    </Border.Background>
-                                </Border>
-                                <ProgressBar
-                                    Width="38"
-                                    Height="20"
-                                    MinWidth="38"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    IsIndeterminate="{Binding IsHeadLoad}"
-                                    IsVisible="{Binding IsHeadLoad}" />
-                            </Panel>
-                        </Button>
-                        <StackPanel
-                            Margin="5,0,0,0"
-                            VerticalAlignment="Center"
-                            DockPanel.Dock="Left"
-                            IsVisible="{Binding TopSide1}">
-                            <TextBlock Text="{Binding UserId}" />
-                            <TextBlock Text="{Binding UserType}" />
-                        </StackPanel>
-                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                            <StackPanel IsVisible="{Binding TopSide}" Orientation="Horizontal">
+            <Panel Name="MainView">
+                <views2:Live2dControl
+                    Width="{Binding Live2dWidth}"
+                    Height="{Binding Live2dHeight}"
+                    HorizontalAlignment="{Binding L2dPos}"
+                    VerticalAlignment="{Binding L2dPos1}" />
+                <DockPanel Margin="10">
+                    <DockPanel Margin="10,0,10,0" DockPanel.Dock="Top">
+                        <Decorator
+                            Name="TopRight"
+                            Width="200"
+                            DockPanel.Dock="Right">
+                            <views2:MainUserControl Name="HeadButton" />
+                        </Decorator>
+                        <Panel
+                            Name="HeadTop"
+                            Height="60"
+                            Margin="0,0,10,0"
+                            DockPanel.Dock="Top">
+                            <StackPanel
+                                Name="Buttons"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Bottom"
+                                Orientation="Horizontal">
+                                <StackPanel.Styles>
+                                    <Style Selector="Button">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                    </Style>
+                                </StackPanel.Styles>
                                 <Button
-                                    Width="42"
-                                    Height="42"
-                                    Margin="-1,-4,-1,-4"
-                                    Classes="top"
-                                    Command="{Binding Upgrade}"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}"
-                                    IsVisible="{Binding HaveUpdate}"
-                                    ToolTip.Tip="{setting:Localize ToolTip.Text73}"
-                                    ToolTip.VerticalOffset="-30">
-                                    <Svg Path="/Resource/Icon/upgrade.svg" />
-                                </Button>
-                                <Button
-                                    Width="42"
-                                    Height="42"
-                                    Margin="-1,-4,-1,-4"
-                                    Classes="top"
-                                    Command="{Binding NewInfo}"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}"
-                                    ToolTip.Tip="{setting:Localize ToolTip.Text74}"
-                                    ToolTip.VerticalOffset="-30">
-                                    <Svg Path="/Resource/Icon/new.svg" />
-                                </Button>
-                                <Button
-                                    Width="42"
-                                    Height="42"
-                                    Margin="-1,-4,-1,-4"
-                                    Classes="top"
-                                    Command="{Binding MusicPause}"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}"
-                                    IsVisible="{Binding MusicDisplay}"
-                                    ToolTip.Tip="{setting:Localize ToolTip.Text48}"
-                                    ToolTip.VerticalOffset="-30">
-                                    <Svg Path="/Resource/Icon/play.svg" />
-                                </Button>
-                                <Button
-                                    Width="42"
-                                    Height="42"
-                                    Margin="-1,-4,-1,-4"
-                                    Classes="top"
-                                    Command="{Binding OpenNetFrp}"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}"
-                                    ToolTip.Tip="{setting:Localize ToolTip.Text72}"
-                                    ToolTip.VerticalOffset="-30">
-                                    <Svg Path="/Resource/Icon/net.svg" />
-                                </Button>
-                                <Button
-                                    Width="42"
-                                    Height="42"
-                                    Margin="-1,-4,-1,-4"
-                                    Classes="top"
+                                    Width="35"
+                                    Height="35"
                                     Command="{Binding OpenGuide}"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}"
+                                    CornerRadius="5"
                                     ToolTip.Tip="{setting:Localize ToolTip.Text70}"
                                     ToolTip.VerticalOffset="-30">
-                                    <Svg Path="/Resource/Icon/book.svg" />
+                                    <svg:SvgControl Path="/Resource/Icon/book.svg" />
                                 </Button>
                                 <Button
-                                    Width="42"
-                                    Height="42"
-                                    Margin="-1,-4,-1,-4"
-                                    Classes="top"
-                                    Command="{Binding ShowSkin}"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}"
-                                    ToolTip.Tip="{setting:Localize ToolTip.Text9}"
-                                    ToolTip.VerticalOffset="-30">
-                                    <Svg Path="/Resource/Icon/skin.svg" />
-                                </Button>
-                                <Button
-                                    Width="42"
-                                    Height="42"
-                                    Margin="-1,-4,-1,-4"
-                                    Classes="top"
+                                    Width="35"
+                                    Height="35"
                                     Command="{Binding ShowCount}"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}"
+                                    CornerRadius="5"
                                     IsVisible="{Binding !IsPhone}"
                                     ToolTip.Tip="{setting:Localize ToolTip.Text92}"
                                     ToolTip.VerticalOffset="-30">
-                                    <Svg Path="/Resource/Icon/count.svg" />
+                                    <svg:SvgControl Path="/Resource/Icon/count.svg" />
                                 </Button>
                                 <Button
-                                    Width="42"
-                                    Height="42"
-                                    Margin="-1,-4,-2,-4"
-                                    Classes="top"
+                                    Width="35"
+                                    Height="35"
                                     Command="{Binding ShowSetting}"
-                                    CornerRadius="{setting:Style ButtonCornerRadius}"
+                                    CornerRadius="5"
                                     ToolTip.Tip="{setting:Localize ToolTip.Text13}"
                                     ToolTip.VerticalOffset="-30">
-                                    <Svg Path="/Resource/Icon/setting.svg" />
+                                    <svg:SvgControl Path="/Resource/Icon/setting.svg" />
                                 </Button>
                             </StackPanel>
-                            <Button
-                                Width="42"
-                                Height="42"
-                                Margin="0,-4,-2,-4"
-                                Classes="top"
-                                Command="{Binding OpenSide}"
-                                CornerRadius="{setting:Style ButtonCornerRadius}"
-                                IsVisible="{Binding TopSide2}"
-                                ToolTip.Tip="{setting:Localize ToolTip.Text126}"
-                                ToolTip.VerticalOffset="-30">
-                                <Svg Path="{Binding SidePath}" />
-                            </Button>
-                        </StackPanel>
+                            <Panel RenderOptions.TextRenderingMode="Antialias">
+                                <TextBlock
+                                    VerticalAlignment="Top"
+                                    FontSize="24"
+                                    Text="{setting:Localize MainWindow.Text23}" />
+                                <TextBlock
+                                    VerticalAlignment="Bottom"
+                                    FontSize="16"
+                                    Text="{Binding HelloText}" />
+                            </Panel>
+                        </Panel>
                     </DockPanel>
-                </Border>
-                <views:ServerMotdControl
-                    Margin="0,0,0,3"
-                    DockPanel.Dock="Top"
-                    IPPort="{Binding Server}"
-                    IsVisible="{Binding MotdDisplay, FallbackValue=true}" />
-                <Decorator Name="Content1" />
-            </DockPanel>
-            <Decorator Name="Start" IsVisible="False" />
-            <Panel
-                Name="Grid2"
-                Background="{setting:Colors BG1}"
-                IsVisible="False">
-                <TextBlock
-                    Name="Label1"
-                    HorizontalAlignment="Center"
-                    FontSize="30"
-                    Text="test" />
+                    <ScrollViewer
+                        VerticalAlignment="Top"
+                        DockPanel.Dock="Right"
+                        IsVisible="{Binding SideDisplay}">
+                        <Decorator
+                            Name="Right"
+                            Width="200"
+                            Margin="0,10,10,10">
+                            <StackPanel Name="RightSide">
+                                <Border
+                                    Margin="0,0,0,10"
+                                    BorderThickness="0"
+                                    Classes="t2"
+                                    IsVisible="{Binding !NewsDisplay}">
+                                    <Panel>
+                                        <Panel>
+                                            <Border MaxHeight="115" CornerRadius="5">
+                                                <Border.Background>
+                                                    <ImageBrush Source="{Binding NewsImage}" Stretch="UniformToFill" />
+                                                </Border.Background>
+                                            </Border>
+                                            <Border Background="#77000000" CornerRadius="5" />
+                                        </Panel>
+                                        <StackPanel Margin="15">
+                                            <StackPanel.Styles>
+                                                <Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                </Style>
+                                            </StackPanel.Styles>
+                                            <Panel Margin="0,0,0,5">
+                                                <TextBlock
+                                                    Margin="0,0,0,5"
+                                                    FontSize="16"
+                                                    Foreground="White"
+                                                    Text="{setting:Localize MainWindow.Text20}" />
+                                                <Button
+                                                    Width="30"
+                                                    Height="30"
+                                                    HorizontalAlignment="Right"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Command="{Binding LoadNews}"
+                                                    CornerRadius="5"
+                                                    IsVisible="{Binding !IsLoadNews}">
+                                                    <svg:SvgControl Fill="White" Path="/Resource/Icon/reload.svg" />
+                                                </Button>
+                                            </Panel>
+                                            <Panel Height="50">
+                                                <Button
+                                                    HorizontalAlignment="Stretch"
+                                                    VerticalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Stretch"
+                                                    VerticalContentAlignment="Stretch"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Command="{Binding OpenNews}"
+                                                    IsEnabled="{Binding !IsLoadNews}"
+                                                    IsVisible="{Binding IsHaveNews}">
+                                                    <DockPanel>
+                                                        <svg:SvgControl
+                                                            Width="35"
+                                                            Height="35"
+                                                            VerticalAlignment="Center"
+                                                            DockPanel.Dock="Right"
+                                                            Fill="White"
+                                                            Path="/Resource/Icon/menu.svg" />
+                                                        <TextBlock
+                                                            Margin="5,0,0,0"
+                                                            Foreground="White"
+                                                            Text="{Binding DisplayNews, FallbackValue=123}"
+                                                            TextTrimming="CharacterEllipsis"
+                                                            TextWrapping="Wrap" />
+                                                    </DockPanel>
+                                                </Button>
+                                                <TextBlock
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="White"
+                                                    IsVisible="{Binding !IsHaveNews}"
+                                                    Text="{setting:Localize MainWindow.Text21}" />
+                                                <Border IsVisible="{Binding IsLoadNews}">
+                                                    <TextBlock
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Foreground="White"
+                                                        Text="{setting:Localize MainWindow.Text22}" />
+                                                </Border>
+                                            </Panel>
+                                        </StackPanel>
+                                    </Panel>
+                                </Border>
+                                <Border
+                                    Margin="0,0,0,10"
+                                    HorizontalAlignment="Stretch"
+                                    Classes="t2"
+                                    IsVisible="{Binding MusicDisplay}">
+                                    <StackPanel Margin="15">
+                                        <Panel Margin="0,0,0,5">
+                                            <TextBlock FontSize="16" Text="{setting:Localize MainWindow.Text14}" />
+                                            <Button
+                                                Width="30"
+                                                Height="30"
+                                                HorizontalAlignment="Right"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Command="{Binding MusicPause}"
+                                                CornerRadius="5"
+                                                ToolTip.Tip="{setting:Localize ToolTip.Text48}"
+                                                ToolTip.VerticalOffset="-30">
+                                                <svg:SvgControl Path="{Binding AudioIcon}" />
+                                            </Button>
+                                        </Panel>
+                                        <Panel>
+                                            <TextBlock Text="{setting:Localize SettingWindow.Tab6.Text18}" />
+                                            <TextBlock
+                                                Width="40"
+                                                Margin="0,0,5,0"
+                                                HorizontalAlignment="Right"
+                                                Text="{Binding MusicVolume, StringFormat='{}{0}%', FallbackValue=100%}" />
+                                        </Panel>
+                                        <Slider
+                                            Height="40"
+                                            Margin="0,-10,0,-10"
+                                            HorizontalAlignment="Stretch"
+                                            Foreground="{setting:Theme MainColor}"
+                                            IsSnapToTickEnabled="True"
+                                            LargeChange="1"
+                                            Maximum="100"
+                                            Minimum="0"
+                                            SmallChange="1"
+                                            TickFrequency="1"
+                                            Value="{Binding MusicVolume}" />
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    Margin="0,0,0,10"
+                                    HorizontalAlignment="Stretch"
+                                    Classes="t2"
+                                    IsVisible="{Binding HaveUpdate}">
+                                    <StackPanel Margin="15">
+                                        <TextBlock
+                                            Margin="0,0,0,5"
+                                            FontSize="16"
+                                            Text="{setting:Localize MainWindow.Text15}" />
+                                        <UniformGrid Columns="2">
+                                            <Button
+                                                Height="35"
+                                                Margin="-3,-3,0,-3"
+                                                HorizontalAlignment="Stretch"
+                                                Classes="top"
+                                                Command="{Binding Upgrade}"
+                                                Content="{setting:Localize MainWindow.Text16}"
+                                                ToolTip.Tip="{setting:Localize ToolTip.Text73}"
+                                                ToolTip.VerticalOffset="-30" />
+                                            <Button
+                                                Height="35"
+                                                Margin="0,-3,0,-3"
+                                                HorizontalAlignment="Stretch"
+                                                Classes="top"
+                                                Command="{Binding NewInfo}"
+                                                Content="{setting:Localize MainWindow.Text17}"
+                                                ToolTip.Tip="{setting:Localize ToolTip.Text74}"
+                                                ToolTip.VerticalOffset="-30" />
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    Margin="0,0,0,10"
+                                    Classes="t2"
+                                    IsVisible="{Binding IsOnlineMode}">
+                                    <StackPanel Margin="15">
+                                        <TextBlock
+                                            Margin="0,0,0,5"
+                                            FontSize="16"
+                                            Text="{setting:Localize MainWindow.Text18}" />
+                                        <Button
+                                            Height="35"
+                                            Margin="-3"
+                                            HorizontalAlignment="Stretch"
+                                            Classes="top"
+                                            Command="{Binding OpenNetFrp}"
+                                            Content="{setting:Localize MainWindow.Text19}"
+                                            ToolTip.Tip="{setting:Localize ToolTip.Text72}"
+                                            ToolTip.VerticalOffset="-30" />
+                                    </StackPanel>
+                                </Border>
+                                <Border
+                                    Margin="0,0,0,10"
+                                    Classes="t2"
+                                    IsVisible="{Binding HaveLast}">
+                                    <StackPanel Margin="15">
+                                        <TextBlock
+                                            Margin="0,0,0,5"
+                                            FontSize="16"
+                                            Text="{Binding LastGameName}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <Button
+                                            Height="35"
+                                            Margin="-3"
+                                            HorizontalAlignment="Stretch"
+                                            Classes="top"
+                                            Command="{Binding LaunchLast}"
+                                            Content="{setting:Localize MainWindow.Text27}" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Decorator>
+                    </ScrollViewer>
+                    <ScrollViewer Margin="0,10,0,0" VerticalAlignment="Top">
+                        <DockPanel>
+                            <StackPanel
+                                Name="ContentTop"
+                                Margin="10,0,10,0"
+                                DockPanel.Dock="Top"
+                                IsVisible="{Binding !NewsDisplay}" />
+                            <views:ServerMotdControl
+                                Margin="10,0,10,10"
+                                DockPanel.Dock="Top"
+                                IPPort="{Binding Server}"
+                                IsVisible="{Binding MotdDisplay}" />
+                            <Decorator Name="Content1" Margin="10,0,10,10" />
+                        </DockPanel>
+                    </ScrollViewer>
+                </DockPanel>
+                <Panel
+                    Name="Grid2"
+                    Margin="20,10,20,20"
+                    Background="{setting:Theme TopGridColor}"
+                    IsVisible="False">
+                    <TextBlock
+                        Name="Label1"
+                        HorizontalAlignment="Center"
+                        FontSize="30"
+                        Text="test" />
+                </Panel>
             </Panel>
+            <Decorator Name="Start" IsVisible="False" />
         </Panel>
     </dialog:DialogHost>
 </UserControl>

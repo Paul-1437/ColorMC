@@ -29,18 +29,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <AvaloniaXaml Remove="Resource\UI\UI.axaml" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Remove=".gitignore" />
     <None Remove="icon.ico" />
     <None Remove="macicon.ico" />
+    <None Remove="MusicPlayer\sfd.temp" />
     <None Remove="Resource\Icon\add.svg" />
     <None Remove="Resource\Icon\add1.svg" />
     <None Remove="Resource\Icon\AddMenu\item1.svg" />
     <None Remove="Resource\Icon\AddMenu\item2.svg" />
     <None Remove="Resource\Icon\AddMenu\item3.svg" />
+    <None Remove="Resource\Icon\AddMenu\item4.svg" />
+    <None Remove="Resource\Icon\AddMenu\item5.svg" />
+    <None Remove="Resource\Icon\AddMenu\item6.svg" />
+    <None Remove="Resource\Icon\AddMenu\item7.svg" />
     <None Remove="Resource\Icon\AddMenu\svg1.svg" />
     <None Remove="Resource\Icon\book.svg" />
     <None Remove="Resource\Icon\count.svg" />
@@ -111,8 +112,9 @@
     <None Remove="Resource\Icon\NetFrp\item5.svg" />
     <None Remove="Resource\Icon\NetFrp\join.svg" />
     <None Remove="Resource\Icon\new.svg" />
+    <None Remove="Resource\Icon\pause.svg" />
     <None Remove="Resource\Icon\play.svg" />
-    <None Remove="Resource\Icon\resize.svg" />
+    <None Remove="Resource\Icon\reload.svg" />
     <None Remove="Resource\Icon\setting.svg" />
     <None Remove="Resource\Icon\Setting\item1.svg" />
     <None Remove="Resource\Icon\Setting\item2.svg" />
@@ -141,7 +143,14 @@
     <None Remove="Resource\Icon\Setting\svg24.svg" />
     <None Remove="Resource\Icon\Setting\svg25.svg" />
     <None Remove="Resource\Icon\Setting\svg26.svg" />
+    <None Remove="Resource\Icon\Setting\svg27.svg" />
+    <None Remove="Resource\Icon\Setting\svg28.svg" />
+    <None Remove="Resource\Icon\Setting\svg29.svg" />
     <None Remove="Resource\Icon\Setting\svg3.svg" />
+    <None Remove="Resource\Icon\Setting\svg30.svg" />
+    <None Remove="Resource\Icon\Setting\svg31.svg" />
+    <None Remove="Resource\Icon\Setting\svg32.svg" />
+    <None Remove="Resource\Icon\Setting\svg33.svg" />
     <None Remove="Resource\Icon\Setting\svg4.svg" />
     <None Remove="Resource\Icon\Setting\svg5.svg" />
     <None Remove="Resource\Icon\Setting\svg6.svg" />
@@ -154,10 +163,15 @@
     <None Remove="Resource\Icon\user.svg" />
     <None Remove="Resource\Language\gui_en-us.json" />
     <None Remove="Resource\Language\gui_zh-cn.json" />
+    <None Remove="Resource\Pic\1.png" />
+    <None Remove="Resource\Pic\2.png" />
+    <None Remove="Resource\Pic\3.png" />
+    <None Remove="Resource\Pic\4.png" />
+    <None Remove="Resource\Pic\5.png" />
     <None Remove="Resource\Pic\game.png" />
     <None Remove="Resource\Pic\launch.png" />
     <None Remove="Resource\Pic\load.png" />
-    <None Remove="Resource\Pic\user.png" />
+    <None Remove="Resource\Pic\pic1.png" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="icon.ico" />
@@ -166,7 +180,10 @@
     <AvaloniaResource Include="Resource\Icon\AddMenu\item1.svg" />
     <AvaloniaResource Include="Resource\Icon\AddMenu\item2.svg" />
     <AvaloniaResource Include="Resource\Icon\AddMenu\item3.svg" />
-    <AvaloniaResource Include="Resource\Icon\AddMenu\svg1.svg" />
+    <AvaloniaResource Include="Resource\Icon\AddMenu\item4.svg" />
+    <AvaloniaResource Include="Resource\Icon\AddMenu\item5.svg" />
+    <AvaloniaResource Include="Resource\Icon\AddMenu\item6.svg" />
+    <AvaloniaResource Include="Resource\Icon\AddMenu\item7.svg" />
     <AvaloniaResource Include="Resource\Icon\book.svg" />
     <AvaloniaResource Include="Resource\Icon\count.svg" />
     <AvaloniaResource Include="Resource\Icon\down.svg" />
@@ -235,10 +252,9 @@
     <AvaloniaResource Include="Resource\Icon\NetFrp\item4.svg" />
     <AvaloniaResource Include="Resource\Icon\NetFrp\item5.svg" />
     <AvaloniaResource Include="Resource\Icon\Item\join.svg" />
-    <AvaloniaResource Include="Resource\Icon\new.svg" />
     <AvaloniaResource Include="Resource\Icon\play.svg" />
+    <AvaloniaResource Include="Resource\Icon\reload.svg" />
     <AvaloniaResource Include="Resource\Icon\setting.svg" />
-    <AvaloniaResource Include="Resource\Icon\resize.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\item1.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\item2.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\item3.svg" />
@@ -266,23 +282,35 @@
     <AvaloniaResource Include="Resource\Icon\Setting\svg24.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg25.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg26.svg" />
+    <AvaloniaResource Include="Resource\Icon\Setting\svg27.svg" />
+    <AvaloniaResource Include="Resource\Icon\Setting\svg28.svg" />
+    <AvaloniaResource Include="Resource\Icon\Setting\svg29.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg3.svg" />
+    <AvaloniaResource Include="Resource\Icon\Setting\svg30.svg" />
+    <AvaloniaResource Include="Resource\Icon\Setting\svg31.svg" />
+    <AvaloniaResource Include="Resource\Icon\Setting\svg32.svg" />
+    <AvaloniaResource Include="Resource\Icon\Setting\svg33.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg4.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg5.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg6.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg7.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg8.svg" />
     <AvaloniaResource Include="Resource\Icon\Setting\svg9.svg" />
-    <AvaloniaResource Include="Resource\Icon\upgrade.svg" />
     <AvaloniaResource Include="Resource\Icon\skin.svg" />
+    <AvaloniaResource Include="Resource\Icon\pause.svg" />
+    <EmbeddedResource Include="Resource\Pic\1.png" />
+    <EmbeddedResource Include="Resource\Pic\2.png" />
+    <EmbeddedResource Include="Resource\Pic\3.png" />
+    <EmbeddedResource Include="Resource\Pic\4.png" />
+    <EmbeddedResource Include="Resource\Pic\5.png" />
+    <EmbeddedResource Include="Resource\Pic\pic1.png" />
     <EmbeddedResource Include="macicon.ico" />
+    <EmbeddedResource Include="MusicPlayer\Decoder\Mp3\sfd.temp" />
     <EmbeddedResource Include="Resource\Language\gui_zh-cn.json" />
     <EmbeddedResource Include="Resource\Language\gui_en-us.json" />
     <EmbeddedResource Include="Resource\Pic\game.png" />
     <EmbeddedResource Include="Resource\Pic\launch.png" />
     <EmbeddedResource Include="Resource\Pic\load.png" />
-    <EmbeddedResource Include="Resource\Pic\user.png" />
-    <EmbeddedResource Include="Resource\UI\UI.axaml" />
   </ItemGroup>
   <ItemGroup>
     <!--This helps with theme dll-s trimming.
@@ -296,26 +324,37 @@
     <PackageReference Include="Avalonia.Controls.ColorPicker" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
-    <PackageReference Include="Avalonia.Markup.Xaml.Loader" Version="$(AvaloniaVersion)" />
     <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Skia" Version="$(AvaloniaVersion)" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.0.6" />
-    <PackageReference Include="Avalonia.Svg.Skia" Version="11.0.0.18" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.1.0" />
+    <PackageReference Include="Avalonia.Svg.Skia" Version="11.1.0.1" />
     <PackageReference Include="Avalonia.Controls.TreeDataGrid" Version="11.0.10" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-    <PackageReference Include="DialogHost.Avalonia" Version="0.7.7" />
-    <PackageReference Include="NAudio.Core" Version="2.2.1" />
-    <PackageReference Include="NAudio.WinMM" Version="2.2.1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.0" />
+    <PackageReference Include="DialogHost.Avalonia" Version="0.8.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="Silk.NET.OpenAL" Version="2.21.0" />
     <PackageReference Include="Silk.NET.SDL" Version="2.21.0" />
+    <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.21.0" />
     <PackageReference Include="SkiaSharp" Version="2.88.8" />
-    <PackageReference Include="Ultz.Native.SDL" Version="2.30.1" />
+	  
+	<PackageReference Include="DotNetty.Buffers" Version="0.7.6" />
+	<PackageReference Include="DotNetty.Common" Version="0.7.6" />
+	<PackageReference Include="DotNetty.Handlers" Version="0.7.6" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Live2DCSharpSDK\Live2DCSharpSDK.App\Live2DCSharpSDK.App.csproj" />
+    <ProjectReference Include="..\..\Live2DCSharpSDK\Live2DCSharpSDK.OpenGL\Live2DCSharpSDK.OpenGL.csproj" />
+    <ProjectReference Include="..\..\MinecraftSkinRender\MinecraftSkinRender.OpenGL\MinecraftSkinRender.OpenGL.csproj" />
+    <ProjectReference Include="..\..\MinecraftSkinRender\MinecraftSkinRender\MinecraftSkinRender.csproj" />
     <ProjectReference Include="..\..\X11.Net\X11\X11.csproj" />
     <ProjectReference Include="..\ColorMC.Core\ColorMC.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="UI\Controls\Items\FileVersionItemControl.axaml.cs">
+      <DependentUpon>FileVersionItemControl.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="UI\Controls\Items\OptifineVersionItemControl.axaml.cs">
+      <DependentUpon>OptifineVersionItemControl.axaml</DependentUpon>
+    </Compile>
   </ItemGroup>
 </Project>

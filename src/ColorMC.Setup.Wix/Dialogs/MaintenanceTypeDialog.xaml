@@ -7,7 +7,7 @@
     xmlns:wixsharp="clr-namespace:WixSharp.UI.WPF;assembly=WixSharp.UI.WPF"
     d:DesignHeight="408"
     d:DesignWidth="512"
-    DialogTitle="ColorMC 安装"
+    DialogTitle="ColorMC Installer"
     mc:Ignorable="d">
     <wixsharp:WpfDialog.Resources>
         <Style TargetType="Button">
@@ -33,7 +33,7 @@
             VerticalAlignment="Top"
             FontSize="20"
             FontWeight="Bold">
-            ColorMC 卸载
+            ColorMC Installer
         </TextBlock>
 
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -46,15 +46,16 @@
                     Background="Transparent"
                     BorderBrush="Transparent">
                     <Border
-                        Padding="2"
-                        Background="Transparent"
-                        BorderThickness="3">
+                        Padding="5"
+                        Background="White"
+                        BorderThickness="3"
+                        CornerRadius="5">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#f3f3f3" />
-                                        <Setter Property="BorderBrush" Value="#FF5ABED6" />
+                                        <Setter Property="Background" Value="#FFFEFEFE" />
+                                        <Setter Property="BorderBrush" Value="#FFD4D4D8" />
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -68,7 +69,7 @@
                                 Margin="0,5,0,0"
                                 HorizontalAlignment="Center"
                                 Foreground="Black"
-                                Text="修复ColorMC" />
+                                Text="Repair ColorMC" />
                         </StackPanel>
                     </Border>
                 </Button>
@@ -81,15 +82,16 @@
                     Background="Transparent"
                     BorderBrush="Transparent">
                     <Border
-                        Padding="2"
-                        Background="Transparent"
-                        BorderThickness="3">
+                        Padding="5"
+                        Background="White"
+                        BorderThickness="3"
+                        CornerRadius="5">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#f3f3f3" />
-                                        <Setter Property="BorderBrush" Value="#FF5ABED6" />
+                                        <Setter Property="Background" Value="#FFFEFEFE" />
+                                        <Setter Property="BorderBrush" Value="#FFD4D4D8" />
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -103,7 +105,7 @@
                                 Margin="0,5,0,0"
                                 HorizontalAlignment="Center"
                                 Foreground="Black"
-                                Text="卸载ColorMC" />
+                                Text="Uninstall ColorMC" />
                         </StackPanel>
                     </Border>
                 </Button>
@@ -113,7 +115,8 @@
             <TextBlock
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Text="卸载不会删除游戏文件！" />
+                FontSize="20"
+                Text="Uninstalling will not delete game files!" />
         </StackPanel>
 
         <Button
@@ -127,14 +130,15 @@
             <Border
                 Width="100"
                 Height="25"
-                Background="#FF5ABED6"
-                BorderBrush="#FFb7bac1"
-                CornerRadius="3">
+                Background="White"
+                BorderBrush="#FFD4D4D8"
+                BorderThickness="1"
+                CornerRadius="5">
                 <TextBlock
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Foreground="White"
-                    Text="退出" />
+                    Foreground="Black"
+                    Text="Cancel" />
             </Border>
         </Button>
     </Grid>

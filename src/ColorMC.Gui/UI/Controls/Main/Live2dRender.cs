@@ -16,6 +16,7 @@ using ColorMC.Gui.UI.Model.Main;
 using ColorMC.Gui.Utils;
 using Live2DCSharpSDK.App;
 using Live2DCSharpSDK.Framework.Motion;
+using Live2DCSharpSDK.OpenGL;
 
 namespace ColorMC.Gui.UI.Controls.Main;
 
@@ -142,7 +143,7 @@ public class Live2dRender : OpenGlControlBase, ICustomHitTest
         }
         if (!File.Exists(model))
         {
-            (DataContext as MainModel)!.Model.Show(App.Lang("MainWindow.Live2D.Error1"));
+            (DataContext as MainModel)!.Model.Show(App.Lang("Live2dControl.Error1"));
             return;
         }
         var info = new FileInfo(model);
@@ -152,7 +153,7 @@ public class Live2dRender : OpenGlControlBase, ICustomHitTest
         }
         catch (Exception e)
         {
-            string temp = App.Lang("MainWindow.Live2D.Error2");
+            string temp = App.Lang("Live2dControl.Error2");
             Logs.Error(temp, e);
             (DataContext as MainModel)!.Model.Show(temp);
         }
@@ -181,7 +182,7 @@ public class Live2dRender : OpenGlControlBase, ICustomHitTest
 
         try
         {
-            _lapp = new(new AvaloniaApi(this, gl), Logs.Info);
+            _lapp = new LAppDelegateOpenGL(new AvaloniaApi(this, gl), Logs.Info);
             _change = true;
             CheckError(gl);
             _init = true;
@@ -189,7 +190,7 @@ public class Live2dRender : OpenGlControlBase, ICustomHitTest
         catch (Exception e)
         {
             (DataContext as MainModel)!.ChangeModelDone();
-            Logs.Error(App.Lang("Gui.Error31"), e);
+            Logs.Error(App.Lang("Live2dControl.Error3"), e);
         }
     }
 
@@ -221,7 +222,16 @@ public class Live2dRender : OpenGlControlBase, ICustomHitTest
             _change = false;
             ChangeModel();
             model.ChangeModelDone();
-            model.ShowMessage(App.Lang("MainWindow.Live2D.Text1"));
+            var random = new Random();
+            var index = random.Next(1000);
+            if (index == 666)
+            {
+                model.ShowMessage("Ciallo～(∠·ω< )⌒★");
+            }
+            else
+            {
+                model.ShowMessage(App.Lang("Live2dControl.Text1"));
+            }
         }
         if (_delete)
         {

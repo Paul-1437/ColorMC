@@ -1,13 +1,11 @@
-using Avalonia;
 using System;
+using Avalonia;
 
 #if !DEBUG
 using Avalonia.Media;
 using System.IO;
 using System.Linq;
 using System.Runtime.Loader;
-using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 #endif
 
@@ -21,7 +19,7 @@ internal static class GuiLoad
         Program.MainCall = Gui.ColorMCGui.Main;
         Program.BuildApp = Gui.ColorMCGui.BuildAvaloniaApp;
         Program.SetBaseSha1 = Gui.ColorMCGui.SetBaseSha1;
-        Program.SetAot = Gui.ColorMCGui.SetAot;
+        Program.SetRuntimeState = Gui.ColorMCGui.SetRuntimeState;
         Program.SetInputDir = Gui.ColorMCGui.SetInputDir;
     }
 
@@ -35,34 +33,45 @@ internal static class GuiLoad
 
 public static class Program
 {
-    public const string Font = "resm:ColorMC.Launcher.Resources.MiSans-Normal.ttf?assembly=ColorMC.Launcher#MiSans";
+    public const string Font = "resm:ColorMC.Launcher.Resources.MiSans-Regular.ttf?assembly=ColorMC.Launcher#MiSans";
 
 #if !DEBUG
+
+#if MIN
+    public const bool IsMin = true;
+#else
+    public const bool IsMin = false;
+#endif
+
+#if AOT
+    public const bool Aot = true;
+#else
+    public const bool Aot = false;
+#endif
+
     /// <summary>
     /// 加载路径
     /// </summary>
-    public const string TopVersion = "A25";
+    public const string TopVersion = "A30";
 
     public static readonly string[] BaseSha1 =
     [
-        "02d917740183291c6161dc6b2e64dd33107169c7",
-        "64c074b6b2e2df7c2614932f8539c9157f7b7965",
-        "a23c1799f5788bc309cf80f649efa37c48ff2faf",
-        "0db964bb803853f57ded3629195a3165b5f923a3"
+        "73f2a4169241299ed48e43f7d9b2d9b92f8ac15a",
+        "4181e84ecafc704e863ed85ac8cf38eb576b1b05",
+        "062d91857932572244bc0a22ae31cedb0e6b9aa3",
+        "5a74c7cbf82a7e793e2237cf9a1a5796b28f528d"
     ];
 
     public delegate void IN(string[] args);
-    public delegate void IN2(bool aot);
+    public delegate void IN2(bool aot, bool min);
     public delegate AppBuilder IN1();
     public delegate void IN3(string dir);
 
     public static IN MainCall { get; set; }
     public static IN1 BuildApp { get; set; }
     public static IN SetBaseSha1 { get; set; }
-    public static IN2 SetAot { get; set; }
+    public static IN2 SetRuntimeState { get; set; }
     public static IN3 SetInputDir { get; set; }
-
-    public static bool Aot { get; set; }
 
     private static string _loadDir;
     private static string _inputDir;
@@ -78,7 +87,7 @@ public static class Program
     public static void Main(string[] args)
     {
 #if !DEBUG
-        var path = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}/ColorMC/run";
+        var path = $"{Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)}/ColorMC/run";
         if (File.Exists(path))
         {
             var dir = File.ReadAllText(path);
@@ -92,7 +101,13 @@ public static class Program
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                _inputDir = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/ColorMC/";
+                _inputDir = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/.ColorMC/";
+
+                path = $"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/ColorMC/";
+                if (Directory.Exists(path))
+                {
+                    Directory.Move(path, _inputDir);
+                }
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
@@ -120,36 +135,29 @@ public static class Program
         }
         catch
         {
-            //有没有权限写文件
-            BuildAvaloniaApp()
-                .StartWithClassicDesktopLifetime(args);
-            return;
+            //没有权限写文件
+            _inputDir = $"{Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)}/ColorMC/";
+            _inputDir = Path.GetFullPath(_inputDir);
         }
 
         _loadDir = _inputDir + "dll";
 
         Console.WriteLine($"LoadDir: {_loadDir}");
-
-        //Test AOT
-        try
-        {
-            var assemblyName = new AssemblyName("AotTestClass");
-            var assBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
-        }
-        catch
-        {
-            Aot = true;
-        }
-
 #endif
         try
         {
 #if DEBUG
+            Gui.ColorMCGui.SetInputDir(AppContext.BaseDirectory);
             Gui.ColorMCGui.Main(args);
 #else
+
+#if !AOT
             Load();
+#else
+            GuiLoad.Load();
+#endif
             SetInputDir(_inputDir);
-            SetAot(Aot);
+            SetRuntimeState(Aot, IsMin);
             SetBaseSha1(BaseSha1);
             MainCall(args);
 #endif
@@ -171,24 +179,14 @@ public static class Program
 #endif
         }
     }
+
 #if DEBUG
     public static AppBuilder BuildAvaloniaApp()
     {
         return Gui.ColorMCGui.BuildAvaloniaApp();
     }
 #else
-
-    public static AppBuilder BuildAvaloniaApp()
-    {
-        return AppBuilder.Configure<App>()
-                .With(new FontManagerOptions
-                {
-                    DefaultFamilyName = Font,
-                })
-                .LogToTrace()
-                .UsePlatformDetect();
-    }
-
+#if !AOT
     private static bool NotHaveDll()
     {
         return File.Exists($"{_loadDir}/ColorMC.Core.dll")
@@ -199,7 +197,7 @@ public static class Program
 
     private static void Load()
     {
-        if (!NotHaveDll() || Aot)
+        if (!NotHaveDll())
         {
             GuiLoad.Load();
         }
@@ -255,8 +253,8 @@ public static class Program
                 SetBaseSha1 = (Delegate.CreateDelegate(typeof(IN),
                         mis1.GetMethod("SetBaseSha1")!) as IN)!;
 
-                SetAot = (Delegate.CreateDelegate(typeof(IN2),
-                       mis1.GetMethod("SetAot")!) as IN2)!;
+                SetRuntimeState = (Delegate.CreateDelegate(typeof(IN2),
+                       mis1.GetMethod("SetRuntimeState")!) as IN2)!;
 
                 SetInputDir = (Delegate.CreateDelegate(typeof(IN3),
                        mis1.GetMethod("SetInputDir")!) as IN3)!;
@@ -270,5 +268,7 @@ public static class Program
             }
         }
     }
+#endif
+
 #endif
 }

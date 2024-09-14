@@ -5,94 +5,101 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.Add"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
-    d:DesignHeight="450"
+    xmlns:panel="clr-namespace:ColorMC.Gui.UI.Views"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
+    d:DesignHeight="600"
     d:DesignWidth="800"
     x:DataType="model:AddJavaControlModel"
-    Background="{setting:Colors TranBack}"
     mc:Ignorable="d">
-    <DockPanel Margin="5">
-        <Border Classes="t2" DockPanel.Dock="Top">
-            <StackPanel>
-                <WrapPanel Margin="0,0,0,-5">
-                    <ComboBox
-                        Width="120"
-                        Margin="0,0,5,5"
-                        ItemsSource="{Binding JavaTypeList}"
-                        SelectedIndex="{Binding TypeIndex}"
-                        SelectedItem="{Binding JavaType}" />
-                    <StackPanel Margin="0,0,5,5" Orientation="Horizontal">
+    <Decorator Margin="10,0,10,10">
+        <Border
+            Margin="10,10,10,10"
+            Classes="t2"
+            DockPanel.Dock="Top">
+            <DockPanel>
+                <panel:WrapPanelWithStretch
+                    Margin="15,15,5,-10"
+                    AutoMax="{Binding MinMode}"
+                    DockPanel.Dock="Top">
+                    <DockPanel MinWidth="150" Margin="0,0,10,10">
+                        <TextBlock Margin="0,0,5,0" Text="{setting:Localize AddJavaWindow.Text7}" />
+                        <ComboBox
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{Binding JavaTypeList}"
+                            SelectedIndex="{Binding TypeIndex}"
+                            SelectedItem="{Binding JavaType}" />
+                    </DockPanel>
+                    <DockPanel MinWidth="150" Margin="0,0,10,10">
                         <TextBlock Margin="0,0,5,0" Text="{setting:Localize AddJavaWindow.Text2}" />
                         <ComboBox
-                            Width="120"
+                            HorizontalAlignment="Stretch"
                             ItemsSource="{Binding SystemList}"
                             SelectedItem="{Binding System}" />
-                    </StackPanel>
-
-                    <StackPanel Margin="0,0,5,5" Orientation="Horizontal">
-                        <TextBlock Margin="0,0,5,0" Text="{setting:Localize Text.Version}" />
+                    </DockPanel>
+                    <DockPanel MinWidth="80" Margin="0,0,10,10">
+                        <TextBlock Margin="0,0,5,0" Text="{setting:Localize AddJavaWindow.Text8}" />
                         <ComboBox
-                            Width="90"
+                            HorizontalAlignment="Stretch"
                             ItemsSource="{Binding VersionList}"
                             SelectedItem="{Binding Version}" />
-                    </StackPanel>
-
-                    <StackPanel Margin="0,0,5,5" Orientation="Horizontal">
+                    </DockPanel>
+                    <DockPanel MinWidth="150" Margin="0,0,10,10">
                         <TextBlock Margin="0,0,5,0" Text="{setting:Localize AddJavaWindow.Text4}" />
                         <ComboBox
-                            Width="120"
+                            HorizontalAlignment="Stretch"
                             ItemsSource="{Binding ArchList}"
                             SelectedIndex="{Binding ArchIndex}"
                             SelectedItem="{Binding Arch}" />
-                    </StackPanel>
-                </WrapPanel>
+                    </DockPanel>
+                </panel:WrapPanelWithStretch>
                 <TextBlock
-                    Margin="0,5,0,0"
-                    VerticalAlignment="Bottom"
+                    Margin="15,0,15,15"
+                    DockPanel.Dock="Bottom"
                     Text="{setting:Localize AddJavaWindow.Text5}"
                     TextWrapping="Wrap" />
-            </StackPanel>
-        </Border>
-        <Border Margin="0,5,0,0" Classes="t1">
-            <Panel>
-                <DataGrid
-                    Name="JavaFiles"
-                    AutoGenerateColumns="False"
-                    CanUserResizeColumns="True"
-                    CanUserSortColumns="False"
-                    ItemsSource="{Binding JavaList}">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn
-                            Binding="{Binding Name}"
-                            Header="{setting:Localize Text.Name}"
-                            IsReadOnly="True" />
-                        <DataGridTextColumn
-                            Binding="{Binding Arch}"
-                            Header="{setting:Localize AddJavaWindow.DataGrid.Text2}"
-                            IsReadOnly="True" />
-                        <DataGridTextColumn
-                            Binding="{Binding Os}"
-                            Header="{setting:Localize AddJavaWindow.DataGrid.Text3}"
-                            IsReadOnly="True" />
-                        <DataGridTextColumn
-                            Binding="{Binding MainVersion}"
-                            Header="{setting:Localize AddJavaWindow.DataGrid.Text4}"
-                            IsReadOnly="True" />
-                        <DataGridTextColumn
-                            Binding="{Binding Version}"
-                            Header="{setting:Localize Text.Version}"
-                            IsReadOnly="True" />
-                        <DataGridTextColumn
-                            Binding="{Binding Size}"
-                            Header="{setting:Localize Text.Size}"
-                            IsReadOnly="True" />
-                    </DataGrid.Columns>
-                </DataGrid>
-
-                <Panel Background="{setting:Colors BG1}" IsVisible="{Binding Display}">
-                    <TextBlock HorizontalAlignment="Center" Text="{setting:Localize AddJavaWindow.Text6}" />
+                <Panel Margin="5">
+                    <DataGrid
+                        Name="JavaFiles"
+                        AutoGenerateColumns="False"
+                        CanUserResizeColumns="True"
+                        CanUserSortColumns="False"
+                        IsVisible="{Binding !Display}"
+                        ItemsSource="{Binding JavaList}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn
+                                Binding="{Binding Name}"
+                                Header="{setting:Localize Text.Name}"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Binding="{Binding Arch}"
+                                Header="{setting:Localize AddJavaWindow.Text4}"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Binding="{Binding Os}"
+                                Header="{setting:Localize AddJavaWindow.Text2}"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Binding="{Binding MainVersion}"
+                                Header="{setting:Localize AddJavaWindow.Text8}"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Binding="{Binding Version}"
+                                Header="{setting:Localize Text.Version}"
+                                IsReadOnly="True" />
+                            <DataGridTextColumn
+                                Binding="{Binding Size}"
+                                Header="{setting:Localize Text.Size}"
+                                IsReadOnly="True" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Border Classes="t1" IsVisible="{Binding Display}">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            FontSize="30"
+                            Text="{setting:Localize AddJavaWindow.Text6}" />
+                    </Border>
                 </Panel>
-            </Panel>
+            </DockPanel>
         </Border>
-    </DockPanel>
+    </Decorator>
 </UserControl>

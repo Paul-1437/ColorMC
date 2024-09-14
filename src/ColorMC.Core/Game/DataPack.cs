@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using ColorMC.Core.Helpers;
 using ColorMC.Core.Nbt;
+using ColorMC.Core.Objs;
 using ColorMC.Core.Objs.Minecraft;
 using ColorMC.Core.Utils;
 using ICSharpCode.SharpZipLib.Zip;
@@ -13,56 +14,6 @@ namespace ColorMC.Core.Game;
 /// </summary>
 public static class DataPack
 {
-    /// <summary>
-    /// 检查数据包
-    /// </summary>
-    /// <param name="path">路径</param>
-    /// <param name="ens">已启用的数据包</param>
-    /// <param name="dis">已禁用的数据包</param>
-    /// <param name="data">数据包内容</param>
-    /// <returns></returns>
-    private static DataPackObj? CheckPack(string path, NbtList? ens, NbtList? dis, JObject data)
-    {
-        if (data.TryGetValue("pack", out var obj) && obj is JObject obj1)
-        {
-            var item1 = new DataPackObj()
-            {
-                Name = "file/" + Path.GetFileName(path),
-                Path = path,
-                Description = obj1["description"]?.ToString() ?? "",
-                PackFormat = obj1["pack_format"]?.Value<int>() ?? -1
-            };
-
-            if (ens != null)
-            {
-                foreach (var item2 in ens)
-                {
-                    if (item2 is NbtString item3 && item3.Value == item1.Name)
-                    {
-                        item1.Enable = true;
-                        break;
-                    }
-                }
-            }
-
-            if (dis != null)
-            {
-                foreach (var item2 in dis)
-                {
-                    if (item2 is NbtString item3 && item3.Value == item1.Name)
-                    {
-                        item1.Enable = false;
-                        break;
-                    }
-                }
-            }
-
-            return item1;
-        }
-
-        return null;
-    }
-
     /// <summary>
     /// 获取数据包列表
     /// </summary>
@@ -143,12 +94,12 @@ public static class DataPack
     }
 
     /// <summary>
-    /// 禁用启用数据包
+    /// 禁用/启用世界数据包
     /// </summary>
     /// <param name="list">数据包列表</param>
     /// <param name="world">世界储存</param>
     /// <returns></returns>
-    public static bool DisEna(IEnumerable<DataPackObj> list, WorldObj world)
+    public static bool DisableOrEnableDataPack(this WorldObj world, IEnumerable<DataPackObj> list)
     {
         var nbt = world.Nbt.TryGet<NbtCompound>("Data")?.TryGet<NbtCompound>("DataPacks");
 
@@ -217,12 +168,11 @@ public static class DataPack
     }
 
     /// <summary>
-    /// 删除数据包
+    /// 删除世界数据包
     /// </summary>
-    /// <param name="list">数据包列表</param>
     /// <param name="world">世界存储</param>
     /// <returns>是否删除</returns>
-    public static async Task<bool> DeleteAsync(List<DataPackObj> list, WorldObj world, ColorMCCore.Request request)
+    public static async Task<bool> DeleteDataPackAsync(this WorldObj world, DataPackDeleteArg arg)
     {
         var nbt = world.Nbt.TryGet<NbtCompound>("Data")?.TryGet<NbtCompound>("DataPacks");
 
@@ -232,11 +182,15 @@ public static class DataPack
             return false;
         }
 
-        foreach (var item in list)
+        foreach (var item in arg.List)
         {
             if (Directory.Exists(item.Path))
             {
-                await PathHelper.DeleteFilesAsync(item.Path, request);
+                await PathHelper.DeleteFilesAsync(new DeleteFilesArg
+                {
+                    Local = item.Path,
+                    Request = arg.Request
+                });
             }
             else
             {
@@ -248,7 +202,7 @@ public static class DataPack
         {
             try
             {
-                foreach (var obj in list)
+                foreach (var obj in arg.List)
                 {
                     foreach (var item in ens.CopyList())
                     {
@@ -276,5 +230,55 @@ public static class DataPack
         });
 
         return true;
+    }
+
+    /// <summary>
+    /// 检查数据包
+    /// </summary>
+    /// <param name="path">路径</param>
+    /// <param name="ens">已启用的数据包</param>
+    /// <param name="dis">已禁用的数据包</param>
+    /// <param name="data">数据包内容</param>
+    /// <returns></returns>
+    private static DataPackObj? CheckPack(string path, NbtList? ens, NbtList? dis, JObject data)
+    {
+        if (data.TryGetValue("pack", out var obj) && obj is JObject obj1)
+        {
+            var item1 = new DataPackObj()
+            {
+                Name = "file/" + Path.GetFileName(path),
+                Path = path,
+                Description = obj1["description"]?.ToString() ?? "",
+                PackFormat = obj1["pack_format"]?.Value<int>() ?? -1
+            };
+
+            if (ens != null)
+            {
+                foreach (var item2 in ens)
+                {
+                    if (item2 is NbtString item3 && item3.Value == item1.Name)
+                    {
+                        item1.Enable = true;
+                        break;
+                    }
+                }
+            }
+
+            if (dis != null)
+            {
+                foreach (var item2 in dis)
+                {
+                    if (item2 is NbtString item3 && item3.Value == item1.Name)
+                    {
+                        item1.Enable = false;
+                        break;
+                    }
+                }
+            }
+
+            return item1;
+        }
+
+        return null;
     }
 }

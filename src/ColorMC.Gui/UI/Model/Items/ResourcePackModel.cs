@@ -1,32 +1,29 @@
 using System.IO;
 using Avalonia.Media.Imaging;
 using ColorMC.Core.Objs.Minecraft;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model.GameEdit;
-using CommunityToolkit.Mvvm.ComponentModel;
+using ColorMC.Gui.UIBinding;
 
 namespace ColorMC.Gui.UI.Model.Items;
 
-public partial class ResourcePackModel : ObservableObject
+public partial class ResourcePackModel : SelectItemModel
 {
-    [ObservableProperty]
-    private bool _isSelect;
-
-    public readonly GameEditModel Top;
+    public readonly GameEditModel TopModel;
     public readonly ResourcepackObj Pack;
 
-    public string Local => Pack.Local;
+    public string Local => Path.GetFileName(Pack.Local);
     public string PackFormat => Pack.pack_format.ToString();
-    public string Description => Pack.description;
-    public string Broken => Pack.Broken ?
-            App.Lang("GameEditWindow.Tab8.Info4") : "";
+    public Chat Description => GameBinding.StringToChat(Pack.description);
+    public string Broken => Pack.Broken ? App.Lang("GameEditWindow.Tab8.Info4") : "";
 
     public Bitmap Pic { get; }
 
     public ResourcePackModel(GameEditModel top, ResourcepackObj pack)
     {
-        Top = top;
+        TopModel = top;
         Pack = pack;
-        Pic = Pack.Icon == null ? App.GameIcon : GetImage();
+        Pic = Pack.Icon == null ? ImageManager.GameIcon : GetImage();
     }
 
     public Bitmap GetImage()
@@ -37,12 +34,12 @@ public partial class ResourcePackModel : ObservableObject
 
     public void Select()
     {
-        Top.SetSelectResource(this);
+        TopModel.SetSelectResource(this);
     }
 
     public void Close()
     {
-        if (Pic != App.GameIcon)
+        if (Pic != ImageManager.GameIcon)
         {
             Pic.Dispose();
         }

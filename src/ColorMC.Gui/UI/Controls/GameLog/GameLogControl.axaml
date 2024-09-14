@@ -6,102 +6,104 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:model="clr-namespace:ColorMC.Gui.UI.Model.GameLog"
-    xmlns:setting="clr-namespace:ColorMC.Gui.Utils.LaunchSetting"
+    xmlns:panel="clr-namespace:ColorMC.Gui.UI.Views"
+    xmlns:setting="clr-namespace:ColorMC.Gui.UI"
     d:DesignHeight="450"
     d:DesignWidth="800"
     x:DataType="model:GameLogModel"
-    Background="{setting:Colors TranBack}"
     mc:Ignorable="d">
-    <DockPanel Margin="5,5,5,0">
+    <DockPanel Margin="10">
         <Border
-            Margin="0,0,0,5"
+            Margin="10,0,10,10"
             Classes="t2"
             DockPanel.Dock="Top">
-            <StackPanel>
-                <WrapPanel>
-                    <ToggleSwitch
-                        Margin="0,0,10,0"
-                        VerticalAlignment="Center"
-                        IsChecked="{Binding IsWordWrap}"
-                        OffContent="{setting:Localize GameLogWindow.Text1}"
-                        OnContent="{setting:Localize GameLogWindow.Text1}" />
-                    <ToggleSwitch
-                        Margin="0,0,10,0"
-                        IsChecked="{Binding IsAuto}"
-                        OffContent="{setting:Localize GameLogWindow.Text2}"
-                        OnContent="{setting:Localize GameLogWindow.Text2}" />
-                    <ComboBox
-                        Width="200"
-                        Margin="0,0,0,0"
-                        HorizontalAlignment="Stretch"
-                        ItemsSource="{Binding FileList}"
-                        SelectedItem="{Binding File}" />
-                </WrapPanel>
-                <WrapPanel Margin="0,5,0,-5">
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-3,3,2"
-                        VerticalAlignment="Center"
-                        Classes="top"
-                        Command="{Binding Launch}"
-                        Content="{setting:Localize GameLogWindow.Text4}"
-                        IsEnabled="{Binding !IsGameRun}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text44}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-3,3,2"
-                        VerticalAlignment="Center"
-                        Classes="top"
-                        Command="{Binding Stop}"
-                        Content="{setting:Localize GameLogWindow.Text3}"
-                        IsEnabled="{Binding IsGameRun}"
-                        ToolTip.Tip="{setting:Localize ToolTip.Text44}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-3,3,2"
-                        VerticalAlignment="Center"
-                        Classes="top"
-                        Command="{Binding Load1}"
-                        Content="{setting:Localize GameLogWindow.Text6}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-3,3,2"
-                        VerticalAlignment="Center"
-                        Classes="top"
-                        Command="{Binding Search}"
-                        Content="{setting:Localize GameLogWindow.Text7}"
-                        ToolTip.VerticalOffset="-30" />
-                    <Button
-                        Width="100"
-                        Height="30"
-                        Margin="-2,-3,3,2"
-                        VerticalAlignment="Center"
-                        Classes="top"
-                        Command="{Binding Push}"
-                        Content="{setting:Localize GameLogWindow.Text8}"
-                        ToolTip.VerticalOffset="-30" />
-                </WrapPanel>
-            </StackPanel>
+            <DockPanel Margin="15">
+                <StackPanel Margin="0,0,0,10" DockPanel.Dock="Top">
+                    <panel:WrapPanelWithStretch>
+                        <ToggleSwitch
+                            Margin="0,0,10,10"
+                            VerticalAlignment="Center"
+                            IsChecked="{Binding IsWordWrap}"
+                            OffContent="{setting:Localize GameLogWindow.Text1}"
+                            OnContent="{setting:Localize GameLogWindow.Text1}" />
+                        <ToggleSwitch
+                            Margin="0,0,10,10"
+                            IsChecked="{Binding IsAuto}"
+                            OffContent="{setting:Localize GameLogWindow.Text2}"
+                            OnContent="{setting:Localize GameLogWindow.Text2}" />
+                        <ComboBox
+                            MinWidth="200"
+                            Margin="0,0,10,10"
+                            HorizontalAlignment="Stretch"
+                            ItemsSource="{Binding FileList}"
+                            SelectedItem="{Binding File}" />
+                    </panel:WrapPanelWithStretch>
+                    <WrapPanel Margin="0,0,0,-10">
+                        <Button
+                            Width="100"
+                            Height="35"
+                            Margin="-2,-3,3,-3"
+                            VerticalAlignment="Center"
+                            Classes="top"
+                            Command="{Binding Launch}"
+                            Content="{setting:Localize GameLogWindow.Text4}"
+                            IsEnabled="{Binding !IsGameRun}"
+                            ToolTip.Tip="{setting:Localize ToolTip.Text44}"
+                            ToolTip.VerticalOffset="-30" />
+                        <Button
+                            Width="100"
+                            Height="35"
+                            Margin="-2,-3,3,-3"
+                            VerticalAlignment="Center"
+                            Classes="top"
+                            Command="{Binding Stop}"
+                            Content="{setting:Localize GameLogWindow.Text3}"
+                            IsEnabled="{Binding IsGameRun}"
+                            ToolTip.Tip="{setting:Localize ToolTip.Text44}"
+                            ToolTip.VerticalOffset="-30" />
+                        <Button
+                            Width="100"
+                            Height="35"
+                            Margin="-2,-3,3,-3"
+                            VerticalAlignment="Center"
+                            Classes="top"
+                            Command="{Binding Load1}"
+                            Content="{setting:Localize GameLogWindow.Text6}"
+                            ToolTip.VerticalOffset="-30" />
+                        <Button
+                            Width="100"
+                            Height="35"
+                            Margin="-2,-3,3,-3"
+                            VerticalAlignment="Center"
+                            Classes="top"
+                            Command="{Binding Search}"
+                            Content="{setting:Localize GameLogWindow.Text7}"
+                            ToolTip.VerticalOffset="-30" />
+                        <Button
+                            Width="100"
+                            Height="35"
+                            Margin="-2,-3,3,-3"
+                            VerticalAlignment="Center"
+                            Classes="top"
+                            Command="{Binding Push}"
+                            Content="{setting:Localize GameLogWindow.Text8}"
+                            ToolTip.VerticalOffset="-30" />
+                    </WrapPanel>
+                </StackPanel>
+
+            </DockPanel>
         </Border>
-        <Border Classes="t1">
-            <ae:TextEditor
-                Name="TextEditor1"
-                Document="{Binding Text}"
-                FontSize="14"
-                FontWeight="Normal"
-                Foreground="{setting:Colors Font}"
-                HorizontalScrollBarVisibility="Auto"
-                IsReadOnly="True"
-                ShowLineNumbers="True"
-                VerticalScrollBarVisibility="Visible"
-                WordWrap="{Binding IsWordWrap}" />
-        </Border>
+        <ae:TextEditor
+            Name="TextEditor1"
+            Margin="5,0,5,10"
+            Document="{Binding Text}"
+            FontSize="14"
+            FontWeight="Normal"
+            Foreground="{setting:Theme FontColor}"
+            HorizontalScrollBarVisibility="Auto"
+            IsReadOnly="True"
+            ShowLineNumbers="True"
+            VerticalScrollBarVisibility="Visible"
+            WordWrap="{Binding IsWordWrap}" />
     </DockPanel>
 </UserControl>

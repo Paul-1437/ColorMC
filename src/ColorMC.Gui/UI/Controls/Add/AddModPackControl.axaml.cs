@@ -1,51 +1,60 @@
 using System.ComponentModel;
-using Avalonia.Controls;
+using System.Threading.Tasks;
 using Avalonia.Input;
-using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.Add;
-using ColorMC.Gui.UI.Windows;
 
 namespace ColorMC.Gui.UI.Controls.Add;
 
-public partial class AddModPackControl : UserControl, IUserControl
+public partial class AddModPackControl : BaseUserControl
 {
-    public IBaseWindow Window => App.FindRoot(VisualRoot);
-
-    public string Title => App.Lang("AddModPackWindow.Title");
-
-    public string UseName { get; }
-
     public AddModPackControl()
     {
         InitializeComponent();
 
+        Title = App.Lang("AddModPackWindow.Title");
         UseName = ToString() ?? "AddModPackControl";
 
-        PackFiles.DoubleTapped += PackFiles_DoubleTapped;
-
         ModPackFiles.PointerPressed += ModPackFiles_PointerPressed;
-
-        Input1.KeyDown += Input1_KeyDown;
-
-        ScrollViewer1.PointerWheelChanged += ScrollViewer1_PointerWheelChanged;
     }
 
-    private void ScrollViewer1_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
-    {
-        if (DataContext is AddModPackControlModel model)
-        {
-            model.Wheel(e.Delta.Y);
-        }
-    }
-
-    public void OnKeyDown(object? sender, KeyEventArgs e)
+    public override Task<bool> OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.F5)
         {
             (DataContext as AddModPackControlModel)!.Reload1();
+
+            return Task.FromResult(true);
         }
+
+        return Task.FromResult(false);
+    }
+
+    public override void Closed()
+    {
+        WindowManager.AddModPackWindow = null;
+    }
+
+    public override void Opened()
+    {
+        Window.SetTitle(Title);
+
+        (DataContext as AddModPackControlModel)!.Source = 0;
+    }
+
+    public override TopModel GenModel(BaseModel model)
+    {
+        var amodel = new AddModPackControlModel(model);
+        amodel.PropertyChanged += Model_PropertyChanged;
+        return amodel;
+    }
+
+    public override Bitmap GetIcon()
+    {
+        return ImageManager.GameIcon;
     }
 
     private void Model_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -60,17 +69,15 @@ public partial class AddModPackControl : UserControl, IUserControl
             {
                 if ((DataContext as AddModPackControlModel)!.Display)
                 {
-                    App.CrossFade300.Start(null, ModPackFiles);
+                    ThemeManager.CrossFade300.Start(null, ModPackFiles);
+                    ThemeManager.CrossFade300.Start(ScrollViewer1, null);
                 }
                 else
                 {
-                    App.CrossFade300.Start(ModPackFiles, null);
+                    ThemeManager.CrossFade300.Start(ModPackFiles, null);
+                    ThemeManager.CrossFade300.Start(null, ScrollViewer1);
                 }
             });
-        }
-        else if (e.PropertyName == "WindowClose")
-        {
-            Window.Close();
         }
     }
 
@@ -82,37 +89,5 @@ public partial class AddModPackControl : UserControl, IUserControl
             await (DataContext as AddModPackControlModel)!.Download();
             e.Handled = true;
         }
-    }
-
-    private void Input1_KeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
-        {
-            (DataContext as AddModPackControlModel)!.Reload();
-        }
-    }
-
-    private async void PackFiles_DoubleTapped(object? sender, RoutedEventArgs e)
-    {
-        await (DataContext as AddModPackControlModel)!.Download();
-    }
-
-    public void Closed()
-    {
-        App.AddModPackWindow = null;
-    }
-
-    public void Opened()
-    {
-        Window.SetTitle(Title);
-
-        (DataContext as AddModPackControlModel)!.Source = 0;
-    }
-
-    public void SetBaseModel(BaseModel model)
-    {
-        var amodel = new AddModPackControlModel(model);
-        amodel.PropertyChanged += Model_PropertyChanged;
-        DataContext = amodel;
     }
 }

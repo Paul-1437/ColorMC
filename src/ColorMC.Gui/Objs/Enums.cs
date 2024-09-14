@@ -39,29 +39,6 @@ public enum GameEditWindowType
 }
 
 /// <summary>
-/// 皮肤类型
-/// </summary>
-public enum SkinType
-{
-    /// <summary>
-    /// 1.7旧版
-    /// </summary>
-    Old,
-    /// <summary>
-    /// 1.8新版
-    /// </summary>
-    New,
-    /// <summary>
-    /// 1.8新版纤细
-    /// </summary>
-    NewSlim,
-    /// <summary>
-    /// 未知的类型
-    /// </summary>
-    Unkonw
-}
-
-/// <summary>
 /// 颜色类型
 /// </summary>
 public enum ColorType
@@ -146,10 +123,20 @@ public enum WebType
     BSD,
     OpenFrp,
     OpenFrpApi,
-    Live2DCore
+    Live2DCore,
+    ColorMCDownload,
+    EditSkin,
+    LittleSkinEditSkin,
+    UIGuide,
+    UIGuide1
 }
 
 public enum FrpType
 {
     SakuraFrp, OpenFrp
+}
+
+public enum HeadType
+{
+    Head2D, Head3D_A, Head3D_B
 }

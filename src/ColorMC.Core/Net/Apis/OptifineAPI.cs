@@ -15,31 +15,33 @@ namespace ColorMC.Core.Net.Apis;
 public static class OptifineAPI
 {
     private static List<string> s_OptifneMcVersion;
+
     /// <summary>
     /// 获取高清修复版本
     /// </summary>
-    public static async Task<(SourceLocal?, List<OptifineObj>?)> GetOptifineVersion()
+    public static async Task<List<OptifineObj>?> GetOptifineVersion()
     {
-        string url = UrlHelper.GetOptifine(BaseClient.Source);
+        string url = UrlHelper.GetOptifine(WebClient.Source);
         try
         {
-            var type = BaseClient.Source;
             var list = new List<OptifineObj>();
-            var data = await BaseClient.GetStringAsync(url);
-            if (data.Item1 == false)
+            var data = await WebClient.GetStringAsync(url);
+            if (data.State == false)
             {
                 ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                     new Exception(url), false);
-                return (null, null);
+                return null;
             }
-            if (BaseClient.Source == SourceLocal.Offical)
+            if (WebClient.Source == SourceLocal.Offical)
             {
                 HtmlDocument html = new();
-                html.LoadHtml(data.Item2!);
+                html.LoadHtml(data.Message!);
                 var list2 = html.DocumentNode.SelectNodes("//tr");
                 var list1 = list2.Where(item => item?.GetClasses()?.Contains("downloadLine") == true);
                 if (list1 == null)
-                    return (null, null);
+                {
+                    return null;
+                }
 
                 foreach (var item in list1)
                 {
@@ -68,6 +70,12 @@ public static class OptifineAPI
                         .Replace("OptiFine_", "");
                     mc = mc[..(mc.IndexOf('_'))];
 
+                    var temp5 = temp3.Split(".");
+                    if (temp5.Length == 3 && temp5[2].Length == 4)
+                    {
+                        temp3 = $"{temp5[2]}.{temp5[1]}.{temp5[0]}";
+                    }
+
                     list.Add(new()
                     {
                         FileName = file,
@@ -83,10 +91,12 @@ public static class OptifineAPI
             }
             else
             {
-                var list1 = JsonConvert.DeserializeObject<List<OptifineListObj>>(data.Item2!);
+                var list1 = JsonConvert.DeserializeObject<List<OptifineListObj>>(data.Message!);
 
                 if (list1 == null)
-                    return (null, null);
+                {
+                    return null;
+                }
 
                 list1.ForEach(item =>
                 {
@@ -96,20 +106,19 @@ public static class OptifineAPI
                         Version = $"{item.type}_{item.patch}",
                         MCVersion = item.mcversion,
                         Forge = item.forge,
-                        Url1 = UrlHelper.OptifineDownload(item, type),
-                        Local = BaseClient.Source
+                        Url1 = UrlHelper.OptifineDownload(item, WebClient.Source),
+                        Local = WebClient.Source
                     });
                 });
             }
 
-            return (type, list);
+            return list;
         }
         catch (Exception e)
         {
             Logs.Error(LanguageHelper.Get("Core.Http.OptiFine.Error1"), e);
+            return null;
         }
-
-        return (null, null);
     }
 
     /// <summary>
@@ -123,16 +132,16 @@ public static class OptifineAPI
         {
             if (obj.Local == SourceLocal.Offical)
             {
-                _ = BaseClient.GetStringAsync(obj.Url1);
-                var data = await BaseClient.GetStringAsync(obj.Url2);
-                if (data.Item1 == false)
+                _ = WebClient.GetStringAsync(obj.Url1);
+                var data = await WebClient.GetStringAsync(obj.Url2);
+                if (data.State == false)
                 {
                     ColorMCCore.OnError(LanguageHelper.Get("Core.Http.Error7"),
                         new Exception(obj.Url2), false);
                     return null;
                 }
                 HtmlDocument html = new();
-                html.LoadHtml(data.Item2!);
+                html.LoadHtml(data.Message!);
                 var list1 = html.DocumentNode.SelectNodes("//table/tr/td/table/tbody/tr/td/table/tbody/tr/td/span/a");
                 if (list1 == null)
                     return null;
@@ -157,13 +166,13 @@ public static class OptifineAPI
     /// <param name="obj">游戏实例</param>
     /// <param name="item">高清修复信息</param>
     /// <returns>结果</returns>
-    public static async Task<(bool, string?)> DownloadOptifine(GameSettingObj obj, OptifineObj item)
+    public static async Task<MessageRes> DownloadOptifine(GameSettingObj obj, OptifineObj item)
     {
         DownloadItemObj item1;
         var data = await GetOptifineDownloadUrl(item);
         if (data == null)
         {
-            return (false, LanguageHelper.Get("Core.Http.OptiFine.Error3"));
+            return new() { Message = LanguageHelper.Get("Core.Http.OptiFine.Error3") };
         }
 
         item1 = new()
@@ -177,11 +186,15 @@ public static class OptifineAPI
         var res = await DownloadManager.StartAsync([item1]);
         if (!res)
         {
-            return (false, LanguageHelper.Get("Core.Http.OptiFine.Error4"));
+            return new() { Message = LanguageHelper.Get("Core.Http.OptiFine.Error4") };
         }
-        return (true, null);
+        return new() { State = true };
     }
 
+    /// <summary>
+    /// 获取支持的游戏版本
+    /// </summary>
+    /// <returns></returns>
     public static async Task<List<string>?> GetSupportVersion()
     {
         if (s_OptifneMcVersion != null)
@@ -189,12 +202,12 @@ public static class OptifineAPI
             return s_OptifneMcVersion;
         }
         var list = await GetOptifineVersion();
-        if (list.Item1 == null)
+        if (list == null)
         {
             return null;
         }
         var list1 = new List<string>();
-        var list2 = list.Item2!.GroupBy(item => item.MCVersion);
+        var list2 = list.GroupBy(item => item.MCVersion);
         foreach (var item in list2)
         {
             list1.Add(item.Key);

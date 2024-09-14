@@ -2,6 +2,8 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media.Imaging;
+using ColorMC.Gui.Manager;
 using ColorMC.Gui.Objs;
 using ColorMC.Gui.UI.Model;
 using ColorMC.Gui.UI.Model.Setting;
@@ -19,18 +21,15 @@ public partial class SettingControl : MenuControl
     private Tab7Control _tab7;
     private Tab8Control _tab8;
 
-    public override string Title => App.Lang("SettingWindow.Title");
-
-    public override string UseName { get; }
-
     private readonly int _needJava;
 
     public SettingControl()
     {
+        Title = App.Lang("SettingWindow.Title");
         UseName = ToString() ?? "SettingControl";
     }
 
-    public SettingControl(int mainversion) : base()
+    public SettingControl(int mainversion) : this()
     {
         _needJava = mainversion;
     }
@@ -55,7 +54,7 @@ public partial class SettingControl : MenuControl
 
     public override void Closed()
     {
-        App.SettingWindow = null;
+        WindowManager.SettingWindow = null;
     }
 
     public void GoTo(SettingType type)
@@ -82,12 +81,12 @@ public partial class SettingControl : MenuControl
         (DataContext as SettingModel)!.LoadUISetting();
     }
 
-    protected override MenuModel SetModel(BaseModel model)
+    public override TopModel GenModel(BaseModel model)
     {
         return new SettingModel(model);
     }
 
-    protected override Control ViewChange(bool iswhell, int old, int index)
+    protected override Control ViewChange(int old, int index)
     {
         var model = (DataContext as SettingModel)!;
         switch (old)
@@ -101,39 +100,15 @@ public partial class SettingControl : MenuControl
             case 0:
                 model.LoadUISetting();
                 _tab2 ??= new();
-                if (iswhell && old == 1)
-                {
-                    _tab2.End();
-                }
-                else
-                {
-                    _tab2.Reset();
-                }
                 return _tab2;
             case 1:
                 model.LoadHttpSetting();
                 model.TestGameCloudConnect();
                 _tab3 ??= new();
-                if (iswhell && old == 2)
-                {
-                    _tab3.End();
-                }
-                else
-                {
-                    _tab3.Reset();
-                }
                 return _tab3;
             case 2:
                 model.LoadArg();
                 _tab4 ??= new();
-                if (iswhell && old == 3)
-                {
-                    _tab4.End();
-                }
-                else
-                {
-                    _tab4.Reset();
-                }
                 return _tab4;
             case 3:
                 model.Load(_needJava);
@@ -141,14 +116,6 @@ public partial class SettingControl : MenuControl
             case 4:
                 model.LoadServer();
                 _tab6 ??= new();
-                if (iswhell && old == 5)
-                {
-                    _tab6.End();
-                }
-                else
-                {
-                    _tab6.Reset();
-                }
                 return _tab6;
             case 5:
                 return _tab1 ??= new();
@@ -163,5 +130,10 @@ public partial class SettingControl : MenuControl
             default:
                 throw new InvalidEnumArgumentException();
         }
+    }
+
+    public override Bitmap GetIcon()
+    {
+        return ImageManager.GameIcon;
     }
 }
